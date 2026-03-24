@@ -41,8 +41,11 @@ namespace OptikFormApp.ViewModels
             OpenAboutCommand = new RelayCommand(_ => IsAboutOpen = true);
             CloseAboutCommand = new RelayCommand(_ => IsAboutOpen = false);
 
-            OpenSettingsCommand = new RelayCommand(_ => IsSettingsOpen = true);
-            CloseSettingsCommand = new RelayCommand(_ => IsSettingsOpen = false);
+            OpenUISettingsCommand = new RelayCommand(_ => IsUISettingsOpen = true);
+            CloseUISettingsCommand = new RelayCommand(_ => IsUISettingsOpen = false);
+
+            OpenGeneralConfigCommand = new RelayCommand(_ => IsGeneralConfigOpen = true);
+            CloseGeneralConfigCommand = new RelayCommand(_ => IsGeneralConfigOpen = false);
 
             SelectFolderCommand = new RelayCommand(_ => {
                 var dialog = new Microsoft.Win32.OpenFolderDialog { Title = "Excel Dosyaları İçin Varsayılan Klasörü Seçin" };
@@ -121,14 +124,20 @@ namespace OptikFormApp.ViewModels
         private bool _isAboutOpen;
         public bool IsAboutOpen { get => _isAboutOpen; set { _isAboutOpen = value; OnPropertyChanged(); } }
 
-        private bool _isSettingsOpen;
-        public bool IsSettingsOpen { get => _isSettingsOpen; set { _isSettingsOpen = value; OnPropertyChanged(); } }
+        private bool _isUISettingsOpen;
+        public bool IsUISettingsOpen { get => _isUISettingsOpen; set { _isUISettingsOpen = value; OnPropertyChanged(); } }
+
+        private bool _isGeneralConfigOpen;
+        public bool IsGeneralConfigOpen { get => _isGeneralConfigOpen; set { _isGeneralConfigOpen = value; OnPropertyChanged(); } }
         
         public RelayCommand OpenAboutCommand { get; }
         public RelayCommand CloseAboutCommand { get; }
 
-        public RelayCommand OpenSettingsCommand { get; }
-        public RelayCommand CloseSettingsCommand { get; }
+        public RelayCommand OpenUISettingsCommand { get; }
+        public RelayCommand CloseUISettingsCommand { get; }
+
+        public RelayCommand OpenGeneralConfigCommand { get; }
+        public RelayCommand CloseGeneralConfigCommand { get; }
         
         public RelayCommand ExitCommand { get; }
 
@@ -278,7 +287,7 @@ namespace OptikFormApp.ViewModels
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

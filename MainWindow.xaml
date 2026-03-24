@@ -206,8 +206,8 @@
                         <MenuItem Header="Puanları Hesapla" Command="{Binding EvaluateCommand}"/>
                     </MenuItem>
                     <MenuItem Header="_Seçenekler">
-                        <MenuItem Header="Arayüz Ayarları..." Command="{Binding OpenSettingsCommand}"/>
-                        <MenuItem Header="Genel Konfigürasyon..." Command="{Binding OpenSettingsCommand}"/>
+                        <MenuItem Header="Arayüz Ayarları..." Command="{Binding OpenUISettingsCommand}"/>
+                        <MenuItem Header="Genel Konfigürasyon..." Command="{Binding OpenGeneralConfigCommand}"/>
                     </MenuItem>
                     <MenuItem Header="_Yardım">
                         <MenuItem Header="Uygulama Hakkında..." Command="{Binding OpenAboutCommand}"/>
@@ -579,19 +579,19 @@
             </Border>
         </Grid>
 
-        <!-- SETTINGS OVERLAY -->
-        <Grid Visibility="{Binding IsSettingsOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}" Panel.ZIndex="300">
+        <!-- INTERFACE SETTINGS OVERLAY -->
+        <Grid Visibility="{Binding IsUISettingsOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}" Panel.ZIndex="300">
             <Border Background="{DynamicResource CardBg}" CornerRadius="12" Width="480" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="35">
                 <Border.Effect>
                     <DropShadowEffect Color="Black" Opacity="0.15" BlurRadius="25" ShadowDepth="5"/>
                 </Border.Effect>
                 <StackPanel>
                     <DockPanel LastChildFill="False" Margin="0,0,0,20">
-                        <TextBlock Text="⚙️ Tercihler ve Ayarlar" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextMain}" DockPanel.Dock="Left" VerticalAlignment="Center"/>
-                        <Button Content="X" Command="{Binding CloseSettingsCommand}" Background="Transparent" Foreground="{DynamicResource TextMuted}" FontSize="18" Padding="10,5" DockPanel.Dock="Right" ToolTip="Kapat" Margin="0,-10,-10,0"/>
+                        <TextBlock Text="🎨 Arayüz Seçenekleri" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextMain}" DockPanel.Dock="Left" VerticalAlignment="Center"/>
+                        <Button Content="X" Command="{Binding CloseUISettingsCommand}" Background="Transparent" Foreground="{DynamicResource TextMuted}" FontSize="18" Padding="10,5" DockPanel.Dock="Right" ToolTip="Kapat" Margin="0,-10,-10,0"/>
                     </DockPanel>
 
-                    <TextBlock Text="Arayüz Seçenekleri" FontWeight="SemiBold" Foreground="#3B82F6" Margin="0,0,0,10" FontSize="15"/>
+                    <TextBlock Text="Uygulamanın görünümünü ve tablo düzenini özelleştirin." Foreground="{DynamicResource TextMuted}" Margin="0,0,0,20" TextWrapping="Wrap"/>
                     <Rectangle Height="1" Fill="{DynamicResource Border}" Margin="0,0,0,15"/>
                     
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
@@ -610,7 +610,26 @@
                         </ComboBox>
                     </StackPanel>
 
-                    <TextBlock Text="Genel Konfigürasyon" FontWeight="SemiBold" Foreground="#3B82F6" Margin="0,0,0,10" FontSize="15"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,30,0,0">
+                        <Button Content="Kaydet ve Kapat" Command="{Binding CloseUISettingsCommand}" Background="#10B981" Padding="25,8"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- GENERAL CONFIG OVERLAY -->
+        <Grid Visibility="{Binding IsGeneralConfigOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}" Panel.ZIndex="300">
+            <Border Background="{DynamicResource CardBg}" CornerRadius="12" Width="480" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="35">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Opacity="0.15" BlurRadius="25" ShadowDepth="5"/>
+                </Border.Effect>
+                <StackPanel>
+                    <DockPanel LastChildFill="False" Margin="0,0,0,20">
+                        <TextBlock Text="⚙️ Genel Konfigürasyon" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextMain}" DockPanel.Dock="Left" VerticalAlignment="Center"/>
+                        <Button Content="X" Command="{Binding CloseGeneralConfigCommand}" Background="Transparent" Foreground="{DynamicResource TextMuted}" FontSize="18" Padding="10,5" DockPanel.Dock="Right" ToolTip="Kapat" Margin="0,-10,-10,0"/>
+                    </DockPanel>
+
+                    <TextBlock Text="Uygulama genelindeki çalışma parametrelerini yönetin." Foreground="{DynamicResource TextMuted}" Margin="0,0,0,20" TextWrapping="Wrap"/>
                     <Rectangle Height="1" Fill="{DynamicResource Border}" Margin="0,0,0,15"/>
 
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
@@ -620,7 +639,7 @@
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,30,0,0">
-                        <Button Content="Kaydet ve Kapat" Command="{Binding CloseSettingsCommand}" Background="#10B981" Padding="25,8"/>
+                        <Button Content="Kaydet ve Kapat" Command="{Binding CloseGeneralConfigCommand}" Background="#10B981" Padding="25,8"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
