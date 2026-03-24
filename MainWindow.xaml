@@ -1,0 +1,173 @@
+<Window x:Class="OptikFormApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:OptikFormApp.ViewModels"
+        Title="MAKÜ Optik Değerlendirme (Premium)" Height="750" Width="1150"
+        WindowStartupLocation="CenterScreen" Background="#F8FAFC" FontFamily="Segoe UI">
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <!-- Global Styles -->
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#3B82F6"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2563EB"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#94A3B8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Background="White">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="0"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="#F1F5F9"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#E2E8F0"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+        </Style>
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        </Style>
+        <Style TargetType="DataGridCell">
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#DBEAFE"/>
+                    <Setter Property="Foreground" Value="Black"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header Controls -->
+        <Border Grid.Row="0" Background="White" CornerRadius="8" Padding="20" Margin="0,0,0,15"
+                BorderBrush="#E2E8F0" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="10" ShadowDepth="1"/>
+            </Border.Effect>
+            
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Kitapçık ve Cevap Anahtarları" FontSize="16" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,10"/>
+                    
+                    <ItemsControl ItemsSource="{Binding AnswerKeys}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,10,10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Türü:" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="#64748B"/>
+                                        <TextBox Text="{Binding BookletName, UpdateSourceTrigger=PropertyChanged}" Width="50" Margin="0,0,10,0" ToolTip="Örn: A"/>
+                                        <TextBlock Text="Cevap:" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="#64748B"/>
+                                        <TextBox Text="{Binding Answers, UpdateSourceTrigger=PropertyChanged}" Width="250" FontFamily="Consolas" Margin="0,0,10,0"/>
+                                        <Button Command="{Binding DataContext.RemoveAnswerKeyCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Background="#EF4444" Content="Sil" ToolTip="Sil" Padding="10,5"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Button Content="+ Yeni Kitapçık Türü Ekle" Command="{Binding AddAnswerKeyCommand}" Background="#F1F5F9" Foreground="#3B82F6" BorderBrush="#CBD5E1" BorderThickness="1" HorizontalAlignment="Left" Margin="0,5,0,0" Padding="15,6"/>
+                </StackPanel>
+
+                <!-- Actions -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Bottom" Orientation="Horizontal">
+                    <Button Content="TXT Yükle" Command="{Binding LoadTxtCommand}" Margin="0,0,10,0" Background="#64748B"/>
+                    <Button Content="Puanları Hesapla" Command="{Binding EvaluateCommand}" Background="#10B981" Margin="0,0,10,0"/>
+                    <Button Content="Excel'e Aktar" Command="{Binding ExportExcelCommand}" Background="#F59E0B"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Data Grid -->
+        <Border Grid.Row="1" CornerRadius="8" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" ClipToBounds="True">
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="10" ShadowDepth="1"/>
+            </Border.Effect>
+            <DataGrid ItemsSource="{Binding Students}" HeadersVisibility="Column" BorderThickness="0">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="TC / Öğrenci No" Binding="{Binding StudentId}" Width="150"/>
+                    <DataGridTextColumn Header="Ad Soyad" Binding="{Binding FullName}" Width="*"/>
+                    <DataGridTextColumn Header="Kitapçık" Binding="{Binding BookletType}" Width="80"/>
+                    <DataGridTextColumn Header="Doğru" Binding="{Binding CorrectCount}" Width="80"/>
+                    <DataGridTextColumn Header="Yanlış" Binding="{Binding IncorrectCount}" Width="80"/>
+                    <DataGridTextColumn Header="Boş" Binding="{Binding EmptyCount}" Width="80"/>
+                    <DataGridTextColumn Header="Puan" Binding="{Binding Score, StringFormat={}{0:N2}}" Width="120"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Margin="0,15,0,0" Padding="15,10">
+            <TextBlock Text="{Binding StatusMessage}" Foreground="#475569" FontSize="13" FontWeight="SemiBold"/>
+        </Border>
+    </Grid>
+</Window>
