@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 using OptikFormApp.Models;
@@ -13,14 +14,19 @@ namespace OptikFormApp.ViewModels
     {
         private readonly OpticalParserService _parserService;
         private readonly ExcelExportService _excelService;
+        private readonly ValidationService _validationService;
+        private readonly PdfReportService _pdfService;
 
         public MainViewModel()
         {
             _parserService = new OpticalParserService();
             _excelService = new ExcelExportService();
+            _validationService = new ValidationService();
+            _pdfService = new PdfReportService();
             
             Students = new ObservableCollection<StudentResult>();
             Statistics = new ObservableCollection<QuestionStatisticItem>();
+            ValidationIssues = new ObservableCollection<ValidationIssue>();
             AnswerKeys = new ObservableCollection<AnswerKeyModel>
             {
                 new AnswerKeyModel { BookletName = "A", Answers = "" }
@@ -75,12 +81,51 @@ namespace OptikFormApp.ViewModels
                 }
             });
 
+            ExportPdfCommand = new RelayCommand(_ => {
+                if (Students.Count == 0) {
+                    ShowAlert("Dışa Aktarma Hatası", "Önce veri yüklemeniz ve puanları hesaplamanız gerekmektedir.");
+                    return;
+                }
+
+                var dialog = new Microsoft.Win32.OpenFolderDialog { Title = "Öğrenci Karnelerinin Kaydedileceği Klasörü Seçin" };
+                if (dialog.ShowDialog() == true) {
+                    try {
+                        _pdfService.GenerateStudentReports(new System.Collections.Generic.List<StudentResult>(Students), dialog.FolderName);
+                        ShowAlert("Başarılı", "Tüm öğrenci karneleri seçilen klasöre PDF olarak kaydedildi.");
+                    } catch (Exception ex) {
+                        ShowAlert("Hata", $"PDF raporu oluşturulurken hata oluştu: {ex.Message}");
+                    }
+                }
+            });
+
+            ExportSinglePdfCommand = new RelayCommand(p => {
+                if (p is StudentResult student) {
+                    var sfd = new SaveFileDialog { 
+                        Filter = "PDF Dosyası|*.pdf", 
+                        FileName = $"Karne_{student.StudentId}_{student.FullName.Replace(" ", "_")}.pdf",
+                        Title = "Öğrenci Karnesini Kaydet"
+                    };
+                    if (sfd.ShowDialog() == true) {
+                        try {
+                            _pdfService.GenerateStudentReports(new System.Collections.Generic.List<StudentResult> { student }, System.IO.Path.GetDirectoryName(sfd.FileName) ?? "");
+                            StatusMessage = $"{student.FullName} için karne oluşturuldu.";
+                        } catch (Exception ex) {
+                            ShowAlert("Hata", $"PDF oluşturulurken hata: {ex.Message}");
+                        }
+                    }
+                }
+            });
+
             ApplyTheme(false);
         }
 
         public ObservableCollection<StudentResult> Students { get; set; }
         public ObservableCollection<AnswerKeyModel> AnswerKeys { get; set; }
         public ObservableCollection<QuestionStatisticItem> Statistics { get; set; }
+        public ObservableCollection<ValidationIssue> ValidationIssues { get; set; }
+
+        public RelayCommand ExportPdfCommand { get; }
+        public RelayCommand ExportSinglePdfCommand { get; }
 
         private bool _isModalOpen;
         public bool IsModalOpen
@@ -170,6 +215,11 @@ namespace OptikFormApp.ViewModels
 
         private System.Windows.Thickness _gridCellPadding = new System.Windows.Thickness(10, 0, 10, 0);
         public System.Windows.Thickness GridCellPadding { get => _gridCellPadding; set { _gridCellPadding = value; OnPropertyChanged(); } }
+
+        // --- Charts Section ---
+        public ObservableCollection<ChartItem> AccuracyData { get; set; } = new ObservableCollection<ChartItem>();
+        public ObservableCollection<ChartItem> ScoreDistData { get; set; } = new ObservableCollection<ChartItem>();
+        // ----------------------
 
         private void ApplyTheme(bool dark) {
             var res = System.Windows.Application.Current.Resources;
@@ -278,11 +328,48 @@ namespace OptikFormApp.ViewModels
                     Statistics.Add(stat);
                 }
 
+                // Run Validation
+                ValidationIssues.Clear();
+                var issues = _validationService.Validate(list, keys);
+                foreach (var issue in issues) ValidationIssues.Add(issue);
+
+                // Update Charts
+                UpdateChartData(statsList, list);
+
                 StatusMessage = "Değerlendirme başarıyla tamamlandı.";
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Değerlendirme hatası: {ex.Message}";
+            }
+        }
+
+        private void UpdateChartData(System.Collections.Generic.List<QuestionStatisticItem> stats, System.Collections.Generic.List<StudentResult> students)
+        {
+            // Question Accuracy
+            AccuracyData.Clear();
+            foreach(var s in stats) {
+                AccuracyData.Add(new ChartItem { 
+                    Label = s.QuestionNumber.ToString(), 
+                    Value = s.CorrectPercent,
+                    Tooltip = $"Soru {s.QuestionNumber}: %{s.CorrectPercent} Doğru"
+                });
+            }
+
+            // Score Distribution
+            ScoreDistData.Clear();
+            var bins = new int[11];
+            foreach(var s in students) {
+                int binIdx = (int)Math.Min(s.Score / 10, 10);
+                bins[binIdx]++;
+            }
+
+            for(int i = 0; i < bins.Length; i++) {
+                ScoreDistData.Add(new ChartItem { 
+                    Label = (i*10).ToString(), 
+                    Value = bins[i],
+                    Tooltip = $"{i*10}-{(i*10)+10} Puan: {bins[i]} Öğrenci"
+                });
             }
         }
 

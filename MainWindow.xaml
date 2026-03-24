@@ -2,7 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:OptikFormApp.ViewModels"
-        Title="MAKÜ Optik Değerlendirme (Premium Modals)" Height="800" Width="1250"
+        Title="AĞLASUN MYO Optik Değerlendirme" Height="800" Width="1250"
+        Icon="/Assets/app_logo.png"
         WindowStartupLocation="CenterScreen" Background="{DynamicResource AppBg}" FontFamily="Segoe UI">
     <Window.DataContext>
         <vm:MainViewModel />
@@ -12,6 +13,7 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <vm:AnswerStateToBrushConverter x:Key="AnswerStateConverter"/>
         <vm:CountToVisibilityConverter x:Key="CountToVisConverter"/>
+        <vm:ValueToHeightConverter x:Key="ValueHeightConverter"/>
 
         <Style TargetType="Button">
             <Setter Property="Background" Value="#3B82F6"/>
@@ -197,7 +199,8 @@
                 <Menu Background="Transparent" Padding="10,5">
                     <MenuItem Header="_Dosya">
                         <MenuItem Header="Optik Verisi Yükle (.txt)" Command="{Binding LoadTxtCommand}"/>
-                        <MenuItem Header="Sonuçları Dışa Aktar (.xlsx)" Command="{Binding ExportExcelCommand}"/>
+                        <MenuItem Header="Excel Raporu Al (.xlsx)" Command="{Binding ExportExcelCommand}"/>
+                        <MenuItem Header="Toplu PDF Karne Al (.pdf)" Command="{Binding ExportPdfCommand}"/>
                         <Separator/>
                         <MenuItem Header="Çıkış" Command="{Binding ExitCommand}"/>
                     </MenuItem>
@@ -236,9 +239,14 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Left: Title -->
-                        <StackPanel Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center">
-                            <TextBlock Text="Değerlendirme Kontrol Paneli" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextMain}"/>
-                            <TextBlock Text="Optik okuma, test hesaplama ve raporlama adımlarını sırasıyla yönetin." FontSize="13" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,0"/>
+                        <StackPanel Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center" Orientation="Horizontal">
+                            <Border Width="45" Height="45" CornerRadius="10" Background="{DynamicResource AltRowBg}" Margin="0,0,15,0" Padding="5">
+                                <Image Source="/Assets/app_logo.png" Stretch="Uniform"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="AĞLASUN MYO Optik Değerlendirme" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextMain}"/>
+                                <TextBlock Text="Optik okuma, test hesaplama ve raporlama adımlarını sırasıyla yönetin." FontSize="13" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                            </StackPanel>
                         </StackPanel>
 
                         <!-- Right: Action Pipeline -->
@@ -270,7 +278,7 @@
                             <Button Command="{Binding ExportExcelCommand}" Style="{StaticResource PipelineButton}" Background="#F59E0B" BorderBrush="#D97706" Foreground="White" Padding="20,10">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="📊" Margin="0,0,8,0"/>
-                                    <TextBlock Text="3. Excel'e Aktar" FontWeight="SemiBold"/>
+                                    <TextBlock Text="3. Excel Rapor" FontWeight="SemiBold"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -316,6 +324,13 @@
                         <TabItem Header="İşlem Kayıtları">
                             <Grid>
                                 <DataGrid ItemsSource="{Binding Students}" RowHeight="{Binding GridRowHeight}">
+                                    <DataGrid.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="📄 Bu Öğrenci İçin PDF Karne Al" 
+                                                      Command="{Binding DataContext.ExportSinglePdfCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                      CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                        </ContextMenu>
+                                    </DataGrid.ContextMenu>
                                     <DataGrid.CellStyle>
                                         <Style TargetType="DataGridCell">
                                             <Setter Property="Padding" Value="{Binding DataContext.GridCellPadding, RelativeSource={RelativeSource AncestorType=Window}}"/>
@@ -491,6 +506,64 @@
                                 </StackPanel>
                             </Grid>
                         </TabItem>
+
+                        <!-- TAB 3: CHARTS -->
+                        <TabItem Header="Analiz Grafikleri (Görsel)">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel Margin="20">
+                                    <GroupBox Header="Soru Başarı Oranları (Net Doğru %)" BorderThickness="0" Foreground="{DynamicResource TextMain}">
+                                        <Border Height="250" Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="10">
+                                            <ItemsControl ItemsSource="{Binding AccuracyData}" VerticalAlignment="Bottom">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Vertical" VerticalAlignment="Bottom" Margin="2,0">
+                                                            <Border Width="12" Height="{Binding Value, Converter={StaticResource ValueHeightConverter}, ConverterParameter=2}" VerticalAlignment="Bottom" CornerRadius="4,4,0,0" ToolTip="{Binding Tooltip}">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Setter Property="Background" Value="#10B981"/>
+                                                                        <Style.Triggers>
+                                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                                <Setter Property="Opacity" Value="0.8"/>
+                                                                            </Trigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                            </Border>
+                                                            <TextBlock Text="{Binding Label}" FontSize="8" HorizontalAlignment="Center" Foreground="{DynamicResource TextMuted}" Margin="0,5,0,0"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </Border>
+                                    </GroupBox>
+
+                                    <GroupBox Header="Puan Dağılımı (Öğrenci Sayısı)" BorderThickness="0" Foreground="{DynamicResource TextMain}" Margin="0,30,0,0">
+                                        <Border Height="200" Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="15">
+                                            <ItemsControl ItemsSource="{Binding ScoreDistData}" VerticalAlignment="Bottom">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <UniformGrid Columns="11" VerticalAlignment="Bottom"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Vertical" VerticalAlignment="Bottom">
+                                                            <Border Width="25" Height="{Binding Value, ConverterParameter=20, Converter={StaticResource ValueHeightConverter}}" VerticalAlignment="Bottom" Background="#3B82F6" CornerRadius="4,4,0,0" ToolTip="{Binding Tooltip}"/>
+                                                            <TextBlock Text="{Binding Label}" FontSize="10" HorizontalAlignment="Center" Foreground="{DynamicResource TextMuted}" Margin="0,5,0,0"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </Border>
+                                    </GroupBox>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
                     </TabControl>
                 </Border>
 
@@ -500,8 +573,29 @@
                         <DropShadowEffect Color="#000000" Opacity="0.03" BlurRadius="5" ShadowDepth="1"/>
                     </Border.Effect>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="Durum:" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Margin="0,0,5,0"/>
-                        <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource TextMain}" FontSize="14"/>
+                        <Border Width="24" Height="24" CornerRadius="4" Background="{DynamicResource AltRowBg}" Margin="0,0,12,0" Padding="2">
+                            <Image Source="/Assets/app_logo.png" Stretch="Uniform"/>
+                        </Border>
+                        <TextBlock Text="Durum:" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource TextMain}" FontSize="14" VerticalAlignment="Center"/>
+                        
+                        <ItemsControl ItemsSource="{Binding ValidationIssues}" Margin="20,0,0,0">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#FEE2E2" BorderBrush="#EF4444" BorderThickness="1" CornerRadius="4" Padding="8,2" Margin="0,0,10,0" ToolTip="{Binding Message}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="⚠️" Margin="0,0,5,0"/>
+                                            <TextBlock Text="{Binding Title}" Foreground="#B91C1C" FontSize="11" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
                 </Border>
             </Grid>
@@ -647,21 +741,31 @@
 
         <!-- ABOUT OVERLAY -->
         <Grid Visibility="{Binding IsAboutOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}" Panel.ZIndex="300">
-            <Border Background="{DynamicResource CardBg}" CornerRadius="12" Width="380" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="40,35">
+            <Border Background="{DynamicResource CardBg}" CornerRadius="12" Width="520" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="40,35">
                 <Border.Effect>
                     <DropShadowEffect Color="Black" Opacity="0.15" BlurRadius="25" ShadowDepth="5"/>
                 </Border.Effect>
                 <StackPanel>
-                    <TextBlock Text="🎓" FontSize="45" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                    <TextBlock Text="Optik Değerlendirme" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextMain}" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                    <TextBlock Text="Sürüm 1.0.0 (Premium Edit)" FontSize="13" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                    <Border CornerRadius="10" ClipToBounds="True" Background="White" Margin="0,-10,0,20">
+                        <Image Source="/Assets/about_banner.png" Stretch="Uniform" Height="180"/>
+                    </Border>
                     
-                    <TextBlock Text="Geliştirici" FontWeight="SemiBold" FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center" Margin="0,0,0,2"/>
-                    <TextBlock Text="Ekrem Kılınç (eekilinc)" Foreground="{DynamicResource TextMain}" FontSize="15" FontWeight="Medium" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                    <TextBlock Text="AĞLASUN MYO Optik Değerlendirme" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextMain}" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                    <TextBlock Text="Gelişmiş Analiz ve Raporlama Sistemi" FontSize="14" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,15">
+                        <TextBlock Text="Geliştirici:" Foreground="{DynamicResource TextMuted}" Margin="0,0,10,0"/>
+                        <TextBlock Text="Ekrem Kılınç (eekilinc)" Foreground="{DynamicResource TextMain}" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,20">
+                        <TextBlock Text="GitHub:" Foreground="{DynamicResource TextMuted}" Margin="0,0,10,0"/>
+                        <TextBlock Text="github.com/eekilinc/OptikDegerlendirme" Foreground="#3B82F6" Cursor="Hand" TextDecorations="Underline"/>
+                    </StackPanel>
                     
                     <Rectangle Height="1" Fill="{DynamicResource Border}" Margin="0,0,0,15"/>
-                    <TextBlock Text="Bu yazılım öğrenci sınav sonuçlarını yüksek doğrulukla çözümlemek ve madde analizi üretmek vizyonuyla geliştirilmiştir." TextWrapping="Wrap" TextAlignment="Center" Foreground="{DynamicResource TextMuted}" FontSize="13" Margin="0,0,0,25" LineHeight="20"/>
-
+                    <TextBlock Text="Bu yazılım, öğrenci sınav sonuçlarını yüksek doğrulukla çözümlemek, madde analizi üretmek ve dijital karne raporları oluşturmak amacıyla geliştirilmiştir." 
+                               TextWrapping="Wrap" TextAlignment="Center" Foreground="{DynamicResource TextMuted}" FontSize="13" Margin="0,0,0,25" LineHeight="20"/>
                     <Button Content="Pencereyi Kapat" Command="{Binding CloseAboutCommand}" Style="{StaticResource OutlineButton}"/>
                 </StackPanel>
             </Border>
