@@ -80,15 +80,17 @@ namespace OptikFormApp.Services
 
                             // Answers Table
                             x.Item().Text("Cevaplarınız:").SemiBold().Underline();
-                            x.Item().Grid(grid =>
+                            x.Item().Table(table =>
                             {
-                                grid.Columns(10);
-                                grid.Spacing(5);
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    for (int i = 0; i < 10; i++) columns.RelativeColumn();
+                                });
                                 
                                 for (int i = 0; i < student.ColoredAnswers.Count; i++)
                                 {
                                     var ans = student.ColoredAnswers[i];
-                                    grid.Item().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(2).AlignCenter().Column(c => {
+                                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(2).AlignCenter().Column(c => {
                                         c.Item().Text((i + 1).ToString()).FontSize(8).FontColor(Colors.Grey.Medium);
                                         c.Item().Text(ans.Character.ToString()).Bold().FontColor(
                                             ans.State == AnswerState.Correct ? Colors.Green.Medium :
