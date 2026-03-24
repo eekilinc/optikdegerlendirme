@@ -1,19 +1,9 @@
-Unhandled exception. System.Windows.Markup.XamlParseException: ''System.Windows.ResourceDictionary.Source' ├Âzelli─şini ayarlama i┼şlemi ├Âzel durum d├Ând├╝rd├╝.' Sat─▒r numaras─▒ '10' ve sat─▒r konumu '18'.
- ---> System.IO.IOException: 'themes/materialdesigntheme.defaults.xaml' kayna─ş─▒n─▒n yeri belirlenemiyor.
-   at MS.Internal.AppModel.ResourcePart.GetStreamCore(FileMode mode, FileAccess access)
-   at System.IO.Packaging.PackagePart.GetStream(FileMode mode, FileAccess access)
-   at MS.Internal.IO.Packaging.PackagePartExtensions.GetSeekableStream(PackagePart packPart, FileMode mode, FileAccess access)
-   at System.IO.Packaging.PackWebResponse.CachedResponse.GetResponseStream()
-   at System.IO.Packaging.PackWebResponse.get_ContentType()
-   at MS.Internal.WpfWebRequestHelper.GetContentType(WebResponse response)
-   at MS.Internal.WpfWebRequestHelper.GetResponseStream(WebRequest request, ContentType& contentType)
-   at System.Windows.ResourceDictionary.set_Source(Uri value)
-   at MS.Internal.Xaml.Runtime.ClrObjectRuntime.SetValue(Object inst, XamlMember property, Object value)
-   --- End of inner exception stack trace ---
-   at System.Windows.Markup.XamlReader.RewrapException(Exception e, IXamlLineInfo lineInfo, Uri baseUri)
-   at System.Windows.Markup.WpfXamlLoader.Load(XamlReader xamlReader, IXamlObjectWriterFactory writerFactory, Boolean skipJournaledProperties, Object rootObject, XamlObjectWriterSettings settings, Uri baseUri)
-   at System.Windows.Markup.WpfXamlLoader.LoadBaml(XamlReader xamlReader, Boolean skipJournaledProperties, Object rootObject, XamlAccessLevel accessLevel, Uri baseUri)
-   at System.Windows.Markup.XamlReader.LoadBaml(Stream stream, ParserContext parserContext, Object parent, Boolean closeStream)
-   at System.Windows.Application.LoadComponent(Object component, Uri resourceLocator)
-   at OptikFormApp.App.InitializeComponent() in D:\WriteCode\OptikForm\App.xaml:line 1
-   at OptikFormApp.App.Main()
+  Geri y├╝klenecek projeler belirleniyor...
+  Geri y├╝kleme i├ğin t├╝m projeler g├╝ncel.
+  OptikFormApp -> D:\Denemeler\OPtikDegerlendirme\bin\Debug\net9.0-windows\OptikFormApp.dll
+
+Olu┼şturma ba┼şar─▒l─▒ oldu.
+    0 Uyar─▒
+    0 Hata
+
+Ge├ğen S├╝re 00:00:02.44

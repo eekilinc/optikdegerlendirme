@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using OptikFormApp.Models;
 
@@ -10,168 +9,202 @@ namespace OptikFormApp.Services
 {
     public class OpticalParserService
     {
-        public async Task<(List<StudentResult> students, List<AnswerKeyModel> answerKeys)> ParseFileAsync(string filePath)
+        public async Task<(List<StudentResult> Students, List<AnswerKeyModel> AnswerKeys, List<string> Errors)> ParseFileAsync(string filePath)
         {
-            var studentsList = new List<StudentResult>();
-            var keysList = new List<AnswerKeyModel>();
-            bool isParsingKeys = true;
+            var students = new List<StudentResult>();
+            var answerKeys = new List<AnswerKeyModel>();
+            var errors = new List<string>();
 
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            var encoding = Encoding.GetEncoding("windows-1254"); 
-
-            var lines = await File.ReadAllLinesAsync(filePath, encoding);
-            int validStudentCounter = 1;
-
-            for (int i = 0; i < lines.Length; i++)
+            if (!File.Exists(filePath))
             {
-                var line = lines[i];
-                
-                if (i == 0 && line.Length > 0 && line[0] == '\uFEFF')
-                    line = line.Substring(1);
-
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                if (line.Length < 33) continue; 
-
-                string fullName = line.Substring(0, 22).Trim();
-                string studentId = line.Substring(22, 10).Trim();
-                string bookletType = line.Substring(32, 1).Trim();
-                string rawAnswers = line.Length > 33 ? line.Substring(33) : "";
-
-                // En başta yer alan (İsim ve Numara alanı boş olan) kayıtları Cevap Anahtarı olarak kabul et
-                if (isParsingKeys && string.IsNullOrWhiteSpace(studentId) && string.IsNullOrWhiteSpace(fullName) && !string.IsNullOrWhiteSpace(bookletType))
-                {
-                    keysList.Add(new AnswerKeyModel
-                    {
-                        BookletName = bookletType,
-                        Answers = rawAnswers.TrimEnd()
-                    });
-                    continue;
-                }
-
-                // Bir kere öğrenci okumaya başlandıysa (İsim veya numara doluysa), artık alttakiler öğrenci kabul edilir.
-                isParsingKeys = false;
-
-                var result = new StudentResult
-                {
-                    RowNumber = validStudentCounter++,
-                    FullName = fullName,
-                    StudentId = studentId,
-                    BookletType = bookletType,
-                    RawAnswers = rawAnswers
-                };
-                
-                foreach(char c in result.RawAnswers)
-                {
-                    result.ColoredAnswers.Add(new AnswerItem { Character = c == ' ' ? '_' : c, State = AnswerState.NotEvaluated });
-                }
-
-                studentsList.Add(result);
+                errors.Add("Dosya bulunamadı.");
+                return (students, answerKeys, errors);
             }
 
-            return (studentsList, keysList);
+            try
+            {
+                System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+                var lines = await File.ReadAllLinesAsync(filePath, System.Text.Encoding.GetEncoding(1254));
+                int lineNum = 0;
+
+                foreach (var line in lines)
+                {
+                    lineNum++;
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    if (line.Length < 33) 
+                    {
+                        errors.Add($"Satır {lineNum}: Veri uzunluğu yetersiz (En az 33 karakter gerekli).");
+                        continue; 
+                    }
+
+                    try 
+                    {
+                        string fullName = line.Substring(0, 22).Trim();
+                        string studentId = line.Substring(22, 10).Trim();
+                        string bookletType = line.Substring(32, 1).Trim().ToUpper();
+                        string rawAnswers = line.Length > 33 ? line.Substring(33) : "";
+
+                        if (!IsValidOpticalFormat(bookletType, rawAnswers, studentId))
+                        {
+                            errors.Add($"Satır {lineNum}: Geçersiz veri formatı (Optik forma uygun olmayan karakterler tespit edildi).");
+                            continue;
+                        }
+
+                        if (string.IsNullOrEmpty(fullName) && string.IsNullOrEmpty(studentId))
+                        {
+                            answerKeys.Add(new AnswerKeyModel 
+                            { 
+                                BookletName = bookletType, 
+                                Answers = rawAnswers 
+                            });
+                        }
+                        else
+                        {
+                            students.Add(new StudentResult
+                            {
+                                FullName = fullName,
+                                StudentId = studentId,
+                                BookletType = bookletType,
+                                RawAnswers = rawAnswers,
+                                Answers = rawAnswers.ToCharArray().Select(c => c.ToString()).ToList()
+                            });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"Satır {lineNum} ayrıştırma hatası: {ex.Message}");
+                    }
+                }
+
+                if (students.Count == 0 && answerKeys.Count == 0)
+                {
+                    errors.Add("KRİTİK HATA: Dosyada geçerli hiçbir öğrenci veya cevap anahtarı kaydı bulunamadı.");
+                }
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"Dosya okuma hatası: {ex.Message}");
+            }
+
+            return (students, answerKeys, errors);
         }
 
-        public void EvaluateStudents(List<StudentResult> students, List<AnswerKeyModel> answerKeys)
+        private bool IsValidOpticalFormat(string booklet, string answers, string id)
+        {
+            if (booklet.Length > 0 && !char.IsLetter(booklet[0])) return false;
+            foreach (char c in id)
+            {
+                if (!char.IsDigit(c) && !char.IsWhiteSpace(c)) return false;
+            }
+            foreach (char c in answers)
+            {
+                if (!char.IsLetter(c) && c != ' ' && c != '*' && c != '-' && !char.IsDigit(c)) return false;
+            }
+            return true;
+        }
+
+        public void EvaluateStudents(List<StudentResult> students, List<AnswerKeyModel> keys, List<QuestionSetting> settings)
         {
             foreach (var student in students)
             {
-                var matchedKey = answerKeys.FirstOrDefault(k => string.Equals(k.BookletName, student.BookletType, StringComparison.OrdinalIgnoreCase));
-                if (matchedKey == null || string.IsNullOrWhiteSpace(matchedKey.Answers)) continue;
+                var key = keys.FirstOrDefault(k => k.BookletName == student.BookletType);
+                if (key == null || string.IsNullOrEmpty(key.Answers)) continue;
 
-                string keyToUse = matchedKey.Answers;
-
-                student.CorrectCount = 0;
-                student.IncorrectCount = 0;
-                student.EmptyCount = 0;
                 student.QuestionResults.Clear();
-                student.ColoredAnswers.Clear();
-
-                // Cevap anahtarinin uzunlugu tam olarak sorunun asil sayisidir, limitimiz bu sayidir.
-                int length = keyToUse.Length;
-
-                for (int i = 0; i < length; i++)
-                {
-                    char studAns = i < student.RawAnswers.Length ? student.RawAnswers[i] : ' ';
-                    char correctAns = keyToUse[i];
-
-                    if (correctAns == 'X')
-                    {
-                        student.CorrectCount++;
-                        student.QuestionResults.Add(true);
-                        student.ColoredAnswers.Add(new AnswerItem { Character = studAns == ' ' ? '_' : studAns, State = AnswerState.Correct });
-                        continue;
-                    }
-
-                    if (studAns == ' ')
-                    {
-                        student.EmptyCount++;
-                        student.QuestionResults.Add(false);
-                        student.ColoredAnswers.Add(new AnswerItem { Character = '_', State = AnswerState.Empty });
-                    }
-                    else if (studAns == correctAns)
-                    {
-                        student.CorrectCount++;
-                        student.QuestionResults.Add(true);
-                        student.ColoredAnswers.Add(new AnswerItem { Character = studAns, State = AnswerState.Correct });
-                    }
-                    else
-                    {
-                        student.IncorrectCount++;
-                        student.QuestionResults.Add(false);
-                        student.ColoredAnswers.Add(new AnswerItem { Character = studAns, State = AnswerState.Incorrect });
-                    }
-                }
-
-                if (length > 0)
-                {
-                    student.Score = Math.Round((double)student.CorrectCount / length * 100.0, 2);
-                }
-            }
-        }
-
-        public List<QuestionStatisticItem> CalculateStatistics(List<StudentResult> students, List<AnswerKeyModel> answerKeys)
-        {
-            var stats = new List<QuestionStatisticItem>();
-
-            foreach (var key in answerKeys.Where(k => !string.IsNullOrWhiteSpace(k.Answers)))
-            {
-                var bookletStudents = students.Where(s => string.Equals(s.BookletType, key.BookletName, StringComparison.OrdinalIgnoreCase)).ToList();
-                if (bookletStudents.Count == 0) continue;
+                int correct = 0;
+                int wrong = 0;
+                int empty = 0;
 
                 for (int i = 0; i < key.Answers.Length; i++)
                 {
-                    char correctAns = key.Answers[i];
-                    if (correctAns == 'X') continue;
-
-                    int a = 0, b = 0, c = 0, d = 0, e = 0, empty = 0, correct = 0, incorrect = 0;
-
-                    foreach (var st in bookletStudents)
+                    bool isCorrect = false;
+                    bool isEmpty = false;
+                    
+                    if (i < student.Answers.Count)
                     {
-                        char studAns = i < st.RawAnswers.Length ? st.RawAnswers[i] : ' ';
-                        
-                        if (studAns == 'A') a++;
-                        else if (studAns == 'B') b++;
-                        else if (studAns == 'C') c++;
-                        else if (studAns == 'D') d++;
-                        else if (studAns == 'E') e++;
-                        else if (studAns == ' ') empty++;
+                        var stdAns = student.Answers[i].Trim().ToUpper();
+                        var keyAns = key.Answers[i].ToString().ToUpper();
+                        var stdChar = stdAns.Length > 0 ? stdAns[0] : ' ';
 
-                        if (studAns == correctAns) correct++;
-                        else if (studAns == ' ') { }
-                        else incorrect++;
+                        var qSetting = settings?.FirstOrDefault(s => s.BookletName == key.BookletName && s.QuestionNumber == (i + 1));
+
+                        if (qSetting != null && qSetting.IsCancelled)
+                        {
+                            isCorrect = true;
+                            correct++;
+                        }
+                        else if (string.IsNullOrEmpty(stdAns) || stdAns == " " || stdAns == "-")
+                        {
+                            isEmpty = true;
+                            empty++;
+                        }
+                        else if (qSetting != null && qSetting.IsMultipleEnabled && qSetting.IsCorrect(stdChar))
+                        {
+                            isCorrect = true;
+                            correct++;
+                        }
+                        else if (stdAns == keyAns)
+                        {
+                            isCorrect = true;
+                            correct++;
+                        }
+                        else
+                        {
+                            wrong++;
+                        }
                     }
-
-                    stats.Add(new QuestionStatisticItem {
-                        Booklet = key.BookletName,
-                        QuestionNumber = i + 1,
-                        CorrectAnswer = correctAns.ToString(),
-                        CorrectPercent = Math.Round((double)correct / bookletStudents.Count * 100, 2),
-                        IncorrectPercent = Math.Round((double)incorrect / bookletStudents.Count * 100, 2),
-                        EmptyPercent = Math.Round((double)empty / bookletStudents.Count * 100, 2),
-                        CountA = a, CountB = b, CountC = c, CountD = d, CountE = e, CountEmpty = empty
-                    });
+                    else
+                    {
+                        isEmpty = true;
+                        empty++;
+                    }
+                    student.QuestionResults.Add(isCorrect || isEmpty ? isCorrect : false); 
+                    if (i < student.ColoredAnswers.Count)
+                    {
+                        student.ColoredAnswers[i].State = isCorrect ? AnswerState.Correct : (isEmpty ? AnswerState.Empty : AnswerState.Incorrect);
+                    }
                 }
+
+                student.CorrectCount = correct;
+                student.WrongCount = wrong;
+                student.EmptyCount = empty;
+                
+                double net = correct - (wrong * 0.25);
+                student.NetCount = Math.Max(0, net);
+                student.Score = (key.Answers.Length > 0) ? (student.NetCount / key.Answers.Length) * 100 : 0;
             }
+        }
+
+        public List<QuestionStatisticItem> CalculateStatistics(List<StudentResult> students, List<AnswerKeyModel> keys)
+        {
+            var stats = new List<QuestionStatisticItem>();
+            if (keys.Count == 0) return stats;
+
+            int maxQuestions = keys.Max(k => k.Answers.Length);
+
+            for (int i = 1; i <= maxQuestions; i++)
+            {
+                int correct = 0;
+                int total = 0;
+
+                foreach (var student in students)
+                {
+                    if (i <= student.QuestionResults.Count)
+                    {
+                        total++;
+                        if (student.QuestionResults[i - 1]) correct++;
+                    }
+                }
+
+                stats.Add(new QuestionStatisticItem
+                {
+                    QuestionNumber = i,
+                    CorrectCount = correct,
+                    CorrectPercent = total > 0 ? (double)correct / total * 100 : 0
+                });
+            }
+
             return stats;
         }
     }

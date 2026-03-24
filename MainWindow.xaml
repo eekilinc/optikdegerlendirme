@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:OptikFormApp.ViewModels"
-        Title="AĞLASUN MYO Optik Değerlendirme" Height="800" Width="1250"
+        Title="AĞLASUN MYO Optik Değerlendirme" Height="750" Width="1150" MinWidth="850" MinHeight="600"
         Icon="/Assets/app_logo.png"
         WindowStartupLocation="CenterScreen" Background="{DynamicResource AppBg}" FontFamily="Segoe UI">
     <Window.DataContext>
@@ -14,6 +14,8 @@
         <vm:AnswerStateToBrushConverter x:Key="AnswerStateConverter"/>
         <vm:CountToVisibilityConverter x:Key="CountToVisConverter"/>
         <vm:ValueToHeightConverter x:Key="ValueHeightConverter"/>
+        <vm:LogLevelToBrushConverter x:Key="LogLevelConverter"/>
+        <vm:MultiValuePercentageConverter x:Key="MultiValuePercentageConverter"/>
 
         <Style TargetType="Button">
             <Setter Property="Background" Value="#3B82F6"/>
@@ -189,23 +191,36 @@
     <Grid>
         <!-- APP SHELL -->
         <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/> <!-- Top Menu -->
                 <RowDefinition Height="*"/>    <!-- Main View -->
             </Grid.RowDefinitions>
 
             <!-- MODERN TOP MENU -->
-            <Border Grid.Row="0" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource Border}" BorderThickness="0,0,0,1">
+            <Border Grid.Row="0" Grid.ColumnSpan="2" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource Border}" BorderThickness="0,0,0,1">
                 <Menu Background="Transparent" Padding="10,5">
                     <MenuItem Header="_Dosya">
                         <MenuItem Header="Optik Verisi Yükle (.txt)" Command="{Binding LoadTxtCommand}"/>
+                        <MenuItem Header="Sınavı Veritabanına Kaydet" Command="{Binding SaveExamCommand}"/>
+                        <Separator/>
                         <MenuItem Header="Excel Raporu Al (.xlsx)" Command="{Binding ExportExcelCommand}"/>
                         <MenuItem Header="Toplu PDF Karne Al (.pdf)" Command="{Binding ExportPdfCommand}"/>
                         <Separator/>
                         <MenuItem Header="Çıkış" Command="{Binding ExitCommand}"/>
                     </MenuItem>
+                    <MenuItem Header="_Ders Yönetimi">
+                        <MenuItem Header="Yeni Ders Ekle..." Command="{Binding ShowAddCourseCommand}"/>
+                        <MenuItem Header="Seçili Dersi Sil" Command="{Binding DeleteCourseCommand}" CommandParameter="{Binding SelectedCourse}"/>
+                    </MenuItem>
                     <MenuItem Header="_İşlemler">
                         <MenuItem Header="Cevap Anahtarlarını Yönet" Command="{Binding OpenModalCommand}"/>
+                        <MenuItem Header="Soru Ayarlarını Yönet (İptal/Çoklu)" Command="{Binding OpenQuestionSettingsCommand}"/>
+                        <MenuItem Header="Öğrenim Çıktılarını (Konu) Yönet" Command="{Binding OpenLearningOutcomesCommand}"/>
+                        <Separator/>
                         <MenuItem Header="Puanları Hesapla" Command="{Binding EvaluateCommand}"/>
                     </MenuItem>
                     <MenuItem Header="_Seçenekler">
@@ -218,8 +233,107 @@
                 </Menu>
             </Border>
 
+            <!-- SIDEBAR: COURSES & EXAMS -->
+            <Border Grid.Row="1" Grid.Column="0" Background="{DynamicResource HeaderBg}" BorderBrush="{DynamicResource Border}" BorderThickness="0,0,1,0">
+                <Grid Margin="15">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="1.5*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="2*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Courses Header -->
+                    <Grid Grid.Row="0" Margin="0,0,0,10">
+                        <TextBlock Text="📚 Derslerim" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextMain}"/>
+                        <Button Content="+" Command="{Binding ShowAddCourseCommand}" HorizontalAlignment="Right" Width="24" Height="24" Padding="0" Background="#3B82F6"/>
+                    </Grid>
+
+                    <!-- Course List -->
+                    <ListBox Grid.Row="1" ItemsSource="{Binding Courses}" SelectedItem="{Binding SelectedCourse}" 
+                             Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="10,8" CornerRadius="6" Margin="0,2">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="{Binding Code}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
+                                            <TextBlock Text="{Binding Name}" FontSize="13" Foreground="{DynamicResource TextMain}" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <Button Content="✏" Command="{Binding DataContext.OpenRenameCourseCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                    CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextMuted}" FontSize="13" Padding="8,0" Margin="0,0,2,0" Cursor="Hand" ToolTip="Dersi Düzenle"/>
+                                            <Button Content="🗑" Command="{Binding DataContext.DeleteCourseCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                    CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Foreground="#EF4444" FontSize="13" Padding="8,0" Cursor="Hand" ToolTip="Bu dersi sil"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="Bd" Background="Transparent" CornerRadius="6" BorderThickness="0">
+                                                <ContentPresenter/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBg}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AppBg}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+
+                    <Separator Grid.Row="2" Margin="0,15"/>
+
+                    <!-- Exam History Header -->
+                    <StackPanel Grid.Row="2" Margin="0,15,0,10">
+                         <TextBlock Text="📁 Sınav Geçmişi" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextMain}"/>
+                         <TextBlock Text="{Binding SelectedCourse.Name}" FontSize="11" Foreground="{DynamicResource TextMuted}" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+
+                    <!-- Exam List -->
+                    <ListBox Grid.Row="3" ItemsSource="{Binding CourseExams}" SelectedItem="{Binding SelectedExam}"
+                             Background="Transparent" BorderThickness="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMain}"/>
+                                        <TextBlock Text="{Binding DisplayDate}" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Content="✏" Command="{Binding DataContext.OpenRenameExamCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextMuted}" FontSize="10" Padding="5,0" Margin="0,0,2,0" Cursor="Hand" ToolTip="Sınavı Düzenle"/>
+                                        <Button Content="🗑" Command="{Binding DataContext.DeleteExamCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Foreground="#EF4444" FontSize="10" Padding="5,0" Cursor="Hand" ToolTip="Bu sınavı sil"/>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
             <!-- Main Content -->
-            <Grid Grid.Row="1" Margin="25">
+            <Grid Grid.Row="1" Grid.Column="1" Margin="25">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -232,14 +346,9 @@
                         <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="15" ShadowDepth="2"/>
                     </Border.Effect>
                     
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-
+                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <!-- Left: Title -->
-                        <StackPanel Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center" Orientation="Horizontal">
+                        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Orientation="Horizontal" Margin="0,0,30,10">
                             <Border Width="45" Height="45" CornerRadius="10" Background="{DynamicResource AltRowBg}" Margin="0,0,15,0" Padding="5">
                                 <Image Source="/Assets/app_logo.png" Stretch="Uniform"/>
                             </Border>
@@ -250,39 +359,47 @@
                         </StackPanel>
 
                         <!-- Right: Action Pipeline -->
-                        <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
+                        <WrapPanel HorizontalAlignment="Left" VerticalAlignment="Center" Orientation="Horizontal">
                             
-                            <Button Command="{Binding OpenModalCommand}" Style="{StaticResource OutlineButton}" Margin="0,0,20,0" Padding="15,8">
+                            <Button Command="{Binding OpenModalCommand}" Style="{StaticResource OutlineButton}" Margin="0,0,15,10" Padding="15,8">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="⚙️" Margin="0,0,8,0" FontSize="14"/>
                                     <TextBlock Text="Cevap Anahtarı"/>
                                 </StackPanel>
                             </Button>
                             
-                            <Rectangle Width="1" Fill="{DynamicResource Border}" Margin="0,5,20,5"/>
-
-                            <Button Command="{Binding LoadTxtCommand}" Style="{StaticResource PipelineButton}" Background="{DynamicResource AltRowBg}" BorderBrush="{DynamicResource Border}" Foreground="{DynamicResource TextMain}" Margin="0,0,10,0" Padding="20,10">
+                             <Button Command="{Binding LoadTxtCommand}" Style="{StaticResource PipelineButton}" Background="{DynamicResource AltRowBg}" BorderBrush="{DynamicResource Border}" Foreground="{DynamicResource TextMain}" Margin="0,0,10,10" Padding="15,8">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="📁" Margin="0,0,8,0"/>
-                                    <TextBlock Text="1. Dosya Yükle" FontWeight="SemiBold"/>
-                                </StackPanel>
-                            </Button>
-                            
-                            <Button Command="{Binding EvaluateCommand}" Style="{StaticResource PipelineButton}" Background="#10B981" BorderBrush="#059669" Foreground="White" Margin="0,0,10,0" Padding="20,10">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="⚡" Margin="0,0,8,0"/>
-                                    <TextBlock Text="2. Hesapla" FontWeight="Bold"/>
+                                    <TextBlock Text="1. Yükle" FontWeight="SemiBold"/>
                                 </StackPanel>
                             </Button>
 
-                            <Button Command="{Binding ExportExcelCommand}" Style="{StaticResource PipelineButton}" Background="#F59E0B" BorderBrush="#D97706" Foreground="White" Padding="20,10">
+                            <TextBox Text="{Binding NewExamName, UpdateSourceTrigger=PropertyChanged}" Width="140" Margin="0,0,10,10" VerticalAlignment="Stretch" Padding="8,0" Background="Transparent" Foreground="{DynamicResource TextMain}" BorderBrush="{DynamicResource Border}" ToolTip="Kaydedilecek Sınav Adı (Opsiyonel)"/>
+
+                            <Button Command="{Binding SaveExamCommand}" Style="{StaticResource PipelineButton}" IsEnabled="{Binding Students.Count}" Background="#10B981" BorderBrush="#059669" Foreground="White" Margin="0,0,10,10" Padding="15,8">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="📊" Margin="0,0,8,0"/>
-                                    <TextBlock Text="3. Excel Rapor" FontWeight="SemiBold"/>
+                                    <TextBlock Text="💾" Margin="0,0,8,0"/>
+                                    <TextBlock Text="2. Kaydet" FontWeight="SemiBold"/>
+                                </StackPanel>
+                                <Button.ToolTip>Sınav verilerini seçili dersin altına kalıcı olarak kaydeder.</Button.ToolTip>
+                            </Button>
+                            
+                            <Button Command="{Binding EvaluateCommand}" Style="{StaticResource PipelineButton}" Background="#8B5CF6" BorderBrush="#7C3AED" Foreground="White" Margin="0,0,10,10" Padding="15,8">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="⚡" Margin="0,0,8,0"/>
+                                    <TextBlock Text="3. Hesapla" FontWeight="Bold"/>
                                 </StackPanel>
                             </Button>
-                        </StackPanel>
-                    </Grid>
+
+                            <Button Command="{Binding ExportExcelCommand}" Style="{StaticResource PipelineButton}" Background="#F59E0B" BorderBrush="#D97706" Foreground="White" Margin="0,0,10,10" Padding="15,8">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="📊" Margin="0,0,8,0"/>
+                                    <TextBlock Text="4. Excel" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Button>
+                        </WrapPanel>
+                    </WrapPanel>
                 </Border>
 
                 <!-- TAB CONTROL -->
@@ -353,7 +470,7 @@
                                         </Style>
                                     </DataGrid.CellStyle>
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="#" Binding="{Binding RowNumber}" Width="50">
+                                        <DataGridTextColumn Header="#" Binding="{Binding RowNumber}" Width="Auto">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="FontWeight" Value="SemiBold"/>
@@ -362,9 +479,9 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-                                        <DataGridTextColumn Header="ÖĞRENCİ NO" Binding="{Binding StudentId}" Width="130"/>
-                                        <DataGridTextColumn Header="AD SOYAD" Binding="{Binding FullName}" Width="220"/>
-                                        <DataGridTextColumn Header="KİTAPÇIK" Binding="{Binding BookletType}" Width="85">
+                                        <DataGridTextColumn Header="ÖĞRENCİ NO" Binding="{Binding StudentId}" Width="Auto"/>
+                                        <DataGridTextColumn Header="AD SOYAD" Binding="{Binding FullName}" Width="1.5*"/>
+                                        <DataGridTextColumn Header="KİTAPÇIK" Binding="{Binding BookletType}" Width="Auto">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="HorizontalAlignment" Value="Center"/>
@@ -564,40 +681,101 @@
                                 </StackPanel>
                             </ScrollViewer>
                         </TabItem>
+                        <TabItem Header="Konu Bazlı Başarı">
+                            <Border Background="Transparent" Padding="15">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding LearningOutcomes}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="{DynamicResource AltRowBg}" CornerRadius="10" Margin="0,0,0,12" Padding="20,15">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        
+                                                        <StackPanel Grid.Column="0">
+                                                            <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextMain}"/>
+                                                            <TextBlock Text="{Binding QuestionNumbersRaw, StringFormat='Sorular: {0}'}" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,8"/>
+                                                            
+                                                            <Grid Height="8" Background="{DynamicResource Border}" Margin="0,5,20,0">
+                                                                <Border Background="#10B981" HorizontalAlignment="Left" CornerRadius="4">
+                                                                    <Border.Width>
+                                                                        <MultiBinding Converter="{StaticResource MultiValuePercentageConverter}">
+                                                                             <Binding Path="SuccessRate"/>
+                                                                             <Binding RelativeSource="{RelativeSource AncestorType=Grid}" Path="ActualWidth"/>
+                                                                        </MultiBinding>
+                                                                    </Border.Width>
+                                                                </Border>
+                                                            </Grid>
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                            <TextBlock Text="{Binding SuccessRate, StringFormat='{}%{0}'}" FontSize="20" FontWeight="Bold" Foreground="#10B981" HorizontalAlignment="Right"/>
+                                                            <TextBlock Text="{Binding CorrectCount, StringFormat='{}{0} Doğru'}" FontSize="11" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Right"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Border>
+                        </TabItem>
                     </TabControl>
                 </Border>
 
-                <!-- Minimalist Status Bar -->
-                <Border Grid.Row="2" Background="{DynamicResource CardBg}" CornerRadius="8" Margin="0,20,0,0" Padding="15,12">
-                    <Border.Effect>
-                        <DropShadowEffect Color="#000000" Opacity="0.03" BlurRadius="5" ShadowDepth="1"/>
-                    </Border.Effect>
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Width="24" Height="24" CornerRadius="4" Background="{DynamicResource AltRowBg}" Margin="0,0,12,0" Padding="2">
-                            <Image Source="/Assets/app_logo.png" Stretch="Uniform"/>
-                        </Border>
-                        <TextBlock Text="Durum:" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource TextMain}" FontSize="14" VerticalAlignment="Center"/>
-                        
-                        <ItemsControl ItemsSource="{Binding ValidationIssues}" Margin="20,0,0,0">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Background="#FEE2E2" BorderBrush="#EF4444" BorderThickness="1" CornerRadius="4" Padding="8,2" Margin="0,0,10,0" ToolTip="{Binding Message}">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="⚠️" Margin="0,0,5,0"/>
-                                            <TextBlock Text="{Binding Title}" Foreground="#B91C1C" FontSize="11" FontWeight="Bold"/>
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </Border>
+                <!-- Enhanced Status Bar & Logs -->
+                <Grid Grid.Row="2" Margin="0,20,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="15,12" Margin="0,0,10,0">
+                        <Border.Effect><DropShadowEffect Color="#000000" Opacity="0.03" BlurRadius="5" ShadowDepth="1"/></Border.Effect>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Width="24" Height="24" CornerRadius="4" Background="{DynamicResource AltRowBg}" Margin="0,0,12,0" Padding="2">
+                                <Image Source="/Assets/app_logo.png" Stretch="Uniform"/>
+                            </Border>
+                            <TextBlock Text="Durum:" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource TextMain}" FontSize="14" VerticalAlignment="Center"/>
+                            
+                            <ItemsControl ItemsSource="{Binding ValidationIssues}" Margin="20,0,0,0">
+                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#FEE2E2" BorderBrush="#EF4444" BorderThickness="1" CornerRadius="4" Padding="8,2" Margin="0,0,10,0" ToolTip="{Binding Message}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="⚠️" Margin="0,0,5,0"/><TextBlock Text="{Binding Title}" Foreground="#B91C1C" FontSize="11" FontWeight="Bold"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="15,10">
+                        <Border.Effect><DropShadowEffect Color="#000000" Opacity="0.03" BlurRadius="5" ShadowDepth="1"/></Border.Effect>
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                            <TextBlock Text="📄 İşlem Kayıtları" FontWeight="SemiBold" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,0,0,5"/>
+                            <ScrollViewer Grid.Row="1" Height="80" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding Logs}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="0,2">
+                                                <TextBlock Text="{Binding DisplayTime}" Foreground="{DynamicResource TextMuted}" FontSize="11" Width="55"/>
+                                                <TextBlock Text="{Binding Message}" Foreground="{Binding Level, Converter={StaticResource LogLevelConverter}}" FontSize="11" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                </Grid>
             </Grid>
         </Grid>
 
@@ -739,6 +917,132 @@
             </Border>
         </Grid>
 
+        <!-- QUESTION SETTINGS MODAL OVERLAY -->
+        <Grid Visibility="{Binding IsQuestionSettingsOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}" Panel.ZIndex="400">
+            <Border Background="{DynamicResource CardBg}" CornerRadius="12" Width="550" Height="600" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="35">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Opacity="0.15" BlurRadius="25" ShadowDepth="5"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                        <TextBlock Text="⚙️ Soru Ayarları" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextMain}"/>
+                        <TextBlock Text="Soru iptali veya çoklu doğru seçeneklerini buradan yönetebilirsiniz." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,5,0,0"/>
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding QuestionSettings}" AutoGenerateColumns="False" CanUserAddRows="False" 
+                              Background="Transparent" BorderThickness="0" RowHeaderWidth="0" GridLinesVisibility="None">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kitapçık" Binding="{Binding BookletName}" IsReadOnly="True" Width="60">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="HorizontalAlignment" Value="Center"/><Setter Property="FontWeight" Value="Bold"/></Style></DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <DataGridTextColumn Header="No" Binding="{Binding QuestionNumber}" IsReadOnly="True" Width="40">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="HorizontalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            
+                            <DataGridTemplateColumn Header="İptal (X)" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsCancelled, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="Çoklu Aktif" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsMultipleEnabled, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="Çoklu Doğru Seçenekler" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding MultipleCorrectAnswers, UpdateSourceTrigger=PropertyChanged}" 
+                                                 IsEnabled="{Binding IsMultipleEnabled}"
+                                                 ToolTip="Örn: AB (Hem A hem B doğru kabul edilir)" 
+                                                 Padding="5,2" Margin="5,0"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                        <Button Content="Vazgeç" Command="{Binding CloseQuestionSettingsCommand}" Style="{StaticResource OutlineButton}" Margin="0,0,15,0" Padding="15,8"/>
+                        <Button Content="Kaydet ve Kapat" Command="{Binding CloseQuestionSettingsCommand}" Background="#10B981" Padding="25,10"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- LEARNING OUTCOMES MODAL OVERLAY -->
+        <Grid Visibility="{Binding IsLearningOutcomesOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}" Panel.ZIndex="500">
+            <Border Background="{DynamicResource CardBg}" CornerRadius="12" Width="750" Height="650" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="35">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Opacity="0.15" BlurRadius="25" ShadowDepth="5"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                        <TextBlock Text="📚 Öğrenim Çıktıları (Konu Yönetimi)" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextMain}"/>
+                        <TextBlock Text="Soruları konu başlıklarıyla eşleştirerek detaylı analiz alabilirsiniz." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,5,0,0"/>
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding LearningOutcomes}" AutoGenerateColumns="False" CanUserAddRows="False" 
+                              Background="Transparent" BorderThickness="0" RowHeaderWidth="0" HorizontalScrollBarVisibility="Disabled">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Konu/Çıktı Adı" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Padding="5,2" Margin="2" Background="Transparent" BorderThickness="0"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="Soru Numaraları (Örn: 1-5, 8, 12)" Width="1.5*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding QuestionNumbersRaw, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Padding="5,2" Margin="2" Background="Transparent" BorderThickness="0" 
+                                                 ToolTip="Örn: 1-10, 15, 20-25"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            
+                            <DataGridTemplateColumn Width="75">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Sil" Command="{Binding DataContext.RemoveOutcomeCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                CommandParameter="{Binding}" Background="Transparent" Foreground="#EF4444" BorderThickness="0" Padding="10,2"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                        <Button Content="+ Yeni Konu Ekle" Command="{Binding AddOutcomeCommand}" Style="{StaticResource OutlineButton}" Foreground="#8B5CF6" BorderBrush="#8B5CF6" Margin="0,0,15,0"/>
+                        <Button Content="Vazgeç" Command="{Binding CloseLearningOutcomesCommand}" Style="{StaticResource OutlineButton}" Margin="0,0,15,0" Padding="15,8"/>
+                        <Button Content="Kaydet ve Kapat" Command="{Binding CloseLearningOutcomesCommand}" Background="#10B981" Padding="25,10"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
         <!-- ABOUT OVERLAY -->
         <Grid Visibility="{Binding IsAboutOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}" Panel.ZIndex="300">
             <Border Background="{DynamicResource CardBg}" CornerRadius="12" Width="520" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="40,35">
@@ -771,5 +1075,57 @@
             </Border>
         </Grid>
 
+        <!-- ADD COURSE MODAL OVERLAY -->
+        <Grid Visibility="{Binding IsAddCourseOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}" Panel.ZIndex="600">
+            <Border Background="{DynamicResource CardBg}" CornerRadius="12" Width="400" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="30">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Opacity="0.15" BlurRadius="25" ShadowDepth="5"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="➕ Yeni Ders Ekle" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextMain}" Margin="0,0,0,20"/>
+                    
+                    <TextBlock Text="Ders Kodu" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5"/>
+                    <TextBox Text="{Binding NewCourseCode, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15"/>
+                    
+                    <TextBlock Text="Ders Adı" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5"/>
+                    <TextBox Text="{Binding NewCourseName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,25"/>
+                    
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="Vazgeç" Command="{Binding CloseAddCourseCommand}" Style="{StaticResource OutlineButton}" Margin="0,0,5,0"/>
+                        <Button Grid.Column="1" Content="Dersi Ekle" Command="{Binding AddCourseCommand}" Background="#3B82F6" Margin="5,0,0,0"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- RENAME MODAL OVERLAY -->
+        <Grid Visibility="{Binding IsRenameModalOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}" Panel.ZIndex="605">
+            <Border Background="{DynamicResource CardBg}" CornerRadius="12" Width="400" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="30">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Opacity="0.15" BlurRadius="25" ShadowDepth="5"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="{Binding RenameModalTitle}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextMain}" Margin="0,0,0,20"/>
+                    
+                    <TextBox Text="{Binding RenameInput1, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15"/>
+                    
+                    <TextBox Text="{Binding RenameInput2, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,25" 
+                             Visibility="{Binding ShowRenameInput2, Converter={StaticResource BoolToVis}}"/>
+                    
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="Vazgeç" Command="{Binding CloseRenameModalCommand}" Style="{StaticResource OutlineButton}" Margin="0,0,5,0"/>
+                        <Button Grid.Column="1" Content="Kaydet" Command="{Binding SaveRenameCommand}" Background="#3B82F6" Margin="5,0,0,0"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

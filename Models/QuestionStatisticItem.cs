@@ -5,6 +5,7 @@ namespace OptikFormApp.Models
         public string Booklet { get; set; } = string.Empty;
         public int QuestionNumber { get; set; }
         public string CorrectAnswer { get; set; } = string.Empty;
+        public int CorrectCount { get; set; }
         
         public double CorrectPercent { get; set; }
         public double IncorrectPercent { get; set; }
