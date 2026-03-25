@@ -7,48 +7,125 @@ namespace OptikFormApp.Services
 {
     public class ExcelExportService
     {
-        public void ExportToExcel(List<StudentResult> students, string filePath)
+        public void ExportToExcel(List<StudentResult> students, List<QuestionStatisticItem> stats, IEnumerable<LearningOutcome> outcomes, string filePath)
         {
             using (var workbook = new XLWorkbook())
             {
-                var worksheet = workbook.Worksheets.Add("Sınav Sonuçları");
+                // -- SHEET 1: ÖĞRENCİ LİSTESİ --
+                var ws1 = workbook.Worksheets.Add("Sınav Sonuçları");
+                ws1.Cell(1, 1).Value = "Sıra (Derece)";
+                ws1.Cell(1, 2).Value = "Öğrenci No";
+                ws1.Cell(1, 3).Value = "Ad Soyad";
+                ws1.Cell(1, 4).Value = "Kitapçık";
+                ws1.Cell(1, 5).Value = "Doğru";
+                ws1.Cell(1, 6).Value = "Yanlış";
+                ws1.Cell(1, 7).Value = "Boş";
+                ws1.Cell(1, 8).Value = "Puan";
+                ws1.Cell(1, 9).Value = "Öğrenci Cevapları";
 
-                // Headers
-                worksheet.Cell(1, 1).Value = "Sıra";
-                worksheet.Cell(1, 2).Value = "Öğrenci No";
-                worksheet.Cell(1, 3).Value = "Ad Soyad";
-                worksheet.Cell(1, 4).Value = "Kitapçık";
-                worksheet.Cell(1, 5).Value = "Doğru";
-                worksheet.Cell(1, 6).Value = "Yanlış";
-                worksheet.Cell(1, 7).Value = "Boş";
-                worksheet.Cell(1, 8).Value = "Puan";
-                worksheet.Cell(1, 9).Value = "Öğrenci Cevapları";
-
-                var headerRange = worksheet.Range("A1:I1");
-                headerRange.Style.Font.Bold = true;
-                headerRange.Style.Fill.BackgroundColor = XLColor.AirForceBlue;
-                headerRange.Style.Font.FontColor = XLColor.White;
+                var headerRange1 = ws1.Range("A1:I1");
+                headerRange1.Style.Font.Bold = true;
+                headerRange1.Style.Fill.BackgroundColor = XLColor.AirForceBlue;
+                headerRange1.Style.Font.FontColor = XLColor.White;
 
                 int row = 2;
                 foreach (var student in students)
                 {
-                    worksheet.Cell(row, 1).Value = student.RowNumber;
-                    worksheet.Cell(row, 2).Value = student.StudentId;
-                    worksheet.Cell(row, 3).Value = student.FullName;
-                    worksheet.Cell(row, 4).Value = student.BookletType;
-                    worksheet.Cell(row, 5).Value = student.CorrectCount;
-                    worksheet.Cell(row, 6).Value = student.IncorrectCount;
-                    worksheet.Cell(row, 7).Value = student.EmptyCount;
-                    
-                    worksheet.Cell(row, 8).Value = student.Score;
-                    worksheet.Cell(row, 8).Style.NumberFormat.Format = "0.00";
-                    
-                    worksheet.Cell(row, 9).Value = student.RawAnswers;
-
+                    ws1.Cell(row, 1).Value = student.Rank;
+                    ws1.Cell(row, 2).Value = student.StudentId;
+                    ws1.Cell(row, 3).Value = student.FullName;
+                    ws1.Cell(row, 4).Value = student.BookletType;
+                    ws1.Cell(row, 5).Value = student.CorrectCount;
+                    ws1.Cell(row, 6).Value = student.IncorrectCount;
+                    ws1.Cell(row, 7).Value = student.EmptyCount;
+                    ws1.Cell(row, 8).Value = student.Score;
+                    ws1.Cell(row, 8).Style.NumberFormat.Format = "0.00";
+                    ws1.Cell(row, 9).Value = student.RawAnswers;
                     row++;
                 }
+                ws1.Columns().AdjustToContents();
 
-                worksheet.Columns().AdjustToContents();
+                // -- SHEET 2: MADDE ANALİZİ --
+                if (stats != null && stats.Count > 0)
+                {
+                    var ws2 = workbook.Worksheets.Add("Madde Analizi");
+                    ws2.Cell(1, 1).Value = "Kitapçık";
+                    ws2.Cell(1, 2).Value = "Soru No";
+                    ws2.Cell(1, 3).Value = "Doğru Cevap";
+                    ws2.Cell(1, 4).Value = "Doğru Oranı";
+                    ws2.Cell(1, 5).Value = "Yanlış Oranı";
+                    ws2.Cell(1, 6).Value = "Boş Oranı";
+                    ws2.Cell(1, 7).Value = "A";
+                    ws2.Cell(1, 8).Value = "B";
+                    ws2.Cell(1, 9).Value = "C";
+                    ws2.Cell(1, 10).Value = "D";
+                    ws2.Cell(1, 11).Value = "E";
+                    ws2.Cell(1, 12).Value = "Boş Sayısı";
+
+                    var headerRange2 = ws2.Range("A1:L1");
+                    headerRange2.Style.Font.Bold = true;
+                    headerRange2.Style.Fill.BackgroundColor = XLColor.CoolGrey;
+                    headerRange2.Style.Font.FontColor = XLColor.White;
+
+                    row = 2;
+                    foreach (var stat in stats)
+                    {
+                        ws2.Cell(row, 1).Value = stat.Booklet;
+                        ws2.Cell(row, 2).Value = stat.QuestionNumber;
+                        ws2.Cell(row, 3).Value = stat.CorrectAnswer;
+                        ws2.Cell(row, 4).Value = stat.CorrectPercent / 100.0;
+                        ws2.Cell(row, 4).Style.NumberFormat.Format = "0.00%";
+                        ws2.Cell(row, 5).Value = stat.IncorrectPercent / 100.0;
+                        ws2.Cell(row, 5).Style.NumberFormat.Format = "0.00%";
+                        ws2.Cell(row, 6).Value = stat.EmptyPercent / 100.0;
+                        ws2.Cell(row, 6).Style.NumberFormat.Format = "0.00%";
+                        
+                        ws2.Cell(row, 7).Value = stat.CountA;
+                        ws2.Cell(row, 8).Value = stat.CountB;
+                        ws2.Cell(row, 9).Value = stat.CountC;
+                        ws2.Cell(row, 10).Value = stat.CountD;
+                        ws2.Cell(row, 11).Value = stat.CountE;
+                        ws2.Cell(row, 12).Value = stat.CountEmpty;
+                        row++;
+                    }
+                    ws2.Columns().AdjustToContents();
+                }
+
+                // -- SHEET 3: KONU ANALİZİ --
+                if (outcomes != null)
+                {
+                    bool hasOutcomes = false;
+                    foreach (var o in outcomes) { hasOutcomes = true; break; }
+                    
+                    if (hasOutcomes)
+                    {
+                        var ws3 = workbook.Worksheets.Add("Konu Analizi");
+                        ws3.Cell(1, 1).Value = "Konu Adı";
+                        ws3.Cell(1, 2).Value = "İlgili Sorular";
+                        ws3.Cell(1, 3).Value = "Sınıf Başarı Oranı";
+                        ws3.Cell(1, 4).Value = "Doğru Sayısı";
+                        ws3.Cell(1, 5).Value = "Değerlendirilen Cevap Sayısı";
+
+                        var headerRange3 = ws3.Range("A1:E1");
+                        headerRange3.Style.Font.Bold = true;
+                        headerRange3.Style.Fill.BackgroundColor = XLColor.Emerald;
+                        headerRange3.Style.Font.FontColor = XLColor.White;
+
+                        row = 2;
+                        foreach (var outcome in outcomes)
+                        {
+                            ws3.Cell(row, 1).Value = outcome.Name;
+                            ws3.Cell(row, 2).Value = outcome.QuestionNumbersRaw;
+                            ws3.Cell(row, 3).Value = outcome.SuccessRate / 100.0;
+                            ws3.Cell(row, 3).Style.NumberFormat.Format = "0.00%";
+                            ws3.Cell(row, 4).Value = outcome.CorrectCount;
+                            ws3.Cell(row, 5).Value = outcome.TotalQuestions;
+                            row++;
+                        }
+                        ws3.Columns().AdjustToContents();
+                    }
+                }
+
                 workbook.SaveAs(filePath);
             }
         }

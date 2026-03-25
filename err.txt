@@ -1,9 +1,8 @@
-  Geri y├╝klenecek projeler belirleniyor...
-  Geri y├╝kleme i├ğin t├╝m projeler g├╝ncel.
-  OptikFormApp -> D:\Denemeler\OPtikDegerlendirme\bin\Debug\net9.0-windows\OptikFormApp.dll
+D:\Denemeler\OPtikDegerlendirme\Services\ExcelExportService.cs(122,62): error CS1061: 'LearningOutcome' bir 'TotalEvaluated' tan─▒m─▒ i├ğermiyor ve 'LearningOutcome' t├╝r├╝nde bir ilk ba─ş─▒ms─▒z de─şi┼şken kabul eden hi├ğbir eri┼şilebilir 'TotalEvaluated' geni┼şletme y├Ântemi bulunamad─▒ (bir kullanma y├Ânergeniz veya derleme ba┼şvurunuz eksik olabilir mi?) [D:\Denemeler\OPtikDegerlendirme\OptikFormApp_mjpdu4mp_wpftmp.csproj]
+D:\Denemeler\OPtikDegerlendirme\Services\PdfReportService.cs(139,67): error CS1061: 'LearningOutcome' bir 'ParsedQuestionNumbers' tan─▒m─▒ i├ğermiyor ve 'LearningOutcome' t├╝r├╝nde bir ilk ba─ş─▒ms─▒z de─şi┼şken kabul eden hi├ğbir eri┼şilebilir 'ParsedQuestionNumbers' geni┼şletme y├Ântemi bulunamad─▒ (bir kullanma y├Ânergeniz veya derleme ba┼şvurunuz eksik olabilir mi?) [D:\Denemeler\OPtikDegerlendirme\OptikFormApp_mjpdu4mp_wpftmp.csproj]
 
-Olu┼şturma ba┼şar─▒l─▒ oldu.
+Olu┼şturma BA┼ŞARISIZ OLDU.
     0 Uyar─▒
-    0 Hata
+    2 Hata
 
-Ge├ğen S├╝re 00:00:02.44
+Ge├ğen S├╝re 00:00:01.19

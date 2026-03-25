@@ -11,12 +11,17 @@ namespace OptikFormApp.Services
 {
     public class PdfReportService
     {
-        public void GenerateStudentReports(List<StudentResult> students, string outputFolder)
+        public void GenerateStudentReports(List<StudentResult> targetStudents, List<StudentResult> allStudents, IEnumerable<LearningOutcome> outcomes, string outputFolder)
         {
             // QuestPDF License - Required for community use
             QuestPDF.Settings.License = LicenseType.Community;
 
-            foreach (var student in students)
+            // Calculate Exam Average
+            double examAverage = allStudents != null && allStudents.Count > 0 ? allStudents.Average(x => x.Score) : 0;
+            double examNetAverage = allStudents != null && allStudents.Count > 0 ? allStudents.Average(x => x.NetCount) : 0;
+            int totalStudents = allStudents != null ? allStudents.Count : 0;
+
+            foreach (var student in targetStudents)
             {
                 string safeName = string.Join("_", student.FullName.Split(Path.GetInvalidFileNameChars()));
                 string filePath = Path.Combine(outputFolder, $"Karne_{student.StudentId}_{safeName}.pdf");
@@ -55,7 +60,8 @@ namespace OptikFormApp.Services
                                 table.Cell().Text(t => { t.Span("Ad Soyad: ").SemiBold(); t.Span(student.FullName); });
                                 table.Cell().Text(t => { t.Span("Öğrenci No: ").SemiBold(); t.Span(student.StudentId); });
                                 table.Cell().Text(t => { t.Span("Kitapçık: ").SemiBold(); t.Span(student.BookletType); });
-                                table.Cell().Text(t => { t.Span("Net Puan: ").SemiBold(); t.Span(student.Score.ToString("F2")); });
+                                table.Cell().Text(t => { t.Span("Puan / Sıralama: ").SemiBold(); t.Span($"{student.Score:F2} (Sıra: {student.Rank}/{totalStudents})"); });
+                                table.Cell().Text(t => { t.Span("Sınıf Net/Puan Ort.: ").SemiBold(); t.Span($"{examNetAverage:F2} Net / {examAverage:F2} Puan"); });
                             });
 
                             // Summary Stats
@@ -99,6 +105,61 @@ namespace OptikFormApp.Services
                                     });
                                 }
                             });
+
+                            // Topic Analysis (Learning Outcomes)
+                            if (outcomes != null)
+                            {
+                                bool hasOutcomes = false;
+                                foreach (var o in outcomes) { hasOutcomes = true; break; }
+
+                                if (hasOutcomes)
+                                {
+                                    x.Item().PaddingTop(15).Text("Konu Bazlı Başarı Analiziniz:").SemiBold().Underline();
+                                    x.Item().Table(table =>
+                                    {
+                                        table.ColumnsDefinition(cols =>
+                                        {
+                                            cols.RelativeColumn(3); // Konu Adı
+                                            cols.RelativeColumn(1); // Soru Sayısı
+                                            cols.RelativeColumn(1); // Öğrenci Doğru
+                                            cols.RelativeColumn(1); // Öğrenci Başarı %
+                                        });
+
+                                        table.Header(header =>
+                                        {
+                                            header.Cell().Text("Konu Adı").Bold().FontSize(10);
+                                            header.Cell().Text("Soru Sayısı").Bold().FontSize(10);
+                                            header.Cell().Text("Doğrunuz").Bold().FontSize(10);
+                                            header.Cell().Text("Başarı Oranı").Bold().FontSize(10);
+                                        });
+
+                                        foreach (var topic in outcomes)
+                                        {
+                                            // Calculate student's correct count for this topic
+                                            var questions = topic.QuestionNumbers;
+                                            int topicQCount = questions.Count;
+                                            int topicStdCorrect = 0;
+                                            if (topicQCount > 0)
+                                            {
+                                                foreach (var q in questions)
+                                                {
+                                                    if (q - 1 >= 0 && q - 1 < student.QuestionResults.Count)
+                                                    {
+                                                        if (student.QuestionResults[q - 1]) topicStdCorrect++;
+                                                    }
+                                                }
+                                            }
+
+                                            double topicSuccess = topicQCount > 0 ? ((double)topicStdCorrect / topicQCount) * 100 : 0;
+
+                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(2).Text(topic.Name).FontSize(10);
+                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(2).Text(topicQCount.ToString()).FontSize(10);
+                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(2).Text(topicStdCorrect.ToString()).FontSize(10);
+                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(2).Text($"{topicSuccess:F0}%").FontSize(10).FontColor(topicSuccess >= 50 ? Colors.Green.Medium : Colors.Red.Medium);
+                                        }
+                                    });
+                                }
+                            }
                         });
 
                         page.Footer().AlignCenter().Text(x =>

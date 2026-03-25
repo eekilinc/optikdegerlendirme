@@ -124,12 +124,12 @@ namespace OptikFormApp.ViewModels
                 }
                 if (!string.IsNullOrWhiteSpace(DefaultExcelPath) && System.IO.Directory.Exists(DefaultExcelPath)) {
                     string filePath = System.IO.Path.Combine(DefaultExcelPath, $"OptikSonuclar_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
-                    _excelService.ExportToExcel(new System.Collections.Generic.List<StudentResult>(Students), filePath);
+                    _excelService.ExportToExcel(new System.Collections.Generic.List<StudentResult>(Students), new System.Collections.Generic.List<QuestionStatisticItem>(Statistics), LearningOutcomes, filePath);
                     ShowAlert("Başarılı", $"Excel raporu varsayılan dizinize kaydedildi:\n{filePath}");
                 } else {
                     var sfd = new SaveFileDialog { Filter = "Excel Dosyası|*.xlsx", FileName = $"OptikSonuclar_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx" };
                     if (sfd.ShowDialog() == true) {
-                        _excelService.ExportToExcel(new System.Collections.Generic.List<StudentResult>(Students), sfd.FileName);
+                        _excelService.ExportToExcel(new System.Collections.Generic.List<StudentResult>(Students), new System.Collections.Generic.List<QuestionStatisticItem>(Statistics), LearningOutcomes, sfd.FileName);
                         StatusMessage = "Excel'e aktarım tamamlandı.";
                         AddToLog($"Excel raporu oluşturuldu: {System.IO.Path.GetFileName(sfd.FileName)}", LogLevel.Success);
                     }
@@ -145,7 +145,7 @@ namespace OptikFormApp.ViewModels
                 if (dialog.ShowDialog() == true) {
                     try {
                         AddToLog("Toplu PDF karneleri oluşturuluyor...");
-                        _pdfService.GenerateStudentReports(new System.Collections.Generic.List<StudentResult>(Students), dialog.FolderName);
+                        _pdfService.GenerateStudentReports(new System.Collections.Generic.List<StudentResult>(Students), new System.Collections.Generic.List<StudentResult>(Students), LearningOutcomes, dialog.FolderName);
                         ShowAlert("Başarılı", "Tüm öğrenci karneleri seçilen klasöre PDF olarak kaydedildi.");
                         AddToLog($"{Students.Count} adet öğrenci karnesi PDF olarak dışa aktarıldı.", LogLevel.Success);
                     } catch (Exception ex) {
@@ -164,7 +164,7 @@ namespace OptikFormApp.ViewModels
                     };
                     if (sfd.ShowDialog() == true) {
                         try {
-                            _pdfService.GenerateStudentReports(new System.Collections.Generic.List<StudentResult> { student }, System.IO.Path.GetDirectoryName(sfd.FileName) ?? "");
+                            _pdfService.GenerateStudentReports(new System.Collections.Generic.List<StudentResult> { student }, new System.Collections.Generic.List<StudentResult>(Students), LearningOutcomes, System.IO.Path.GetDirectoryName(sfd.FileName) ?? "");
                             StatusMessage = $"{student.FullName} için karne oluşturuldu.";
                             AddToLog($"{student.FullName} için PDF karne oluşturuldu.", LogLevel.Success);
                         } catch (Exception ex) {

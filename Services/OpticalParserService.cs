@@ -174,6 +174,20 @@ namespace OptikFormApp.Services
                 student.NetCount = Math.Max(0, net);
                 student.Score = (key.Answers.Length > 0) ? (student.NetCount / key.Answers.Length) * 100 : 0;
             }
+
+            // Assign Rank
+            var ranked = students.OrderByDescending(s => s.Score).ThenByDescending(s => s.NetCount).ToList();
+            int currentRank = 1;
+            for (int i = 0; i < ranked.Count; i++)
+            {
+                if (i > 0 && 
+                   (ranked[i].Score < ranked[i - 1].Score || 
+                    ranked[i].NetCount < ranked[i - 1].NetCount))
+                {
+                    currentRank = i + 1;
+                }
+                ranked[i].Rank = currentRank;
+            }
         }
 
         public List<QuestionStatisticItem> CalculateStatistics(List<StudentResult> students, List<AnswerKeyModel> keys)

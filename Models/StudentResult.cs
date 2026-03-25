@@ -19,6 +19,7 @@ namespace OptikFormApp.Models
         public int EmptyCount { get; set; }
         public double NetCount { get; set; }
         public double Score { get; set; }
+        public int Rank { get; set; }
         
         public List<string> Answers { get; set; } = new List<string>();
         public List<bool> QuestionResults { get; set; } = new List<bool>();
