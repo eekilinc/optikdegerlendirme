@@ -14,6 +14,13 @@ namespace OptikFormApp.Models
             set { _name = value; OnPropertyChanged(); } 
         }
         
+        private string _bookletName = "A";
+        public string BookletName 
+        { 
+            get => _bookletName; 
+            set { _bookletName = value; OnPropertyChanged(); } 
+        }
+        
         private string _questionNumbersRaw = string.Empty;
         public string QuestionNumbersRaw 
         { 

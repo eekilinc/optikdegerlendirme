@@ -100,13 +100,14 @@ namespace OptikFormApp.Services
                     if (hasOutcomes)
                     {
                         var ws3 = workbook.Worksheets.Add("Konu Analizi");
-                        ws3.Cell(1, 1).Value = "Konu Adı";
-                        ws3.Cell(1, 2).Value = "İlgili Sorular";
-                        ws3.Cell(1, 3).Value = "Sınıf Başarı Oranı";
-                        ws3.Cell(1, 4).Value = "Doğru Sayısı";
-                        ws3.Cell(1, 5).Value = "Değerlendirilen Cevap Sayısı";
+                        ws3.Cell(1, 1).Value = "Kitapçık";
+                        ws3.Cell(1, 2).Value = "Konu Adı";
+                        ws3.Cell(1, 3).Value = "İlgili Sorular";
+                        ws3.Cell(1, 4).Value = "Sınıf Başarı Oranı";
+                        ws3.Cell(1, 5).Value = "Doğru Sayısı";
+                        ws3.Cell(1, 6).Value = "Değerlendirilen Cevap Sayısı";
 
-                        var headerRange3 = ws3.Range("A1:E1");
+                        var headerRange3 = ws3.Range("A1:F1");
                         headerRange3.Style.Font.Bold = true;
                         headerRange3.Style.Fill.BackgroundColor = XLColor.Emerald;
                         headerRange3.Style.Font.FontColor = XLColor.White;
@@ -114,12 +115,13 @@ namespace OptikFormApp.Services
                         row = 2;
                         foreach (var outcome in outcomes)
                         {
-                            ws3.Cell(row, 1).Value = outcome.Name;
-                            ws3.Cell(row, 2).Value = outcome.QuestionNumbersRaw;
-                            ws3.Cell(row, 3).Value = outcome.SuccessRate / 100.0;
-                            ws3.Cell(row, 3).Style.NumberFormat.Format = "0.00%";
-                            ws3.Cell(row, 4).Value = outcome.CorrectCount;
-                            ws3.Cell(row, 5).Value = outcome.TotalQuestions;
+                            ws3.Cell(row, 1).Value = outcome.BookletName;
+                            ws3.Cell(row, 2).Value = outcome.Name;
+                            ws3.Cell(row, 3).Value = outcome.QuestionNumbersRaw;
+                            ws3.Cell(row, 4).Value = outcome.SuccessRate / 100.0;
+                            ws3.Cell(row, 4).Style.NumberFormat.Format = "0.00%";
+                            ws3.Cell(row, 5).Value = outcome.CorrectCount;
+                            ws3.Cell(row, 6).Value = outcome.TotalQuestions;
                             row++;
                         }
                         ws3.Columns().AdjustToContents();

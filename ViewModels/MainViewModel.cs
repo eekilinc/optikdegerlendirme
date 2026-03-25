@@ -39,6 +39,8 @@ namespace OptikFormApp.ViewModels
         private string _defaultExcelPath = "";
         private int _themeIndex;
         private int _layoutIndex;
+        private bool _hasUnsavedData;
+        private string _saveStatusText = "";
 
         public MainViewModel()
         {
@@ -70,31 +72,34 @@ namespace OptikFormApp.ViewModels
             });
 
             OpenModalCommand = new RelayCommand(_ => IsModalOpen = true);
-            CloseModalCommand = new RelayCommand(_ => IsModalOpen = false);
+            CloseModalCommand = new RelayCommand(_ => { IsModalOpen = false; if (Students.Count > 0) { Evaluate(); AutoSaveSelectedExam(); } });
             OpenQuestionSettingsCommand = new RelayCommand(_ => {
+                // Preserve existing settings that still apply
+                var existingSettings = new Dictionary<(string, int), QuestionSetting>();
+                foreach (var s in QuestionSettings)
+                    existingSettings[(s.BookletName, s.QuestionNumber)] = s;
+                QuestionSettings.Clear();
                 foreach (var key in AnswerKeys.Where(k => !string.IsNullOrEmpty(k.Answers)))
                 {
                     int maxLen = key.Answers.Length;
                     for (int i = 1; i <= maxLen; i++)
                     {
-                        if (!QuestionSettings.Any(s => s.QuestionNumber == i && s.BookletName == key.BookletName))
-                        {
-                            QuestionSettings.Add(new QuestionSetting { 
-                                BookletName = key.BookletName, 
-                                QuestionNumber = i 
-                            });
-                        }
+                        if (existingSettings.TryGetValue((key.BookletName, i), out var existing))
+                            QuestionSettings.Add(existing);
+                        else
+                            QuestionSettings.Add(new QuestionSetting { BookletName = key.BookletName, QuestionNumber = i });
                     }
                 }
                 IsQuestionSettingsOpen = true;
                 AddToLog("Soru ayarları paneli açıldı (Kitapçık bazlı).");
             });
-            CloseQuestionSettingsCommand = new RelayCommand(_ => IsQuestionSettingsOpen = false);
+            CloseQuestionSettingsCommand = new RelayCommand(_ => { IsQuestionSettingsOpen = false; if (Students.Count > 0) { Evaluate(); AutoSaveSelectedExam(); } });
 
             OpenLearningOutcomesCommand = new RelayCommand(_ => IsLearningOutcomesOpen = true);
             CloseLearningOutcomesCommand = new RelayCommand(_ => {
                 IsLearningOutcomesOpen = false;
                 Evaluate();
+                AutoSaveSelectedExam();
             });
             
             AddOutcomeCommand = new RelayCommand(_ => LearningOutcomes.Add(new LearningOutcome { Name = "Yeni Konu" }));
@@ -136,7 +141,7 @@ namespace OptikFormApp.ViewModels
                 }
             });
 
-            ExportPdfCommand = new RelayCommand(_ => {
+            ExportPdfCommand = new RelayCommand(async _ => {
                 if (Students.Count == 0) {
                     ShowAlert("Dışa Aktarma Hatası", "Önce veri yüklemeniz ve puanları hesaplamanız gerekmektedir.");
                     return;
@@ -145,7 +150,10 @@ namespace OptikFormApp.ViewModels
                 if (dialog.ShowDialog() == true) {
                     try {
                         AddToLog("Toplu PDF karneleri oluşturuluyor...");
-                        _pdfService.GenerateStudentReports(new System.Collections.Generic.List<StudentResult>(Students), new System.Collections.Generic.List<StudentResult>(Students), LearningOutcomes, dialog.FolderName);
+                        var studentsCopy = new System.Collections.Generic.List<StudentResult>(Students);
+                        var outcomesCopy = LearningOutcomes.ToList();
+                        string folder = dialog.FolderName;
+                        await System.Threading.Tasks.Task.Run(() => _pdfService.GenerateStudentReports(studentsCopy, studentsCopy, outcomesCopy, folder));
                         ShowAlert("Başarılı", "Tüm öğrenci karneleri seçilen klasöre PDF olarak kaydedildi.");
                         AddToLog($"{Students.Count} adet öğrenci karnesi PDF olarak dışa aktarıldı.", LogLevel.Success);
                     } catch (Exception ex) {
@@ -155,7 +163,7 @@ namespace OptikFormApp.ViewModels
                 }
             });
 
-            ExportSinglePdfCommand = new RelayCommand(p => {
+            ExportSinglePdfCommand = new RelayCommand(async p => {
                 if (p is StudentResult student) {
                     var sfd = new SaveFileDialog { 
                         Filter = "PDF Dosyası|*.pdf", 
@@ -164,7 +172,10 @@ namespace OptikFormApp.ViewModels
                     };
                     if (sfd.ShowDialog() == true) {
                         try {
-                            _pdfService.GenerateStudentReports(new System.Collections.Generic.List<StudentResult> { student }, new System.Collections.Generic.List<StudentResult>(Students), LearningOutcomes, System.IO.Path.GetDirectoryName(sfd.FileName) ?? "");
+                            var allStudentsCopy = new System.Collections.Generic.List<StudentResult>(Students);
+                            var outcomesCopy = LearningOutcomes.ToList();
+                            string dir = System.IO.Path.GetDirectoryName(sfd.FileName) ?? "";
+                            await System.Threading.Tasks.Task.Run(() => _pdfService.GenerateStudentReports(new System.Collections.Generic.List<StudentResult> { student }, allStudentsCopy, outcomesCopy, dir));
                             StatusMessage = $"{student.FullName} için karne oluşturuldu.";
                             AddToLog($"{student.FullName} için PDF karne oluşturuldu.", LogLevel.Success);
                         } catch (Exception ex) {
@@ -204,7 +215,7 @@ namespace OptikFormApp.ViewModels
             });
             SaveExamCommand = new RelayCommand(_ => {
                 string title = string.IsNullOrWhiteSpace(NewExamName) ? $"{DateTime.Now:dd.MM.yyyy} Sınavı" : NewExamName;
-                SaveCurrentExam(title);
+                SaveCurrentExam(title, SelectedExam);
             });
 
             OpenRenameCourseCommand = new RelayCommand(obj => {
@@ -320,6 +331,9 @@ namespace OptikFormApp.ViewModels
         public System.Windows.Thickness GridCellPadding { get => _gridCellPadding; set { _gridCellPadding = value; OnPropertyChanged(); } }
         private System.Windows.Thickness _gridCellPadding = new System.Windows.Thickness(10, 0, 10, 0);
 
+        public bool HasUnsavedData { get => _hasUnsavedData; set { _hasUnsavedData = value; OnPropertyChanged(); OnPropertyChanged(nameof(SaveStatusText)); } }
+        public string SaveStatusText => _hasUnsavedData ? "⚠️ Kaydedilmedi" : (Students.Count > 0 ? "✅ Kaydedildi" : "");
+
         // Commands
         public ICommand LoadTxtCommand { get; set; }
         public ICommand EvaluateCommand { get; set; }
@@ -408,6 +422,7 @@ namespace OptikFormApp.ViewModels
                     }
                 }
                 Evaluate();
+                HasUnsavedData = false;
                 AddToLog($"{exam.Title} başarıyla yüklendi.", LogLevel.Success);
             }
             catch (Exception ex)
@@ -416,7 +431,7 @@ namespace OptikFormApp.ViewModels
             }
         }
 
-        public void SaveCurrentExam(string title)
+        public void SaveCurrentExam(string title, ExamEntry? existingExam = null)
         {
             if (SelectedCourse == null)
             {
@@ -431,21 +446,56 @@ namespace OptikFormApp.ViewModels
                     QuestionSettings = new List<QuestionSetting>(QuestionSettings),
                     LearningOutcomes = new List<LearningOutcome>(LearningOutcomes)
                 };
-                var exam = new ExamEntry
+
+                if (existingExam != null && existingExam.Id > 0)
                 {
-                    CourseId = SelectedCourse.Id,
-                    Title = title,
-                    Date = DateTime.Now,
-                    ConfigJson = JsonSerializer.Serialize(config)
-                };
-                _dbService.SaveExam(exam, new List<StudentResult>(Students));
+                    // Update existing exam
+                    existingExam.Title = title;
+                    existingExam.ConfigJson = JsonSerializer.Serialize(config);
+                    _dbService.UpdateExam(existingExam, new List<StudentResult>(Students));
+                    AddToLog($"'{title}' sınavı güncellendi.", LogLevel.Success);
+                }
+                else
+                {
+                    // Insert new exam
+                    var exam = new ExamEntry
+                    {
+                        CourseId = SelectedCourse.Id,
+                        Title = title,
+                        Date = DateTime.Now,
+                        ConfigJson = JsonSerializer.Serialize(config)
+                    };
+                    _dbService.SaveExam(exam, new List<StudentResult>(Students));
+                    AddToLog($"'{title}' sınavı veritabanına kaydedildi.", LogLevel.Success);
+                }
                 LoadExamsForCourse(SelectedCourse.Id);
-                AddToLog($"'{title}' sınavı veritabanına kaydedildi.", LogLevel.Success);
+                HasUnsavedData = false;
             }
             catch (Exception ex)
             {
                 AddToLog($"Kaydetme hatası: {ex.Message}", LogLevel.Error);
                 ShowAlert("Hata", $"Kayıt sırasında hata oluştu: {ex.Message}");
+            }
+        }
+
+        private void AutoSaveSelectedExam()
+        {
+            if (SelectedExam == null || SelectedExam.Id <= 0 || SelectedCourse == null) return;
+            try
+            {
+                var config = new ExamConfigData
+                {
+                    AnswerKeys = new List<AnswerKeyModel>(AnswerKeys),
+                    QuestionSettings = new List<QuestionSetting>(QuestionSettings),
+                    LearningOutcomes = new List<LearningOutcome>(LearningOutcomes)
+                };
+                SelectedExam.ConfigJson = JsonSerializer.Serialize(config);
+                _dbService.UpdateExam(SelectedExam, new List<StudentResult>(Students));
+                AddToLog($"'{SelectedExam.Title}' değişiklikler otomatik kaydedildi.", LogLevel.Success);
+            }
+            catch (Exception ex)
+            {
+                AddToLog($"Otomatik kaydetme hatası: {ex.Message}", LogLevel.Error);
             }
         }
 
@@ -507,9 +557,11 @@ namespace OptikFormApp.ViewModels
                         AddToLog($"{answerKeys.Count} adet cevap anahtarı yüklendi.", LogLevel.Success);
                     }
                     Students.Clear();
-                    foreach (var student in students) Students.Add(student);
+                    int rowNum = 1;
+                    foreach (var student in students) { student.RowNumber = rowNum++; Students.Add(student); }
                     if (students.Count > 0)
                     {
+                        HasUnsavedData = true;
                         StatusMessage = $"{students.Count} öğrenci başarıyla yüklendi.";
                         AddToLog($"{students.Count} öğrenci kaydı başarıyla yüklendi.", LogLevel.Success);
                         bool hasValidKey = false;
@@ -575,6 +627,11 @@ namespace OptikFormApp.ViewModels
                 int totalPossible = 0; int totalCorrect = 0;
                 foreach (var student in Students)
                 {
+                    // Filter by booklet if specified
+                    if (!string.IsNullOrEmpty(outcome.BookletName) && 
+                        !string.Equals(student.BookletType, outcome.BookletName, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
                     foreach (var qNum in outcome.QuestionNumbers)
                     {
                         if (qNum > 0 && qNum <= student.QuestionResults.Count)

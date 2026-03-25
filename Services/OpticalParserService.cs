@@ -106,12 +106,22 @@ namespace OptikFormApp.Services
 
         public void EvaluateStudents(List<StudentResult> students, List<AnswerKeyModel> keys, List<QuestionSetting> settings)
         {
+            // Build lookup dictionaries for O(1) access
+            var keyLookup = new Dictionary<string, AnswerKeyModel>();
+            foreach (var k in keys)
+                if (!keyLookup.ContainsKey(k.BookletName)) keyLookup[k.BookletName] = k;
+
+            var settingsLookup = new Dictionary<(string, int), QuestionSetting>();
+            if (settings != null)
+                foreach (var s in settings)
+                    settingsLookup[(s.BookletName, s.QuestionNumber)] = s;
+
             foreach (var student in students)
             {
-                var key = keys.FirstOrDefault(k => k.BookletName == student.BookletType);
-                if (key == null || string.IsNullOrEmpty(key.Answers)) continue;
+                if (!keyLookup.TryGetValue(student.BookletType, out var key) || string.IsNullOrEmpty(key.Answers)) continue;
 
                 student.QuestionResults.Clear();
+                student.ColoredAnswers.Clear();
                 int correct = 0;
                 int wrong = 0;
                 int empty = 0;
@@ -120,14 +130,16 @@ namespace OptikFormApp.Services
                 {
                     bool isCorrect = false;
                     bool isEmpty = false;
+                    char displayChar = '_';
                     
                     if (i < student.Answers.Count)
                     {
                         var stdAns = student.Answers[i].Trim().ToUpper();
                         var keyAns = key.Answers[i].ToString().ToUpper();
                         var stdChar = stdAns.Length > 0 ? stdAns[0] : ' ';
+                        displayChar = stdChar == ' ' ? '_' : stdChar;
 
-                        var qSetting = settings?.FirstOrDefault(s => s.BookletName == key.BookletName && s.QuestionNumber == (i + 1));
+                        settingsLookup.TryGetValue((key.BookletName, i + 1), out var qSetting);
 
                         if (qSetting != null && qSetting.IsCancelled)
                         {
@@ -159,15 +171,14 @@ namespace OptikFormApp.Services
                         isEmpty = true;
                         empty++;
                     }
-                    student.QuestionResults.Add(isCorrect || isEmpty ? isCorrect : false); 
-                    if (i < student.ColoredAnswers.Count)
-                    {
-                        student.ColoredAnswers[i].State = isCorrect ? AnswerState.Correct : (isEmpty ? AnswerState.Empty : AnswerState.Incorrect);
-                    }
+                    student.QuestionResults.Add(isCorrect || isEmpty ? isCorrect : false);
+                    var state = isCorrect ? AnswerState.Correct : (isEmpty ? AnswerState.Empty : AnswerState.Incorrect);
+                    student.ColoredAnswers.Add(new AnswerItem { Character = displayChar, State = state });
                 }
 
                 student.CorrectCount = correct;
                 student.WrongCount = wrong;
+                student.IncorrectCount = wrong;
                 student.EmptyCount = empty;
                 
                 double net = correct - (wrong * 0.25);
@@ -195,28 +206,72 @@ namespace OptikFormApp.Services
             var stats = new List<QuestionStatisticItem>();
             if (keys.Count == 0) return stats;
 
-            int maxQuestions = keys.Max(k => k.Answers.Length);
-
-            for (int i = 1; i <= maxQuestions; i++)
+            foreach (var key in keys)
             {
-                int correct = 0;
-                int total = 0;
+                if (string.IsNullOrEmpty(key.Answers)) continue;
+                var bookletStudents = students.Where(s => s.BookletType == key.BookletName).ToList();
+                int totalStudents = bookletStudents.Count;
 
-                foreach (var student in students)
+                for (int i = 0; i < key.Answers.Length; i++)
                 {
-                    if (i <= student.QuestionResults.Count)
+                    int correct = 0;
+                    int incorrect = 0;
+                    int emptyCount = 0;
+                    int countA = 0, countB = 0, countC = 0, countD = 0, countE = 0, countEmpty = 0;
+
+                    foreach (var student in bookletStudents)
                     {
-                        total++;
-                        if (student.QuestionResults[i - 1]) correct++;
-                    }
-                }
+                        if (i < student.QuestionResults.Count)
+                        {
+                            if (student.QuestionResults[i]) correct++;
+                            else
+                            {
+                                // Check if empty or incorrect
+                                string ans = i < student.Answers.Count ? student.Answers[i].Trim().ToUpper() : "";
+                                if (string.IsNullOrEmpty(ans) || ans == " " || ans == "-")
+                                    emptyCount++;
+                                else
+                                    incorrect++;
+                            }
+                        }
 
-                stats.Add(new QuestionStatisticItem
-                {
-                    QuestionNumber = i,
-                    CorrectCount = correct,
-                    CorrectPercent = total > 0 ? (double)correct / total * 100 : 0
-                });
+                        // Count option distribution
+                        if (i < student.Answers.Count)
+                        {
+                            string ans = student.Answers[i].Trim().ToUpper();
+                            switch (ans)
+                            {
+                                case "A": countA++; break;
+                                case "B": countB++; break;
+                                case "C": countC++; break;
+                                case "D": countD++; break;
+                                case "E": countE++; break;
+                                default: countEmpty++; break;
+                            }
+                        }
+                        else
+                        {
+                            countEmpty++;
+                        }
+                    }
+
+                    stats.Add(new QuestionStatisticItem
+                    {
+                        Booklet = key.BookletName,
+                        QuestionNumber = i + 1,
+                        CorrectAnswer = key.Answers[i].ToString().ToUpper(),
+                        CorrectCount = correct,
+                        CorrectPercent = totalStudents > 0 ? (double)correct / totalStudents * 100 : 0,
+                        IncorrectPercent = totalStudents > 0 ? (double)incorrect / totalStudents * 100 : 0,
+                        EmptyPercent = totalStudents > 0 ? (double)emptyCount / totalStudents * 100 : 0,
+                        CountA = countA,
+                        CountB = countB,
+                        CountC = countC,
+                        CountD = countD,
+                        CountE = countE,
+                        CountEmpty = countEmpty
+                    });
+                }
             }
 
             return stats;

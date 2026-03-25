@@ -375,7 +375,17 @@
                                 </StackPanel>
                             </Button>
 
-                            <TextBox Text="{Binding NewExamName, UpdateSourceTrigger=PropertyChanged}" Width="140" Margin="0,0,10,10" VerticalAlignment="Stretch" Padding="8,0" Background="Transparent" Foreground="{DynamicResource TextMain}" BorderBrush="{DynamicResource Border}" ToolTip="Kaydedilecek Sınav Adı (Opsiyonel)"/>
+                            <TextBox Text="{Binding NewExamName, UpdateSourceTrigger=PropertyChanged}" Width="140" Margin="0,0,10,10" VerticalAlignment="Stretch" Padding="8,0" Background="Transparent" Foreground="{DynamicResource TextMain}" BorderBrush="{DynamicResource Border}" ToolTip="Kaydedilecek Sınav Adı (Opsiyonel)">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource Self}}" Value="">
+                                                <Setter Property="Tag" Value="Sınav adı (opsiyonel)"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
 
                             <Button Command="{Binding SaveExamCommand}" Style="{StaticResource PipelineButton}" IsEnabled="{Binding Students.Count}" Background="#10B981" BorderBrush="#059669" Foreground="White" Margin="0,0,10,10" Padding="15,8">
                                 <StackPanel Orientation="Horizontal">
@@ -384,6 +394,38 @@
                                 </StackPanel>
                                 <Button.ToolTip>Sınav verilerini seçili dersin altına kalıcı olarak kaydeder.</Button.ToolTip>
                             </Button>
+                            
+                            <!-- Save Status Indicator -->
+                            <Border Margin="0,0,10,10" Padding="10,6" CornerRadius="6" VerticalAlignment="Center">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#DCFCE7"/>
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Students.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding HasUnsavedData}" Value="True">
+                                                <Setter Property="Background" Value="#FEF3C7"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock FontSize="12" FontWeight="SemiBold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="✅ Kaydedildi"/>
+                                            <Setter Property="Foreground" Value="#16A34A"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasUnsavedData}" Value="True">
+                                                    <Setter Property="Text" Value="⚠️ Kaydedilmedi"/>
+                                                    <Setter Property="Foreground" Value="#D97706"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
                             
                             <Button Command="{Binding EvaluateCommand}" Style="{StaticResource PipelineButton}" Background="#8B5CF6" BorderBrush="#7C3AED" Foreground="White" Margin="0,0,10,10" Padding="15,8">
                                 <StackPanel Orientation="Horizontal">
@@ -470,7 +512,7 @@
                                         </Style>
                                     </DataGrid.CellStyle>
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="#" Binding="{Binding RowNumber}" Width="Auto">
+                                        <DataGridTextColumn Header="#" Binding="{Binding RowNumber}" SortMemberPath="RowNumber" Width="Auto">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="FontWeight" Value="SemiBold"/>
@@ -479,9 +521,9 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-                                        <DataGridTextColumn Header="ÖĞRENCİ NO" Binding="{Binding StudentId}" Width="Auto"/>
-                                        <DataGridTextColumn Header="AD SOYAD" Binding="{Binding FullName}" Width="1.5*"/>
-                                        <DataGridTextColumn Header="KİTAPÇIK" Binding="{Binding BookletType}" Width="Auto">
+                                        <DataGridTextColumn Header="ÖĞRENCİ NO" Binding="{Binding StudentId}" SortMemberPath="StudentId" Width="Auto"/>
+                                        <DataGridTextColumn Header="AD SOYAD" Binding="{Binding FullName}" SortMemberPath="FullName" Width="1.5*"/>
+                                        <DataGridTextColumn Header="KİTAPÇIK" Binding="{Binding BookletType}" SortMemberPath="BookletType" Width="Auto">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="HorizontalAlignment" Value="Center"/>
@@ -509,10 +551,19 @@
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
 
-                                        <DataGridTextColumn Header="D" Binding="{Binding CorrectCount}" Width="50"/>
-                                        <DataGridTextColumn Header="Y" Binding="{Binding IncorrectCount}" Width="50"/>
-                                        <DataGridTextColumn Header="B" Binding="{Binding EmptyCount}" Width="50"/>
-                                        <DataGridTextColumn Header="NET PUAN" Binding="{Binding Score, StringFormat={}{0:N2}}" Width="110">
+                                        <DataGridTextColumn Header="D" Binding="{Binding CorrectCount}" SortMemberPath="CorrectCount" Width="50"/>
+                                        <DataGridTextColumn Header="Y" Binding="{Binding IncorrectCount}" SortMemberPath="IncorrectCount" Width="50"/>
+                                        <DataGridTextColumn Header="B" Binding="{Binding EmptyCount}" SortMemberPath="EmptyCount" Width="50"/>
+                                        <DataGridTextColumn Header="SIRA" Binding="{Binding Rank}" SortMemberPath="Rank" Width="50">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="NET PUAN" Binding="{Binding Score, StringFormat={}{0:N2}}" SortMemberPath="Score" Width="110">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="FontWeight" Value="Bold"/>
@@ -1004,6 +1055,17 @@
                     <DataGrid Grid.Row="1" ItemsSource="{Binding LearningOutcomes}" AutoGenerateColumns="False" CanUserAddRows="False" 
                               Background="Transparent" BorderThickness="0" RowHeaderWidth="0" HorizontalScrollBarVisibility="Disabled">
                         <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Kitapçık" Width="70">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding BookletName, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Padding="5,2" Margin="2" Background="Transparent" BorderThickness="0"
+                                                 HorizontalContentAlignment="Center" FontWeight="Bold"
+                                                 ToolTip="Kitapçık adı (Örn: A, B)"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
                             <DataGridTemplateColumn Header="Konu/Çıktı Adı" Width="*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -1064,7 +1126,11 @@
                     
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,20">
                         <TextBlock Text="GitHub:" Foreground="{DynamicResource TextMuted}" Margin="0,0,10,0"/>
-                        <TextBlock Text="github.com/eekilinc/OptikDegerlendirme" Foreground="#3B82F6" Cursor="Hand" TextDecorations="Underline"/>
+                        <TextBlock Cursor="Hand">
+                            <Hyperlink NavigateUri="https://github.com/eekilinc/OptikDegerlendirme" RequestNavigate="Hyperlink_RequestNavigate" Foreground="#3B82F6" TextDecorations="Underline">
+                                github.com/eekilinc/OptikDegerlendirme
+                            </Hyperlink>
+                        </TextBlock>
                     </StackPanel>
                     
                     <Rectangle Height="1" Fill="{DynamicResource Border}" Margin="0,0,0,15"/>

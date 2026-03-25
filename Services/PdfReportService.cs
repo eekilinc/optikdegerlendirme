@@ -135,6 +135,10 @@ namespace OptikFormApp.Services
 
                                         foreach (var topic in outcomes)
                                         {
+                                            // Only show topics for this student's booklet
+                                            if (!string.Equals(topic.BookletName, student.BookletType, StringComparison.OrdinalIgnoreCase))
+                                                continue;
+
                                             // Calculate student's correct count for this topic
                                             var questions = topic.QuestionNumbers;
                                             int topicQCount = questions.Count;

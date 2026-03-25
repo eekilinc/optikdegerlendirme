@@ -22,6 +22,7 @@ namespace OptikFormApp.Services
             using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
             {
                 connection.Open();
+                using (var pragmaCmd = connection.CreateCommand()) { pragmaCmd.CommandText = "PRAGMA foreign_keys = ON;"; pragmaCmd.ExecuteNonQuery(); }
 
                 var command = connection.CreateCommand();
                 command.CommandText = @"
@@ -109,6 +110,7 @@ namespace OptikFormApp.Services
             using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
             {
                 connection.Open();
+                using (var pragmaCmd = connection.CreateCommand()) { pragmaCmd.CommandText = "PRAGMA foreign_keys = ON;"; pragmaCmd.ExecuteNonQuery(); }
                 var command = connection.CreateCommand();
                 command.CommandText = "DELETE FROM Courses WHERE Id = @id";
                 command.Parameters.AddWithValue("@id", courseId);
@@ -208,6 +210,54 @@ namespace OptikFormApp.Services
                     }
                     transaction.Commit();
                     return examId;
+                }
+            }
+        }
+
+        public void UpdateExam(ExamEntry exam, List<StudentResult> results)
+        {
+            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            {
+                connection.Open();
+                using (var pragmaCmd = connection.CreateCommand()) { pragmaCmd.CommandText = "PRAGMA foreign_keys = ON;"; pragmaCmd.ExecuteNonQuery(); }
+                using (var transaction = connection.BeginTransaction())
+                {
+                    // Update exam metadata
+                    var updateCmd = connection.CreateCommand();
+                    updateCmd.Transaction = transaction;
+                    updateCmd.CommandText = "UPDATE Exams SET Title=@title, ConfigJson=@config WHERE Id=@id";
+                    updateCmd.Parameters.AddWithValue("@title", exam.Title);
+                    updateCmd.Parameters.AddWithValue("@config", exam.ConfigJson);
+                    updateCmd.Parameters.AddWithValue("@id", exam.Id);
+                    updateCmd.ExecuteNonQuery();
+
+                    // Delete old results and re-insert
+                    var delCmd = connection.CreateCommand();
+                    delCmd.Transaction = transaction;
+                    delCmd.CommandText = "DELETE FROM ExamResults WHERE ExamId = @eid";
+                    delCmd.Parameters.AddWithValue("@eid", exam.Id);
+                    delCmd.ExecuteNonQuery();
+
+                    foreach (var res in results)
+                    {
+                        var resCmd = connection.CreateCommand();
+                        resCmd.Transaction = transaction;
+                        resCmd.CommandText = @"
+                            INSERT INTO ExamResults (ExamId, StudentId, FullName, BookletType, RawAnswers, Score, CorrectCount, IncorrectCount, EmptyCount, QuestionResultsJson)
+                            VALUES (@eid, @sid, @name, @booklet, @raw, @score, @corr, @inc, @emp, @qjson)";
+                        resCmd.Parameters.AddWithValue("@eid", exam.Id);
+                        resCmd.Parameters.AddWithValue("@sid", res.StudentId);
+                        resCmd.Parameters.AddWithValue("@name", res.FullName);
+                        resCmd.Parameters.AddWithValue("@booklet", res.BookletType);
+                        resCmd.Parameters.AddWithValue("@raw", res.RawAnswers);
+                        resCmd.Parameters.AddWithValue("@score", res.Score);
+                        resCmd.Parameters.AddWithValue("@corr", res.CorrectCount);
+                        resCmd.Parameters.AddWithValue("@inc", res.IncorrectCount);
+                        resCmd.Parameters.AddWithValue("@emp", res.EmptyCount);
+                        resCmd.Parameters.AddWithValue("@qjson", JsonSerializer.Serialize(res.QuestionResults));
+                        resCmd.ExecuteNonQuery();
+                    }
+                    transaction.Commit();
                 }
             }
         }
