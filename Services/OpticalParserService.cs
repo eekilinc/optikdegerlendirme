@@ -104,7 +104,7 @@ namespace OptikFormApp.Services
             return true;
         }
 
-        public void EvaluateStudents(List<StudentResult> students, List<AnswerKeyModel> keys, List<QuestionSetting> settings)
+        public void EvaluateStudents(List<StudentResult> students, List<AnswerKeyModel> keys, List<QuestionSetting> settings, double wrongDeductionFactor = 0.25)
         {
             // Build lookup dictionaries for O(1) access
             var keyLookup = new Dictionary<string, AnswerKeyModel>();
@@ -181,7 +181,7 @@ namespace OptikFormApp.Services
                 student.IncorrectCount = wrong;
                 student.EmptyCount = empty;
                 
-                double net = correct - (wrong * 0.25);
+                double net = correct - (wrong * wrongDeductionFactor);
                 student.NetCount = Math.Max(0, net);
                 student.Score = (key.Answers.Length > 0) ? (student.NetCount / key.Answers.Length) * 100 : 0;
             }

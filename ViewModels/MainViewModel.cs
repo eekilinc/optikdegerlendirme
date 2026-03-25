@@ -10,6 +10,7 @@ using OptikFormApp.Services;
 using System.Text.Json;
 using System.Collections.Generic;
 using System.Windows.Input;
+using System.Windows.Data;
 
 namespace OptikFormApp.ViewModels
 {
@@ -40,7 +41,13 @@ namespace OptikFormApp.ViewModels
         private int _themeIndex;
         private int _layoutIndex;
         private bool _hasUnsavedData;
-        private string _saveStatusText = "";
+        private string _searchText = "";
+        private string _schoolName = "Okul Adı";
+        private double _netCoefficient = 1.0;
+        private double _baseScore = 0.0;
+        private double _wrongDeductionFactor = 0.25;
+
+        public ICollectionView StudentsView { get; }
 
         public MainViewModel()
         {
@@ -56,6 +63,9 @@ namespace OptikFormApp.ViewModels
             ValidationIssues = new ObservableCollection<ValidationIssue>();
             Courses = new ObservableCollection<Course>();
             CourseExams = new ObservableCollection<ExamEntry>();
+            
+            StudentsView = CollectionViewSource.GetDefaultView(Students);
+            StudentsView.Filter = FilterStudents;
             
             LoadCourses();
 
@@ -111,7 +121,7 @@ namespace OptikFormApp.ViewModels
             OpenUISettingsCommand = new RelayCommand(_ => IsUISettingsOpen = true);
             CloseUISettingsCommand = new RelayCommand(_ => IsUISettingsOpen = false);
             OpenGeneralConfigCommand = new RelayCommand(_ => IsGeneralConfigOpen = true);
-            CloseGeneralConfigCommand = new RelayCommand(_ => IsGeneralConfigOpen = false);
+            CloseGeneralConfigCommand = new RelayCommand(_ => { IsGeneralConfigOpen = false; AutoSaveSelectedExam(); });
 
             SelectFolderCommand = new RelayCommand(_ => {
                 var dialog = new Microsoft.Win32.OpenFolderDialog { Title = "Excel Dosyaları İçin Varsayılan Klasörü Seçin" };
@@ -119,6 +129,8 @@ namespace OptikFormApp.ViewModels
                     DefaultExcelPath = dialog.FolderName;
                 }
             });
+
+            AddToLog("Gelişmiş puanlama ve arama modülü aktif.", LogLevel.Info);
 
             ExitCommand = new RelayCommand(_ => System.Windows.Application.Current.Shutdown());
 
@@ -153,7 +165,7 @@ namespace OptikFormApp.ViewModels
                         var studentsCopy = new System.Collections.Generic.List<StudentResult>(Students);
                         var outcomesCopy = LearningOutcomes.ToList();
                         string folder = dialog.FolderName;
-                        await System.Threading.Tasks.Task.Run(() => _pdfService.GenerateStudentReports(studentsCopy, studentsCopy, outcomesCopy, folder));
+                        await System.Threading.Tasks.Task.Run(() => _pdfService.GenerateStudentReports(studentsCopy, studentsCopy, outcomesCopy, folder, SchoolName));
                         ShowAlert("Başarılı", "Tüm öğrenci karneleri seçilen klasöre PDF olarak kaydedildi.");
                         AddToLog($"{Students.Count} adet öğrenci karnesi PDF olarak dışa aktarıldı.", LogLevel.Success);
                     } catch (Exception ex) {
@@ -175,7 +187,7 @@ namespace OptikFormApp.ViewModels
                             var allStudentsCopy = new System.Collections.Generic.List<StudentResult>(Students);
                             var outcomesCopy = LearningOutcomes.ToList();
                             string dir = System.IO.Path.GetDirectoryName(sfd.FileName) ?? "";
-                            await System.Threading.Tasks.Task.Run(() => _pdfService.GenerateStudentReports(new System.Collections.Generic.List<StudentResult> { student }, allStudentsCopy, outcomesCopy, dir));
+                            await System.Threading.Tasks.Task.Run(() => _pdfService.GenerateStudentReports(new System.Collections.Generic.List<StudentResult> { student }, allStudentsCopy, outcomesCopy, dir, SchoolName));
                             StatusMessage = $"{student.FullName} için karne oluşturuldu.";
                             AddToLog($"{student.FullName} için PDF karne oluşturuldu.", LogLevel.Success);
                         } catch (Exception ex) {
@@ -266,6 +278,41 @@ namespace OptikFormApp.ViewModels
 
             ApplyTheme(false);
         }
+
+        public string SearchText 
+        { 
+            get => _searchText; 
+            set { _searchText = value; OnPropertyChanged(); StudentsView.Refresh(); } 
+        }
+
+        public string SchoolName { get => _schoolName; set { _schoolName = value; OnPropertyChanged(); } }
+        public double NetCoefficient { get => _netCoefficient; set { _netCoefficient = value; OnPropertyChanged(); } }
+        public double BaseScore { get => _baseScore; set { _baseScore = value; OnPropertyChanged(); } }
+        public double WrongDeductionFactor { get => _wrongDeductionFactor; set { _wrongDeductionFactor = value; OnPropertyChanged(); OnPropertyChanged(nameof(DeductionRuleIndex)); } }
+        
+        public int DeductionRuleIndex 
+        { 
+            get => _wrongDeductionFactor switch { 0 => 0, 0.33 => 1, 0.25 => 2, _ => 2 };
+            set 
+            { 
+                WrongDeductionFactor = value switch { 0 => 0, 1 => 0.33, 2 => 0.25, _ => 0.25 };
+            } 
+        }
+
+        public int ValidationIssuesCount => ValidationIssues.Count;
+
+        private bool FilterStudents(object obj)
+        {
+            if (string.IsNullOrWhiteSpace(SearchText)) return true;
+            if (obj is StudentResult student)
+            {
+                return student.FullName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                       student.StudentId.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
+            }
+            return true;
+        }
+
+
 
         // Collections and Properties
         public ObservableCollection<StudentResult> Students { get; set; }
@@ -419,6 +466,11 @@ namespace OptikFormApp.ViewModels
                         foreach (var s in config.QuestionSettings) QuestionSettings.Add(s);
                         LearningOutcomes.Clear();
                         foreach (var o in config.LearningOutcomes) LearningOutcomes.Add(o);
+                        
+                        SchoolName = config.SchoolName ?? "Okul Adı";
+                        NetCoefficient = config.NetCoefficient != 0 ? config.NetCoefficient : 1.0;
+                        BaseScore = config.BaseScore;
+                        WrongDeductionFactor = (config.WrongDeductionFactor != 0 || exam.ConfigJson.Contains("WrongDeductionFactor")) ? config.WrongDeductionFactor : 0.25;
                     }
                 }
                 Evaluate();
@@ -444,7 +496,11 @@ namespace OptikFormApp.ViewModels
                 {
                     AnswerKeys = new List<AnswerKeyModel>(AnswerKeys),
                     QuestionSettings = new List<QuestionSetting>(QuestionSettings),
-                    LearningOutcomes = new List<LearningOutcome>(LearningOutcomes)
+                    LearningOutcomes = new List<LearningOutcome>(LearningOutcomes),
+                    SchoolName = SchoolName,
+                    NetCoefficient = NetCoefficient,
+                    BaseScore = BaseScore,
+                    WrongDeductionFactor = WrongDeductionFactor
                 };
 
                 if (existingExam != null && existingExam.Id > 0)
@@ -487,7 +543,11 @@ namespace OptikFormApp.ViewModels
                 {
                     AnswerKeys = new List<AnswerKeyModel>(AnswerKeys),
                     QuestionSettings = new List<QuestionSetting>(QuestionSettings),
-                    LearningOutcomes = new List<LearningOutcome>(LearningOutcomes)
+                    LearningOutcomes = new List<LearningOutcome>(LearningOutcomes),
+                    SchoolName = SchoolName,
+                    NetCoefficient = NetCoefficient,
+                    BaseScore = BaseScore,
+                    WrongDeductionFactor = WrongDeductionFactor
                 };
                 SelectedExam.ConfigJson = JsonSerializer.Serialize(config);
                 _dbService.UpdateExam(SelectedExam, new List<StudentResult>(Students));
@@ -599,7 +659,14 @@ namespace OptikFormApp.ViewModels
                 var list = new System.Collections.Generic.List<StudentResult>(Students);
                 var keys = new System.Collections.Generic.List<AnswerKeyModel>(AnswerKeys);
                 var settings = new System.Collections.Generic.List<QuestionSetting>(QuestionSettings);
-                _parserService.EvaluateStudents(list, keys, settings);
+                _parserService.EvaluateStudents(list, keys, settings, WrongDeductionFactor);
+                
+                // Apply custom coefficients after basic evaluation
+                foreach (var student in list)
+                {
+                    student.Score = Math.Round((student.NetCount * NetCoefficient) + BaseScore, 2);
+                }
+
                 Students.Clear(); foreach (var st in list) Students.Add(st);
                 Statistics.Clear();
                 var statsList = _parserService.CalculateStatistics(list, keys);

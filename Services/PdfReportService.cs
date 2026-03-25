@@ -11,7 +11,7 @@ namespace OptikFormApp.Services
 {
     public class PdfReportService
     {
-        public void GenerateStudentReports(List<StudentResult> targetStudents, List<StudentResult> allStudents, IEnumerable<LearningOutcome> outcomes, string outputFolder)
+        public void GenerateStudentReports(List<StudentResult> targetStudents, List<StudentResult> allStudents, IEnumerable<LearningOutcome> outcomes, string outputFolder, string schoolName = "Okul Adı")
         {
             // QuestPDF License - Required for community use
             QuestPDF.Settings.License = LicenseType.Community;
@@ -39,6 +39,7 @@ namespace OptikFormApp.Services
                         {
                             row.RelativeItem().Column(col =>
                             {
+                                col.Item().Text(schoolName).FontSize(14).Medium().FontColor(Colors.Grey.Medium);
                                 col.Item().Text("SINAV SONUÇ KARNESİ").FontSize(20).SemiBold().FontColor(Colors.Blue.Medium);
                                 col.Item().Text($"{DateTime.Now:dd.MM.yyyy HH:mm}").FontSize(10).FontColor(Colors.Grey.Medium);
                             });
