@@ -14,13 +14,15 @@ using System.Windows.Data;
 
 namespace OptikFormApp.ViewModels
 {
-    public class MainViewModel : INotifyPropertyChanged
+    public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         private readonly DatabaseService _dbService;
         private readonly OpticalParserService _parserService;
         private readonly ExcelExportService _excelService;
         private readonly ValidationService _validationService;
         private readonly PdfReportService _pdfService;
+        private readonly AppSettingsService _settingsService;
+        private readonly CsvExportService _csvService;
         
         private Course? _selectedCourse;
         private ExamEntry? _selectedExam;
@@ -56,6 +58,22 @@ namespace OptikFormApp.ViewModels
             _validationService = new ValidationService();
             _pdfService = new PdfReportService();
             _dbService = new DatabaseService();
+            _settingsService = new AppSettingsService();
+            _csvService = new CsvExportService();
+
+            // Kalıcı ayarları yükle
+            var saved = _settingsService.Load();
+            _schoolName = saved.SchoolName;
+            _defaultExcelPath = saved.DefaultExcelPath;
+            _netCoefficient = saved.NetCoefficient;
+            _baseScore = saved.BaseScore;
+            _wrongDeductionFactor = saved.WrongDeductionFactor;
+            _themeIndex = saved.ThemeIndex;
+            _layoutIndex = saved.LayoutIndex;
+            _gridRowHeight = _layoutIndex == 0 ? 32 : 50;
+            _gridCellPadding = _layoutIndex == 0
+                ? new System.Windows.Thickness(10, 0, 10, 0)
+                : new System.Windows.Thickness(15, 0, 15, 0);
             
             Students = new ObservableCollection<StudentResult>();
             AnswerKeys = new ObservableCollection<AnswerKeyModel>();
@@ -149,6 +167,28 @@ namespace OptikFormApp.ViewModels
                         _excelService.ExportToExcel(new System.Collections.Generic.List<StudentResult>(Students), new System.Collections.Generic.List<QuestionStatisticItem>(Statistics), LearningOutcomes, sfd.FileName);
                         StatusMessage = "Excel'e aktarım tamamlandı.";
                         AddToLog($"Excel raporu oluşturuldu: {System.IO.Path.GetFileName(sfd.FileName)}", LogLevel.Success);
+                    }
+                }
+            });
+
+            ExportCsvCommand = new RelayCommand(_ => {
+                if (Students.Count == 0) {
+                    ShowAlert("Dışa Aktarma Hatası", "Dışa aktarılacak öğrenci kaydı bulunamadı.");
+                    return;
+                }
+                var sfd = new SaveFileDialog { 
+                    Filter = "CSV Dosyası|*.csv", 
+                    FileName = $"OptikSonuclar_{DateTime.Now:yyyyMMdd_HHmmss}.csv",
+                    Title = "CSV Olarak Kaydet"
+                };
+                if (sfd.ShowDialog() == true) {
+                    try {
+                        _csvService.ExportToCsv(new System.Collections.Generic.List<StudentResult>(Students), sfd.FileName);
+                        StatusMessage = "CSV'ye aktarım tamamlandı.";
+                        AddToLog($"CSV raporu oluşturuldu: {System.IO.Path.GetFileName(sfd.FileName)}", LogLevel.Success);
+                    } catch (Exception ex) {
+                        AddToLog($"CSV hatası: {ex.Message}", LogLevel.Error);
+                        ShowAlert("Hata", $"CSV oluşturulurken hata: {ex.Message}");
                     }
                 }
             });
@@ -276,6 +316,32 @@ namespace OptikFormApp.ViewModels
                 IsRenameModalOpen = false;
             });
 
+            ShowShortcutsCommand = new RelayCommand(_ => IsShortcutsOpen = true);
+            CloseShortcutsCommand = new RelayCommand(_ => IsShortcutsOpen = false);
+
+            ExportGradeListCommand = new RelayCommand(_ =>
+            {
+                if (Students.Count == 0) {
+                    ShowAlert("Dışa Aktarma Hatası", "Dışa aktarılacak öğrenci kaydı bulunamadı.");
+                    return;
+                }
+                var sfd = new SaveFileDialog {
+                    Filter = "CSV Dosyası|*.csv",
+                    FileName = $"NotListesi_{DateTime.Now:yyyyMMdd_HHmmss}.csv",
+                    Title = "Not Listesini Kaydet"
+                };
+                if (sfd.ShowDialog() == true) {
+                    try {
+                        _csvService.ExportGradeList(new System.Collections.Generic.List<StudentResult>(Students), sfd.FileName);
+                        StatusMessage = "Not listesi CSV olarak aktarıldı.";
+                        AddToLog($"Not listesi oluşturuldu: {System.IO.Path.GetFileName(sfd.FileName)}", LogLevel.Success);
+                    } catch (Exception ex) {
+                        AddToLog($"Not listesi hatası: {ex.Message}", LogLevel.Error);
+                        ShowAlert("Hata", $"Not listesi oluşturulurken hata: {ex.Message}");
+                    }
+                }
+            });
+
             ApplyTheme(false);
         }
 
@@ -285,10 +351,10 @@ namespace OptikFormApp.ViewModels
             set { _searchText = value; OnPropertyChanged(); StudentsView.Refresh(); } 
         }
 
-        public string SchoolName { get => _schoolName; set { _schoolName = value; OnPropertyChanged(); } }
-        public double NetCoefficient { get => _netCoefficient; set { _netCoefficient = value; OnPropertyChanged(); } }
-        public double BaseScore { get => _baseScore; set { _baseScore = value; OnPropertyChanged(); } }
-        public double WrongDeductionFactor { get => _wrongDeductionFactor; set { _wrongDeductionFactor = value; OnPropertyChanged(); OnPropertyChanged(nameof(DeductionRuleIndex)); } }
+        public string SchoolName { get => _schoolName; set { _schoolName = value; OnPropertyChanged(); SaveSettings(); } }
+        public double NetCoefficient { get => _netCoefficient; set { _netCoefficient = value; OnPropertyChanged(); SaveSettings(); } }
+        public double BaseScore { get => _baseScore; set { _baseScore = value; OnPropertyChanged(); SaveSettings(); } }
+        public double WrongDeductionFactor { get => _wrongDeductionFactor; set { _wrongDeductionFactor = value; OnPropertyChanged(); OnPropertyChanged(nameof(DeductionRuleIndex)); SaveSettings(); } }
         
         public int DeductionRuleIndex 
         { 
@@ -367,12 +433,14 @@ namespace OptikFormApp.ViewModels
         public string AlertTitle { get => _alertTitle; set { _alertTitle = value; OnPropertyChanged(); } }
         public string AlertMessage { get => _alertMessage; set { _alertMessage = value; OnPropertyChanged(); } }
         public bool IsAboutOpen { get => _isAboutOpen; set { _isAboutOpen = value; OnPropertyChanged(); } }
+        public bool IsShortcutsOpen { get => _isShortcutsOpen; set { _isShortcutsOpen = value; OnPropertyChanged(); } }
+        private bool _isShortcutsOpen;
         public bool IsUISettingsOpen { get => _isUISettingsOpen; set { _isUISettingsOpen = value; OnPropertyChanged(); } }
         public bool IsGeneralConfigOpen { get => _isGeneralConfigOpen; set { _isGeneralConfigOpen = value; OnPropertyChanged(); } }
-        public string DefaultExcelPath { get => _defaultExcelPath; set { _defaultExcelPath = value; OnPropertyChanged(); } }
+        public string DefaultExcelPath { get => _defaultExcelPath; set { _defaultExcelPath = value; OnPropertyChanged(); SaveSettings(); } }
         
-        public int ThemeIndex { get => _themeIndex; set { _themeIndex = value; OnPropertyChanged(); ApplyTheme(value == 1); } }
-        public int LayoutIndex { get => _layoutIndex; set { _layoutIndex = value; OnPropertyChanged(); GridRowHeight = value == 0 ? 32 : 50; GridCellPadding = value == 0 ? new System.Windows.Thickness(10, 0, 10, 0) : new System.Windows.Thickness(15, 0, 15, 0); } }
+        public int ThemeIndex { get => _themeIndex; set { _themeIndex = value; OnPropertyChanged(); ApplyTheme(value == 1); SaveSettings(); } }
+        public int LayoutIndex { get => _layoutIndex; set { _layoutIndex = value; OnPropertyChanged(); GridRowHeight = value == 0 ? 32 : 50; GridCellPadding = value == 0 ? new System.Windows.Thickness(10, 0, 10, 0) : new System.Windows.Thickness(15, 0, 15, 0); SaveSettings(); } }
         public int GridRowHeight { get => _gridRowHeight; set { _gridRowHeight = value; OnPropertyChanged(); } }
         private int _gridRowHeight = 32;
         public System.Windows.Thickness GridCellPadding { get => _gridCellPadding; set { _gridCellPadding = value; OnPropertyChanged(); } }
@@ -385,6 +453,7 @@ namespace OptikFormApp.ViewModels
         public ICommand LoadTxtCommand { get; set; }
         public ICommand EvaluateCommand { get; set; }
         public ICommand ExportExcelCommand { get; set; }
+        public ICommand ExportCsvCommand { get; set; }
         public ICommand ExportPdfCommand { get; set; }
         public ICommand ExportSinglePdfCommand { get; set; }
         public ICommand AddAnswerKeyCommand { get; set; }
@@ -401,6 +470,9 @@ namespace OptikFormApp.ViewModels
         public ICommand CloseAlertCommand { get; set; }
         public ICommand OpenAboutCommand { get; set; }
         public ICommand CloseAboutCommand { get; set; }
+        public ICommand ShowShortcutsCommand { get; set; }
+        public ICommand CloseShortcutsCommand { get; set; }
+        public ICommand ExportGradeListCommand { get; set; }
         public ICommand OpenUISettingsCommand { get; set; }
         public ICommand CloseUISettingsCommand { get; set; }
         public ICommand OpenGeneralConfigCommand { get; set; }
@@ -557,6 +629,20 @@ namespace OptikFormApp.ViewModels
             {
                 AddToLog($"Otomatik kaydetme hatası: {ex.Message}", LogLevel.Error);
             }
+        }
+
+        private void SaveSettings()
+        {
+            _settingsService.Save(new OptikFormApp.Models.AppSettings
+            {
+                SchoolName = _schoolName,
+                DefaultExcelPath = _defaultExcelPath,
+                NetCoefficient = _netCoefficient,
+                BaseScore = _baseScore,
+                WrongDeductionFactor = _wrongDeductionFactor,
+                ThemeIndex = _themeIndex,
+                LayoutIndex = _layoutIndex
+            });
         }
 
         private void ApplyTheme(bool dark) {
@@ -771,6 +857,12 @@ namespace OptikFormApp.ViewModels
             AlertTitle = title;
             AlertMessage = message;
             IsAlertOpen = true;
+        }
+
+        public void Dispose()
+        {
+            _dbService?.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

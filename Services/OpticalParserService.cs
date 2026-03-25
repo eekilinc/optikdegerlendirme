@@ -177,7 +177,6 @@ namespace OptikFormApp.Services
                 }
 
                 student.CorrectCount = correct;
-                student.WrongCount = wrong;
                 student.IncorrectCount = wrong;
                 student.EmptyCount = empty;
                 

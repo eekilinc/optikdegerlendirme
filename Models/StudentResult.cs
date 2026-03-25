@@ -15,7 +15,6 @@ namespace OptikFormApp.Models
 
         public int CorrectCount { get; set; }
         public int IncorrectCount { get; set; }
-        public int WrongCount { get; set; }
         public int EmptyCount { get; set; }
         public double NetCount { get; set; }
         public double Score { get; set; }

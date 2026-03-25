@@ -1,4 +1,4 @@
-<Window x:Class="OptikFormApp.MainWindow"
+﻿<Window x:Class="OptikFormApp.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:OptikFormApp.ViewModels"
@@ -8,6 +8,18 @@
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
+
+    <Window.InputBindings>
+        <!-- Dosya kısayolları -->
+        <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding LoadTxtCommand}" />
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveExamCommand}" />
+        <KeyBinding Key="E" Modifiers="Ctrl" Command="{Binding ExportExcelCommand}" />
+        <KeyBinding Key="C" Modifiers="Ctrl+Shift" Command="{Binding ExportCsvCommand}" />
+        <KeyBinding Key="P" Modifiers="Ctrl" Command="{Binding ExportPdfCommand}" />
+        <!-- İşlem kısayolları -->
+        <KeyBinding Key="F5" Command="{Binding EvaluateCommand}" />
+        <KeyBinding Key="F1" Command="{Binding OpenAboutCommand}" />
+    </Window.InputBindings>
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -209,11 +221,13 @@
             <Border Grid.Row="0" Grid.ColumnSpan="2" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource Border}" BorderThickness="0,0,0,1">
                 <Menu Background="Transparent" Padding="10,5">
                     <MenuItem Header="_Dosya">
-                        <MenuItem Header="Optik Verisi Yükle (.txt)" Command="{Binding LoadTxtCommand}"/>
-                        <MenuItem Header="Sınavı Veritabanına Kaydet" Command="{Binding SaveExamCommand}"/>
+                        <MenuItem Header="Optik Verisi Yükle (.txt)" Command="{Binding LoadTxtCommand}" InputGestureText="Ctrl+O"/>
+                        <MenuItem Header="Sınavı Veritabanına Kaydet" Command="{Binding SaveExamCommand}" InputGestureText="Ctrl+S"/>
                         <Separator/>
-                        <MenuItem Header="Excel Raporu Al (.xlsx)" Command="{Binding ExportExcelCommand}"/>
-                        <MenuItem Header="Toplu PDF Karne Al (.pdf)" Command="{Binding ExportPdfCommand}"/>
+                        <MenuItem Header="Excel Raporu Al (.xlsx)" Command="{Binding ExportExcelCommand}" InputGestureText="Ctrl+E"/>
+                        <MenuItem Header="CSV Olarak Dışa Aktar (.csv)" Command="{Binding ExportCsvCommand}" InputGestureText="Ctrl+Shift+C"/>
+                        <MenuItem Header="Not Listesi (No + Puan) (.csv)" Command="{Binding ExportGradeListCommand}"/>
+                        <MenuItem Header="Toplu PDF Karne Al (.pdf)" Command="{Binding ExportPdfCommand}" InputGestureText="Ctrl+P"/>
                         <Separator/>
                         <MenuItem Header="Çıkış" Command="{Binding ExitCommand}"/>
                     </MenuItem>
@@ -233,6 +247,8 @@
                         <MenuItem Header="Sınav ve Puanlama Ayarları..." Command="{Binding OpenGeneralConfigCommand}"/>
                     </MenuItem>
                     <MenuItem Header="_Yardım">
+                        <MenuItem Header="Klavye Kısayolları" Command="{Binding ShowShortcutsCommand}" InputGestureText="F1"/>
+                        <Separator/>
                         <MenuItem Header="Uygulama Hakkında..." Command="{Binding OpenAboutCommand}"/>
                     </MenuItem>
                 </Menu>
@@ -446,10 +462,17 @@
                                 </StackPanel>
                             </Button>
 
-                            <Button Command="{Binding ExportExcelCommand}" Style="{StaticResource PipelineButton}" Background="#F59E0B" BorderBrush="#D97706" Foreground="White" Margin="0,0,10,10" Padding="15,8">
+                            <Button Command="{Binding ExportExcelCommand}" Style="{StaticResource PipelineButton}" Background="#F59E0B" BorderBrush="#D97706" Foreground="White" Margin="0,0,10,10" Padding="15,8" ToolTip="Excel Raporu Al (Ctrl+E)">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="📊" Margin="0,0,8,0"/>
                                     <TextBlock Text="4. Excel" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Command="{Binding ExportCsvCommand}" Style="{StaticResource PipelineButton}" Background="#6366F1" BorderBrush="#4F46E5" Foreground="White" Margin="0,0,10,10" Padding="15,8" ToolTip="CSV Olarak Aktar (Ctrl+Shift+C)">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="📋" Margin="0,0,8,0"/>
+                                    <TextBlock Text="CSV" FontWeight="SemiBold"/>
                                 </StackPanel>
                             </Button>
                         </WrapPanel>
@@ -997,106 +1020,346 @@
             </Border>
         </Grid>
 
-        <!-- INTERFACE SETTINGS OVERLAY -->
-        <Grid Visibility="{Binding IsUISettingsOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}" Panel.ZIndex="300">
-            <Border Background="{DynamicResource CardBg}" CornerRadius="12" Width="480" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="35">
+        <!-- KEYBOARD SHORTCUTS MODAL OVERLAY -->
+        <Grid Visibility="{Binding IsShortcutsOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}" Panel.ZIndex="250">
+            <Border Background="{DynamicResource CardBg}" CornerRadius="20" Width="560" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="0">
                 <Border.Effect>
-                    <DropShadowEffect Color="Black" Opacity="0.15" BlurRadius="25" ShadowDepth="5"/>
+                    <DropShadowEffect Color="Black" Opacity="0.2" BlurRadius="40" ShadowDepth="12"/>
                 </Border.Effect>
-                <StackPanel>
-                    <DockPanel LastChildFill="False" Margin="0,0,0,20">
-                        <TextBlock Text="🎨 Arayüz Seçenekleri" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextMain}" DockPanel.Dock="Left" VerticalAlignment="Center"/>
-                        <Button Content="X" Command="{Binding CloseUISettingsCommand}" Background="Transparent" Foreground="{DynamicResource TextMuted}" FontSize="18" Padding="10,5" DockPanel.Dock="Right" ToolTip="Kapat" Margin="0,-10,-10,0"/>
-                    </DockPanel>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                    <TextBlock Text="Uygulamanın görünümünü ve tablo düzenini özelleştirin." Foreground="{DynamicResource TextMuted}" Margin="0,0,0,20" TextWrapping="Wrap"/>
-                    <Rectangle Height="1" Fill="{DynamicResource Border}" Margin="0,0,0,15"/>
-                    
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-                        <TextBlock Text="Sistem Teması:" Width="150" VerticalAlignment="Center" Foreground="{DynamicResource TextMain}" FontWeight="SemiBold"/>
-                        <ComboBox SelectedIndex="{Binding ThemeIndex}" Width="200" Padding="8,4" Background="{DynamicResource AppBg}" Foreground="{DynamicResource TextMain}">
-                            <ComboBoxItem Content="☀️ Açık Tema"/>
-                            <ComboBoxItem Content="🌙 Karanlık Tema"/>
-                        </ComboBox>
-                    </StackPanel>
+                    <!-- Header Band -->
+                    <Border Grid.Row="0" Background="#3B82F6" CornerRadius="20,20,0,0" Padding="30,25">
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="⌨️  Klavye Kısayolları" FontSize="22" FontWeight="Bold" Foreground="White"/>
+                                <TextBlock Text="Uygulamayı daha hızlı kullanmak için kısayolları öğrenin." FontSize="13" Foreground="#BFDBFE" Margin="0,6,0,0"/>
+                            </StackPanel>
+                            <Button Content="✕" Command="{Binding CloseShortcutsCommand}"
+                                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    Background="Transparent" BorderThickness="0" Foreground="White"
+                                    FontSize="18" Padding="8,4" Cursor="Hand" Opacity="0.8"/>
+                        </Grid>
+                    </Border>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,30">
-                        <TextBlock Text="Tablo Yerleşimi:" Width="150" VerticalAlignment="Center" Foreground="{DynamicResource TextMain}" FontWeight="SemiBold"/>
-                        <ComboBox SelectedIndex="{Binding LayoutIndex}" Width="200" Padding="8,4" Background="{DynamicResource AppBg}" Foreground="{DynamicResource TextMain}">
-                            <ComboBoxItem Content="Kompakt Görünüm"/>
-                            <ComboBoxItem Content="Geniş ve Rahat"/>
-                        </ComboBox>
-                    </StackPanel>
+                    <!-- Shortcut Cards Grid -->
+                    <Grid Grid.Row="1" Margin="25,20,25,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,30,0,0">
-                        <Button Content="Kaydet ve Kapat" Command="{Binding CloseUISettingsCommand}" Background="#10B981" Padding="25,8"/>
-                    </StackPanel>
-                </StackPanel>
+                        <!-- Dosya İşlemleri Başlığı -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="📂 Dosya İşlemleri"
+                                   FontSize="11" FontWeight="Bold" Foreground="#3B82F6"
+                                   Margin="0,0,0,8" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="⚡ İşlemler"
+                                   FontSize="11" FontWeight="Bold" Foreground="#8B5CF6"
+                                   Margin="0,0,0,8" VerticalAlignment="Center"/>
+
+                        <!-- Sol Sütun - Dosya -->
+                        <StackPanel Grid.Row="1" Grid.Column="0" Grid.RowSpan="3">
+                            <!-- Kısayol Satırı Şablonu -->
+                            <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
+                                        <TextBlock Text="Ctrl + O" FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#3B82F6"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="TXT Dosyası Yükle" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                            <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
+                                        <TextBlock Text="Ctrl + S" FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#3B82F6"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="Sınavı Kaydet" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                            <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Border Background="#FFF7ED" BorderBrush="#FED7AA" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
+                                        <TextBlock Text="Ctrl + E" FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#EA580C"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="Excel Raporu Al" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                            <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Border Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
+                                        <TextBlock Text="Ctrl+⇧+C" FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#16A34A"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="CSV Dışa Aktar" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                            <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Border Background="#FDF4FF" BorderBrush="#E9D5FF" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
+                                        <TextBlock Text="Ctrl + P" FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#7C3AED"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="Toplu PDF Karne" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Sağ Sütun - İşlemler -->
+                        <StackPanel Grid.Row="1" Grid.Column="2" Grid.RowSpan="3">
+                            <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Border Background="#F5F3FF" BorderBrush="#DDD6FE" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
+                                        <TextBlock Text="   F5   " FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#7C3AED"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="Puanları Hesapla" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                            <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Border Background="#F0F9FF" BorderBrush="#BAE6FD" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
+                                        <TextBlock Text="   F1   " FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#0284C7"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="Bu Pencereyi Aç" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2" Background="{DynamicResource AltRowBg}" CornerRadius="0,0,20,20" Padding="30,15">
+                        <Grid>
+                            <TextBlock Text="💡  Tüm kısayollar Dosya menüsünde de gösterilmektedir." FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
+                            <Button Content="Kapat" Command="{Binding CloseShortcutsCommand}"
+                                    HorizontalAlignment="Right" Background="#3B82F6" Foreground="White"
+                                    Padding="25,8" FontSize="13"/>
+                        </Grid>
+                    </Border>
+                </Grid>
             </Border>
         </Grid>
 
-        <!-- GENERAL CONFIG OVERLAY -->
-        <!-- GENERAL CONFIG MODAL OVERLAY -->
-        <Grid Visibility="{Binding IsGeneralConfigOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}" Panel.ZIndex="500">
-            <Border Background="{DynamicResource CardBg}" CornerRadius="12" Width="450" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="35">
+        <!-- INTERFACE SETTINGS OVERLAY -->
+        <Grid Visibility="{Binding IsUISettingsOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}" Panel.ZIndex="300">
+            <Border Background="{DynamicResource CardBg}" CornerRadius="20" Width="500" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="0">
                 <Border.Effect>
-                    <DropShadowEffect Color="Black" Opacity="0.15" BlurRadius="25" ShadowDepth="5"/>
+                    <DropShadowEffect Color="Black" Opacity="0.2" BlurRadius="40" ShadowDepth="12"/>
                 </Border.Effect>
-                <StackPanel>
-                    <TextBlock Text="⚙️ Sınav ve Puanlama Ayarları" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextMain}" Margin="0,0,0,25"/>
-                    
-                    <TextBlock Text="Okul / Kurum Adı" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5"/>
-                    <TextBox Text="{Binding SchoolName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,20" Padding="10,8"/>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                    <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="15" Margin="0,0,0,20">
-                        <StackPanel>
-                            <TextBlock Text="📊 Puanlama Parametreleri" FontWeight="Bold" Foreground="{DynamicResource TextMain}" Margin="0,0,0,15"/>
+                    <!-- Header -->
+                    <Border Grid.Row="0" Background="#6366F1" CornerRadius="20,20,0,0" Padding="30,25">
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="🎨  Arayüz Seçenekleri" FontSize="22" FontWeight="Bold" Foreground="White"/>
+                                <TextBlock Text="Uygulamanın görünümünü ve tablo düzenini özelleştirin." FontSize="13" Foreground="#C7D2FE" Margin="0,6,0,0"/>
+                            </StackPanel>
+                            <Button Content="✕" Command="{Binding CloseUISettingsCommand}"
+                                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    Background="Transparent" BorderThickness="0" Foreground="White"
+                                    FontSize="18" Padding="8,4" Cursor="Hand" Opacity="0.8"/>
+                        </Grid>
+                    </Border>
 
-                            <TextBlock Text="Net Hesabı Kuralı (Düşüm)" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5"/>
-                            <ComboBox SelectedIndex="{Binding DeductionRuleIndex}" Margin="0,0,0,15" Padding="10,8">
-                                <ComboBoxItem Content="Düşüm Yapılmasın (Net = Doğru)"/>
-                                <ComboBoxItem Content="3 Yanlış 1 Doğru (0.33)"/>
-                                <ComboBoxItem Content="4 Yanlış 1 Doğru (0.25 - Standart)"/>
-                            </ComboBox>
-                            
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="80"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                    <TextBlock Text="Net Katsayısı" FontSize="13" Foreground="{DynamicResource TextMain}"/>
-                                    <TextBlock Text="Her 1 net kaç puan yapacak?" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                                </StackPanel>
-                                <TextBox Grid.Column="1" Text="{Binding NetCoefficient, UpdateSourceTrigger=PropertyChanged}" Padding="5" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
-                            </Grid>
+                    <!-- Settings Cards -->
+                    <StackPanel Grid.Row="1" Margin="25,20,25,10">
 
+                        <!-- Tema Kartı -->
+                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="12" Padding="20,16" Margin="0,0,0,12">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                    <TextBlock Text="Taban Puan" FontSize="13" Foreground="{DynamicResource TextMain}"/>
-                                    <TextBlock Text="Sınav başlangıç puanı (Örn: 0)" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                                    <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextMain}">
+                                        <Run Text="☀️  "/> <Run Text="Renk Teması"/>
+                                    </TextBlock>
+                                    <TextBlock Text="Açık veya karanlık arayüz seçin" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,0"/>
                                 </StackPanel>
-                                <TextBox Grid.Column="1" Text="{Binding BaseScore, UpdateSourceTrigger=PropertyChanged}" Padding="5" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+                                <ComboBox Grid.Column="1" SelectedIndex="{Binding ThemeIndex}" Width="160" Padding="10,8"
+                                          Background="{DynamicResource AppBg}" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center">
+                                    <ComboBoxItem Content="☀️  Açık Tema"/>
+                                    <ComboBoxItem Content="🌙  Karanlık Tema"/>
+                                </ComboBox>
                             </Grid>
-                        </StackPanel>
-                    </Border>
-                    
-                    <TextBlock Text="Excel Çıktı Klasörü:" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5"/>
-                    <Grid Margin="0,0,0,20">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox IsReadOnly="True" Text="{Binding DefaultExcelPath}" Margin="0,0,5,0" Padding="8,5" Foreground="{DynamicResource TextMuted}"/>
-                        <Button Grid.Column="1" Content="..." Command="{Binding SelectFolderCommand}" Width="40" Padding="5"/>
-                    </Grid>
+                        </Border>
 
-                    <Button Content="Ayarları Kaydet ve Kapat" Command="{Binding CloseGeneralConfigCommand}" Background="#3B82F6" Padding="20,12" FontWeight="Bold"/>
-                </StackPanel>
+                        <!-- Yerleşim Kartı -->
+                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="12" Padding="20,16" Margin="0,0,0,4">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextMain}">
+                                        <Run Text="📋  "/> <Run Text="Tablo Yerleşimi"/>
+                                    </TextBlock>
+                                    <TextBlock Text="Satır yüksekliğini ve hücre boşluğunu ayarlı" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <ComboBox Grid.Column="1" SelectedIndex="{Binding LayoutIndex}" Width="160" Padding="10,8"
+                                          Background="{DynamicResource AppBg}" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center">
+                                    <ComboBoxItem Content="📊  Kompakt"/>
+                                    <ComboBoxItem Content="📄  Geniş / Rahat"/>
+                                </ComboBox>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2" Background="{DynamicResource AltRowBg}" CornerRadius="0,0,20,20" Padding="25,15">
+                        <Grid>
+                            <TextBlock Text="💡  Ayarlar anında uygulanır ve kaydedilir." FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
+                            <Button Content="Kapat" Command="{Binding CloseUISettingsCommand}"
+                                    HorizontalAlignment="Right" Background="#6366F1" Foreground="White"
+                                    Padding="25,8" FontSize="13"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- GENERAL CONFIG MODAL OVERLAY -->
+        <Grid Visibility="{Binding IsGeneralConfigOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}" Panel.ZIndex="500">
+            <Border Background="{DynamicResource CardBg}" CornerRadius="20" Width="500" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="0">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Opacity="0.2" BlurRadius="40" ShadowDepth="12"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header -->
+                    <Border Grid.Row="0" Background="#10B981" CornerRadius="20,20,0,0" Padding="30,25">
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="⚙️  Sınav ve Puanlama Ayarları" FontSize="22" FontWeight="Bold" Foreground="White"/>
+                                <TextBlock Text="Okul adını, puan kuralını ve çıktı klasörünü ayarlayın." FontSize="13" Foreground="#A7F3D0" Margin="0,6,0,0"/>
+                            </StackPanel>
+                            <Button Content="✕" Command="{Binding CloseGeneralConfigCommand}"
+                                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    Background="Transparent" BorderThickness="0" Foreground="White"
+                                    FontSize="18" Padding="8,4" Cursor="Hand" Opacity="0.8"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Content -->
+                    <StackPanel Grid.Row="1" Margin="25,20,25,15">
+
+                        <!-- Okul Adı Kartı -->
+                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="12" Padding="20,16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextMain}" Margin="0,0,0,8">
+                                    <Run Text="🏫  "/> <Run Text="Okul / Kurum Adı"/>
+                                </TextBlock>
+                                <TextBox Text="{Binding SchoolName, UpdateSourceTrigger=PropertyChanged}" Padding="10,10"
+                                         Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource Border}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Puanlama Kartı -->
+                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="12" Padding="20,16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextMain}" Margin="0,0,0,12">
+                                    <Run Text="📊  "/> <Run Text="Puanlama Parametreleri"/>
+                                </TextBlock>
+
+                                <TextBlock Text="Net Hesabı Kuralı (Düşüm)" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,6"/>
+                                <ComboBox SelectedIndex="{Binding DeductionRuleIndex}" Margin="0,0,0,14" Padding="10,9"
+                                          Background="{DynamicResource CardBg}">
+                                    <ComboBoxItem Content="🟢  Düşüm Yapılmasın (Net = Doğru)"/>
+                                    <ComboBoxItem Content="🟡  3 Yanlış 1 Doğru (0.33)"/>
+                                    <ComboBoxItem Content="🔴  4 Yanlış 1 Doğru (0.25 - Standart)"/>
+                                </ComboBox>
+
+                                <!-- Net Katsayı + Taban Puan -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="12,10">
+                                        <StackPanel>
+                                            <TextBlock Text="Net Katsayısı" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                                            <TextBlock Text="1 net = kaç puan?" FontSize="11" Foreground="{DynamicResource TextMuted}" Opacity="0.6" Margin="0,2,0,6"/>
+                                            <TextBox Text="{Binding NetCoefficient, UpdateSourceTrigger=PropertyChanged}"
+                                                     Padding="8,8" HorizontalContentAlignment="Center"
+                                                     FontWeight="Bold" FontSize="16" Foreground="#10B981"
+                                                     Background="Transparent" BorderBrush="{DynamicResource Border}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Grid.Column="2" Background="{DynamicResource CardBg}" CornerRadius="8" Padding="12,10">
+                                        <StackPanel>
+                                            <TextBlock Text="Taban Puan" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                                            <TextBlock Text="Başlangıç puanı (Genelde 0)" FontSize="11" Foreground="{DynamicResource TextMuted}" Opacity="0.6" Margin="0,2,0,6"/>
+                                            <TextBox Text="{Binding BaseScore, UpdateSourceTrigger=PropertyChanged}"
+                                                     Padding="8,8" HorizontalContentAlignment="Center"
+                                                     FontWeight="Bold" FontSize="16" Foreground="#3B82F6"
+                                                     Background="Transparent" BorderBrush="{DynamicResource Border}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Excel Klasör Kartı -->
+                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="12" Padding="20,16">
+                            <StackPanel>
+                                <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextMain}" Margin="0,0,0,8">
+                                    <Run Text="📁  "/> <Run Text="Varsayılan Excel Klasörü"/>
+                                </TextBlock>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0" IsReadOnly="True" Text="{Binding DefaultExcelPath}" Padding="10,9"
+                                             Foreground="{DynamicResource TextMuted}" Background="{DynamicResource CardBg}"
+                                             BorderBrush="{DynamicResource Border}"/>
+                                    <Button Grid.Column="2" Content="📂  Seç" Command="{Binding SelectFolderCommand}"
+                                            Padding="14,9" Background="#3B82F6" Foreground="White" FontSize="12"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2" Background="{DynamicResource AltRowBg}" CornerRadius="0,0,20,20" Padding="25,15">
+                        <Grid>
+                            <TextBlock Text="💡  Ayarlar her açılışta otomatik yüklenir." FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
+                            <Button Content="Kaydet ve Kapat" Command="{Binding CloseGeneralConfigCommand}"
+                                    HorizontalAlignment="Right" Background="#10B981" Foreground="White"
+                                    Padding="25,8" FontSize="13"/>
+                        </Grid>
+                    </Border>
+                </Grid>
             </Border>
         </Grid>
 
