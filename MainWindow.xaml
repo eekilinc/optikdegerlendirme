@@ -368,8 +368,15 @@
                             
                             <Button Command="{Binding OpenModalCommand}" Style="{StaticResource OutlineButton}" Margin="0,0,15,10" Padding="15,8">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="⚙️" Margin="0,0,8,0" FontSize="14"/>
+                                    <TextBlock Text="📋" Margin="0,0,8,0" FontSize="14"/>
                                     <TextBlock Text="Cevap Anahtarı"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Command="{Binding OpenGeneralConfigCommand}" Style="{StaticResource OutlineButton}" Margin="0,0,15,10" Padding="15,8">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="⚙️" Margin="0,0,8,0" FontSize="14"/>
+                                    <TextBlock Text="Sınav Ayarları"/>
                                 </StackPanel>
                             </Button>
                             
