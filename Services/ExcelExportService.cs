@@ -103,11 +103,12 @@ namespace OptikFormApp.Services
                         ws3.Cell(1, 1).Value = "Kitapçık";
                         ws3.Cell(1, 2).Value = "Konu Adı";
                         ws3.Cell(1, 3).Value = "İlgili Sorular";
-                        ws3.Cell(1, 4).Value = "Sınıf Başarı Oranı";
-                        ws3.Cell(1, 5).Value = "Doğru Sayısı";
-                        ws3.Cell(1, 6).Value = "Değerlendirilen Cevap Sayısı";
+                        ws3.Cell(1, 4).Value = "Genel Başarı %";
+                        ws3.Cell(1, 5).Value = "Kitapçık Başarısı %";
+                        ws3.Cell(1, 6).Value = "Genel Doğru";
+                        ws3.Cell(1, 7).Value = "Genel Toplam";
 
-                        var headerRange3 = ws3.Range("A1:F1");
+                        var headerRange3 = ws3.Range("A1:G1");
                         headerRange3.Style.Font.Bold = true;
                         headerRange3.Style.Fill.BackgroundColor = XLColor.Emerald;
                         headerRange3.Style.Font.FontColor = XLColor.White;
@@ -118,10 +119,12 @@ namespace OptikFormApp.Services
                             ws3.Cell(row, 1).Value = outcome.BookletName;
                             ws3.Cell(row, 2).Value = outcome.Name;
                             ws3.Cell(row, 3).Value = outcome.QuestionNumbersRaw;
-                            ws3.Cell(row, 4).Value = outcome.SuccessRate / 100.0;
-                            ws3.Cell(row, 4).Style.NumberFormat.Format = "0.00%";
-                            ws3.Cell(row, 5).Value = outcome.CorrectCount;
-                            ws3.Cell(row, 6).Value = outcome.TotalQuestions;
+                            ws3.Cell(row, 4).Value = outcome.GlobalSuccessRate / 100.0;
+                            ws3.Cell(row, 4).Style.NumberFormat.Format = "0.0%";
+                            ws3.Cell(row, 5).Value = outcome.SuccessRate / 100.0;
+                            ws3.Cell(row, 5).Style.NumberFormat.Format = "0.0%";
+                            ws3.Cell(row, 6).Value = outcome.GlobalCorrectCount;
+                            ws3.Cell(row, 7).Value = outcome.GlobalTotalQuestions;
                             row++;
                         }
                         ws3.Columns().AdjustToContents();

@@ -121,24 +121,26 @@ namespace OptikFormApp.Services
                                         {
                                             cols.RelativeColumn(3); // Konu Adı
                                             cols.RelativeColumn(1); // Soru Sayısı
-                                            cols.RelativeColumn(1); // Öğrenci Doğru
-                                            cols.RelativeColumn(1); // Öğrenci Başarı %
+                                            cols.RelativeColumn(1); // Doğrunuz
+                                            cols.RelativeColumn(1); // Başarı %
+                                            cols.RelativeColumn(1); // Genel Ort.
                                         });
-
+ 
                                         table.Header(header =>
                                         {
                                             header.Cell().Text("Konu Adı").Bold().FontSize(10);
                                             header.Cell().Text("Soru Sayısı").Bold().FontSize(10);
                                             header.Cell().Text("Doğrunuz").Bold().FontSize(10);
-                                            header.Cell().Text("Başarı Oranı").Bold().FontSize(10);
+                                            header.Cell().Text("Başarı %").Bold().FontSize(10);
+                                            header.Cell().Text("Genel Ort.").Bold().FontSize(10);
                                         });
-
+ 
                                         foreach (var topic in outcomes)
                                         {
                                             // Only show topics for this student's booklet
                                             if (!string.Equals(topic.BookletName, student.BookletType, StringComparison.OrdinalIgnoreCase))
                                                 continue;
-
+ 
                                             // Calculate student's correct count for this topic
                                             var questions = topic.QuestionNumbers;
                                             int topicQCount = questions.Count;
@@ -153,13 +155,14 @@ namespace OptikFormApp.Services
                                                     }
                                                 }
                                             }
-
+ 
                                             double topicSuccess = topicQCount > 0 ? ((double)topicStdCorrect / topicQCount) * 100 : 0;
-
+ 
                                             table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(2).Text(topic.Name).FontSize(10);
                                             table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(2).Text(topicQCount.ToString()).FontSize(10);
                                             table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(2).Text(topicStdCorrect.ToString()).FontSize(10);
                                             table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(2).Text($"{topicSuccess:F0}%").FontSize(10).FontColor(topicSuccess >= 50 ? Colors.Green.Medium : Colors.Red.Medium);
+                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(2).Text($"{topic.GlobalSuccessRate:F0}%").FontSize(10).FontColor(Colors.Grey.Medium);
                                         }
                                     });
                                 }

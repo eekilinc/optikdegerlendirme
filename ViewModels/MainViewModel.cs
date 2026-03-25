@@ -622,28 +622,62 @@ namespace OptikFormApp.ViewModels
         private void UpdateOutcomeStats()
         {
             if (Students.Count == 0) return;
+
+            // 1. First, calculate booklet-specific stats for each outcome row
             foreach (var outcome in LearningOutcomes)
             {
-                int totalPossible = 0; int totalCorrect = 0;
+                int localPossible = 0; int localCorrect = 0;
                 foreach (var student in Students)
                 {
-                    // Filter by booklet if specified
-                    if (!string.IsNullOrEmpty(outcome.BookletName) && 
-                        !string.Equals(student.BookletType, outcome.BookletName, StringComparison.OrdinalIgnoreCase))
-                        continue;
-
-                    foreach (var qNum in outcome.QuestionNumbers)
+                    if (string.Equals(student.BookletType, outcome.BookletName, StringComparison.OrdinalIgnoreCase))
                     {
-                        if (qNum > 0 && qNum <= student.QuestionResults.Count)
+                        foreach (var qNum in outcome.QuestionNumbers)
                         {
-                            totalPossible++;
-                            if (student.QuestionResults[qNum - 1]) totalCorrect++;
+                            if (qNum > 0 && qNum <= student.QuestionResults.Count)
+                            {
+                                localPossible++;
+                                if (student.QuestionResults[qNum - 1]) localCorrect++;
+                            }
                         }
                     }
                 }
-                outcome.TotalQuestions = totalPossible;
-                outcome.CorrectCount = totalCorrect;
-                outcome.SuccessRate = totalPossible > 0 ? Math.Round((double)totalCorrect / totalPossible * 100, 2) : 0;
+                outcome.TotalQuestions = localPossible;
+                outcome.CorrectCount = localCorrect;
+                outcome.SuccessRate = localPossible > 0 ? Math.Round((double)localCorrect / localPossible * 100, 1) : 0;
+            }
+
+            // 2. Second, calculate global (merged) stats by topic name
+            var groups = LearningOutcomes.GroupBy(o => o.Name.Trim().ToLowerInvariant());
+            foreach (var group in groups)
+            {
+                int globalCorrect = 0; int globalTotal = 0;
+                
+                // Map booklets to outcomes in this group for fast lookup
+                var bookletMap = group.ToDictionary(o => o.BookletName.ToUpperInvariant(), o => o);
+
+                foreach (var student in Students)
+                {
+                    string stdBooklet = (student.BookletType ?? "A").ToUpperInvariant();
+                    if (bookletMap.TryGetValue(stdBooklet, out var outcomeDef))
+                    {
+                        foreach (var qNum in outcomeDef.QuestionNumbers)
+                        {
+                            if (qNum > 0 && qNum <= student.QuestionResults.Count)
+                            {
+                                globalTotal++;
+                                if (student.QuestionResults[qNum - 1]) globalCorrect++;
+                            }
+                        }
+                    }
+                }
+
+                double globalRate = globalTotal > 0 ? Math.Round((double)globalCorrect / globalTotal * 100, 1) : 0;
+                foreach (var outcome in group)
+                {
+                    outcome.GlobalCorrectCount = globalCorrect;
+                    outcome.GlobalTotalQuestions = globalTotal;
+                    outcome.GlobalSuccessRate = globalRate;
+                }
             }
             OnPropertyChanged(nameof(LearningOutcomes));
         }

@@ -44,6 +44,15 @@ namespace OptikFormApp.Models
         private int _totalQuestions;
         public int TotalQuestions { get => _totalQuestions; set { _totalQuestions = value; OnPropertyChanged(); } }
 
+        private double _globalSuccessRate;
+        public double GlobalSuccessRate { get => _globalSuccessRate; set { _globalSuccessRate = value; OnPropertyChanged(); } }
+
+        private int _globalCorrectCount;
+        public int GlobalCorrectCount { get => _globalCorrectCount; set { _globalCorrectCount = value; OnPropertyChanged(); } }
+
+        private int _globalTotalQuestions;
+        public int GlobalTotalQuestions { get => _globalTotalQuestions; set { _globalTotalQuestions = value; OnPropertyChanged(); } }
+
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string? name = null)
         {
