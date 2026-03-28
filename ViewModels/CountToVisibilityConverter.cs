@@ -7,11 +7,15 @@ namespace OptikFormApp.ViewModels
 {
     public class CountToVisibilityConverter : IValueConverter
     {
+        public bool Invert { get; set; }
+
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is int count)
             {
-                return count == 0 ? Visibility.Visible : Visibility.Collapsed;
+                bool isEmpty = count == 0;
+                if (Invert) return isEmpty ? Visibility.Collapsed : Visibility.Visible;
+                return isEmpty ? Visibility.Visible : Visibility.Collapsed;
             }
             return Visibility.Collapsed;
         }
