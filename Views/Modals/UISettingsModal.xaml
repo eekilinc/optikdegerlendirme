@@ -18,11 +18,11 @@
                 </Grid.RowDefinitions>
 
                 <!-- Header -->
-                <Border Grid.Row="0" Background="#6366F1" CornerRadius="20,20,0,0" Padding="30,25">
+                <Border Grid.Row="0" Background="{DynamicResource Accent}" CornerRadius="20,20,0,0" Padding="30,25">
                     <Grid>
                         <StackPanel>
                             <TextBlock Text="🎨  Arayüz Ayarları" FontSize="22" FontWeight="Bold" Foreground="White"/>
-                            <TextBlock Text="Görünüm ve yerleşim ayarlarını kişiselleştirin." FontSize="13" Foreground="#C7D2FE" Margin="0,6,0,0"/>
+                            <TextBlock Text="Görünüm ve yerleşim ayarlarını kişiselleştirin." FontSize="13" Foreground="White" Opacity="0.9" Margin="0,6,0,0"/>
                         </StackPanel>
                         <Button Content="✕" Command="{Binding CloseUISettingsCommand}"
                                 HorizontalAlignment="Right" VerticalAlignment="Top"
@@ -35,7 +35,8 @@
                 <StackPanel Grid.Row="1" Margin="25,20,25,10">
                     
                     <!-- Tema Kartı -->
-                    <Border Background="{DynamicResource AltRowBg}" CornerRadius="12" Padding="20,16" Margin="0,0,0,12">
+                    <Border Background="{DynamicResource AppBg}" CornerRadius="12" Padding="20,16" Margin="0,0,0,12" 
+                           BorderThickness="1" BorderBrush="{DynamicResource Border}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -47,16 +48,41 @@
                                 </TextBlock>
                                 <TextBlock Text="Açık veya koyu mod arasında geçiş yapın." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,0"/>
                             </StackPanel>
-                            <ComboBox Grid.Column="1" SelectedIndex="{Binding ThemeIndex}" Width="160" Padding="10,8"
-                                      Background="{DynamicResource AppBg}" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center">
-                                <ComboBoxItem Content="🌞  Aydınlık Tema"/>
-                                <ComboBoxItem Content="🌙  Karanlık Tema"/>
-                            </ComboBox>
+                            <Border Grid.Column="1" CornerRadius="8" Background="White" BorderBrush="#E5E7EB">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" Opacity="0.1" BlurRadius="4" ShadowDepth="1"/>
+                                </Border.Effect>
+                                <ComboBox SelectedIndex="{Binding ThemeIndex}" Width="160" Padding="12,10"
+                                          Background="Transparent" Foreground="Black" BorderThickness="0"
+                                          VerticalAlignment="Center" FontSize="13">
+                                    <ComboBox.Resources>
+                                        <Style TargetType="ComboBoxItem">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Setter Property="Foreground" Value="Black"/>
+                                            <Setter Property="Padding" Value="12,8"/>
+                                            <Setter Property="FontSize" Value="13"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#F8FAFC"/>
+                                                    <Setter Property="Foreground" Value="#1F2937"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="#3B82F6"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ComboBox.Resources>
+                                    <ComboBoxItem Content="🌞  Aydınlık Tema" Background="White" Foreground="Black"/>
+                                    <ComboBoxItem Content="🌙  Karanlık Tema" Background="White" Foreground="Black"/>
+                                </ComboBox>
+                            </Border>
                         </Grid>
                     </Border>
 
                     <!-- Yerleşim Kartı -->
-                    <Border Background="{DynamicResource AltRowBg}" CornerRadius="12" Padding="20,16" Margin="0,0,0,4">
+                    <Border Background="{DynamicResource AppBg}" CornerRadius="12" Padding="20,16" Margin="0,0,0,4"
+                           BorderThickness="1" BorderBrush="{DynamicResource Border}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -68,22 +94,47 @@
                                 </TextBlock>
                                 <TextBlock Text="Satır yüksekliğini ve hücre boşluğunu ayarlayın." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,0"/>
                             </StackPanel>
-                            <ComboBox Grid.Column="1" SelectedIndex="{Binding LayoutIndex}" Width="160" Padding="10,8"
-                                      Background="{DynamicResource AppBg}" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center">
-                                <ComboBoxItem Content="📊  Kompakt"/>
-                                <ComboBoxItem Content="📄  Geniş / Rahat"/>
-                            </ComboBox>
+                            <Border Grid.Column="1" CornerRadius="8" Background="White" BorderBrush="#E5E7EB">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" Opacity="0.1" BlurRadius="4" ShadowDepth="1"/>
+                                </Border.Effect>
+                                <ComboBox SelectedIndex="{Binding LayoutIndex}" Width="160" Padding="12,10"
+                                          Background="Transparent" Foreground="Black" BorderThickness="0"
+                                          VerticalAlignment="Center" FontSize="13">
+                                    <ComboBox.Resources>
+                                        <Style TargetType="ComboBoxItem">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Setter Property="Foreground" Value="Black"/>
+                                            <Setter Property="Padding" Value="12,8"/>
+                                            <Setter Property="FontSize" Value="13"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#F8FAFC"/>
+                                                    <Setter Property="Foreground" Value="#1F2937"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="#3B82F6"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ComboBox.Resources>
+                                    <ComboBoxItem Content="📊  Kompakt" Background="White" Foreground="Black"/>
+                                    <ComboBoxItem Content="📄  Geniş / Rahat" Background="White" Foreground="Black"/>
+                                </ComboBox>
+                            </Border>
                         </Grid>
                     </Border>
                 </StackPanel>
 
                 <!-- Footer -->
-                <Border Grid.Row="2" Background="{DynamicResource AltRowBg}" CornerRadius="0,0,20,20" Padding="25,15">
+                <Border Grid.Row="2" Background="{DynamicResource AppBg}" CornerRadius="0,0,20,20" Padding="25,15"
+                       BorderThickness="1,1,1,0" BorderBrush="{DynamicResource Border}">
                     <Grid>
                         <TextBlock Text="💡  Ayarlar anında uygulanır ve kaydedilir." FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
                         <Button Content="Kapat" Command="{Binding CloseUISettingsCommand}"
-                                HorizontalAlignment="Right" Background="#6366F1" Foreground="White"
-                                Padding="25,8" FontSize="13"/>
+                                HorizontalAlignment="Right" Background="{DynamicResource Accent}" Foreground="White"
+                                Padding="25,8" FontSize="13" BorderThickness="0"/>
                     </Grid>
                 </Border>
             </Grid>

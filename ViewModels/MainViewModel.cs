@@ -97,6 +97,9 @@ namespace OptikFormApp.ViewModels
             StudentsView = CollectionViewSource.GetDefaultView(Students);
             StudentsView.Filter = FilterStudents;
             
+            // Temayı uygula (saved ayarları yüklendikten sonra)
+            ApplyTheme(_themeIndex == 1);
+            
             _initTask = InitializeAsync();
 
             AnswerKeys.Add(new AnswerKeyModel { BookletName = "A", Answers = "" });
@@ -528,6 +531,11 @@ namespace OptikFormApp.ViewModels
         public string NewOutcomeRange { get => _newOutcomeRange; set { _newOutcomeRange = value; OnPropertyChanged(); } }
         public string NewOutcomeBooklet { get => _newOutcomeBooklet; set { _newOutcomeBooklet = value; OnPropertyChanged(); } }
 
+        // Zorluk Seviyesi Analizi için yeni property'ler
+        public ObservableCollection<QuestionDifficulty> QuestionDifficulties { get; } = new ObservableCollection<QuestionDifficulty>();
+        public double AverageDifficulty { get; set; } = 0;
+        public string DifficultyDistribution { get; set; } = "";
+
         public bool HasUnsavedData { get => _hasUnsavedData; set { _hasUnsavedData = value; OnPropertyChanged(); OnPropertyChanged(nameof(SaveStatusText)); } }
         public string SaveStatusText => _hasUnsavedData ? "⚠️ Kaydedilmedi" : (Students.Count > 0 ? "✅ Kaydedildi" : "");
 
@@ -755,15 +763,51 @@ namespace OptikFormApp.ViewModels
             if (System.Windows.Application.Current == null) return;
             var res = System.Windows.Application.Current.Resources;
             var cc = new System.Windows.Media.BrushConverter();
-            res["AppBg"] = cc.ConvertFromString(dark ? "#0F172A" : "#F4F7FB");
-            res["CardBg"] = cc.ConvertFromString(dark ? "#1E293B" : "White");
-            res["TextMain"] = cc.ConvertFromString(dark ? "#F8FAFC" : "#1E293B");
-            res["TextMuted"] = cc.ConvertFromString(dark ? "#94A3B8" : "#64748B");
-            res["Border"] = cc.ConvertFromString(dark ? "#334155" : "#E2E8F0");
-            res["HeaderBg"] = cc.ConvertFromString(dark ? "#0F172A" : "#F1F5F9");
-            res["AltRowBg"] = cc.ConvertFromString(dark ? "#0F172A" : "#F8FAFC");
-            res["HoverBg"] = cc.ConvertFromString(dark ? "#334155" : "#EFF6FF");
-            res["ModalBackdrop"] = cc.ConvertFromString(dark ? "#B3000000" : "#800F172A");
+            
+            // Modern renk paleti
+            if (dark) {
+                res["AppBg"] = cc.ConvertFromString("#0F172A");      // Slate-900
+                res["CardBg"] = cc.ConvertFromString("#1E293B");     // Slate-800  
+                res["TextMain"] = cc.ConvertFromString("#F8FAFC");    // Slate-50
+                res["TextMuted"] = cc.ConvertFromString("#94A3B8");  // Slate-400
+                res["Border"] = cc.ConvertFromString("#334155");     // Slate-700
+                res["HeaderBg"] = cc.ConvertFromString("#0F172A");    // Slate-900
+                res["AltRowBg"] = cc.ConvertFromString("#1E293B");   // Slate-800
+                res["HoverBg"] = cc.ConvertFromString("#475569");    // Slate-600
+                res["ModalBackdrop"] = cc.ConvertFromString("#B3000000"); // Black with opacity
+                res["Accent"] = cc.ConvertFromString("#3B82F6");     // Blue-600
+                res["AccentHover"] = cc.ConvertFromString("#2563EB");  // Blue-700
+                res["Success"] = cc.ConvertFromString("#10B981");     // Green-600
+                res["Warning"] = cc.ConvertFromString("#F59E0B");     // Amber-600
+                res["Error"] = cc.ConvertFromString("#EF4444");       // Red-600
+                
+                // Glassmorphism renkleri
+                res["GlassCardBgColor"] = cc.ConvertFromString("#FFFFFF"); // White for glass effect
+                res["GlassCardBorderColor"] = cc.ConvertFromString("#FFFFFF"); // White for glass effect
+                res["ShadowColor"] = cc.ConvertFromString("#000000");   // Black for shadows
+            } else {
+                res["AppBg"] = cc.ConvertFromString("#F8FAFC");      // Slate-50
+                res["CardBg"] = cc.ConvertFromString("#FFFFFF");       // White
+                res["TextMain"] = cc.ConvertFromString("#1E293B");    // Slate-800
+                res["TextMuted"] = cc.ConvertFromString("#64748B");  // Slate-500
+                res["Border"] = cc.ConvertFromString("#E2E8F0");     // Slate-200
+                res["HeaderBg"] = cc.ConvertFromString("#F1F5F9");    // Slate-100
+                res["AltRowBg"] = cc.ConvertFromString("#F8FAFC");   // Slate-50
+                res["HoverBg"] = cc.ConvertFromString("#EFF6FF");    // Blue-50
+                res["ModalBackdrop"] = cc.ConvertFromString("#800F172A"); // Black with opacity
+                res["Accent"] = cc.ConvertFromString("#3B82F6");     // Blue-600
+                res["AccentHover"] = cc.ConvertFromString("#2563EB");  // Blue-700
+                res["Success"] = cc.ConvertFromString("#10B981");     // Green-600
+                res["Warning"] = cc.ConvertFromString("#F59E0B");     // Amber-600
+                res["Error"] = cc.ConvertFromString("#EF4444");       // Red-600
+                
+                // Glassmorphism renkleri
+                res["GlassCardBgColor"] = cc.ConvertFromString("#FFFFFF"); // White for glass effect
+                res["GlassCardBorderColor"] = cc.ConvertFromString("#FFFFFF"); // White for glass effect
+                res["ShadowColor"] = cc.ConvertFromString("#000000");   // Black for shadows
+            }
+            
+            // System colors
             res[System.Windows.SystemColors.MenuBrushKey] = res["CardBg"];
             res[System.Windows.SystemColors.MenuTextBrushKey] = res["TextMain"];
             res[System.Windows.SystemColors.WindowBrushKey] = res["AppBg"];
@@ -933,46 +977,23 @@ namespace OptikFormApp.ViewModels
 
         private void UpdateOutcomeStats()
         {
-            if (Students.Count == 0) return;
+            if (Students.Count == 0 || LearningOutcomes.Count == 0) return;
 
-            // 1. First, calculate booklet-specific stats for each outcome row
-            foreach (var outcome in LearningOutcomes)
-            {
-                int localPossible = 0; int localCorrect = 0;
-                foreach (var student in Students)
-                {
-                    if (string.Equals(student.BookletType, outcome.BookletName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        foreach (var qNum in outcome.QuestionNumbers)
-                        {
-                            if (qNum > 0 && qNum <= student.QuestionResults.Count)
-                            {
-                                localPossible++;
-                                if (student.QuestionResults[qNum - 1]) localCorrect++;
-                            }
-                        }
-                    }
-                }
-                outcome.TotalQuestions = localPossible;
-                outcome.CorrectCount = localCorrect;
-                outcome.SuccessRate = localPossible > 0 ? Math.Round((double)localCorrect / localPossible * 100, 1) : 0;
-            }
+            var groups = LearningOutcomes.GroupBy(o => o.Name).ToList();
+            var updatedOutcomes = new List<LearningOutcome>();
 
-            // 2. Second, calculate global (merged) stats by topic name
-            var groups = LearningOutcomes.GroupBy(o => o.Name.Trim().ToLowerInvariant());
             foreach (var group in groups)
             {
-                int globalCorrect = 0; int globalTotal = 0;
-                
-                // Map booklets to outcomes in this group for fast lookup
-                var bookletMap = group.ToDictionary(o => o.BookletName.ToUpperInvariant(), o => o);
+                var globalCorrect = 0;
+                var globalTotal = 0;
 
-                foreach (var student in Students)
+                foreach (var outcome in group)
                 {
-                    string stdBooklet = (student.BookletType ?? "A").ToUpperInvariant();
-                    if (bookletMap.TryGetValue(stdBooklet, out var outcomeDef))
+                    var bookletStudents = Students.Where(s => s.BookletType == outcome.BookletName).ToList();
+                    
+                    foreach (var student in bookletStudents)
                     {
-                        foreach (var qNum in outcomeDef.QuestionNumbers)
+                        foreach (var qNum in outcome.QuestionNumbers)
                         {
                             if (qNum > 0 && qNum <= student.QuestionResults.Count)
                             {
@@ -981,20 +1002,89 @@ namespace OptikFormApp.ViewModels
                             }
                         }
                     }
+
+                    outcome.TotalQuestions = globalTotal;
+                    outcome.SuccessRate = globalTotal > 0 ? (double)globalCorrect / globalTotal * 100 : 0;
                 }
 
-                double globalRate = globalTotal > 0 ? Math.Round((double)globalCorrect / globalTotal * 100, 1) : 0;
-                foreach (var outcome in group)
-                {
-                    outcome.GlobalCorrectCount = globalCorrect;
-                    outcome.GlobalTotalQuestions = globalTotal;
-                    outcome.GlobalSuccessRate = globalRate;
-                }
+                var firstOutcome = group.First();
+                firstOutcome.GlobalCorrectCount = globalCorrect;
+                firstOutcome.GlobalTotalCount = globalTotal;
+                firstOutcome.GlobalSuccessRate = globalTotal > 0 ? (double)globalCorrect / globalTotal * 100 : 0;
+                updatedOutcomes.Add(firstOutcome);
             }
+
+            LearningOutcomes.Clear();
+            foreach (var outcome in updatedOutcomes)
+            {
+                LearningOutcomes.Add(outcome);
+            }
+            
             OnPropertyChanged(nameof(LearningOutcomes));
+            
+            // Zorluk Seviyesi Analizini Güncelle
+            UpdateQuestionDifficultyAnalysis();
             
             // Log the calculation completion
             AddToLog($"Kazanım odaklı başarı analizi tamamlandı: {LearningOutcomes.Count} kazanımdan {groups.Count()} benzersiz konu hesaplandı.", LogLevel.Success);
+        }
+
+        private void UpdateQuestionDifficultyAnalysis()
+        {
+            if (Students.Count == 0) return;
+
+            QuestionDifficulties.Clear();
+            double totalDifficulty = 0;
+            int questionCount = Math.Min(Students.FirstOrDefault()?.QuestionResults.Count ?? 0, 50);
+
+            for (int i = 0; i < questionCount; i++)
+            {
+                var questionNum = i + 1;
+                var correctCount = Students.Count(s => s.QuestionResults[i]);
+                var successRate = Students.Count > 0 ? (double)correctCount / Students.Count * 100 : 0;
+
+                var difficulty = new QuestionDifficulty
+                {
+                    QuestionNumber = questionNum,
+                    SuccessRate = successRate,
+                    CorrectAnswers = correctCount,
+                    TotalAnswers = Students.Count,
+                    DifficultyLevel = GetDifficultyLevel(successRate)
+                };
+
+                QuestionDifficulties.Add(difficulty);
+                totalDifficulty += successRate;
+            }
+
+            AverageDifficulty = questionCount > 0 ? totalDifficulty / questionCount : 0;
+            DifficultyDistribution = GetDifficultyDistribution();
+
+            OnPropertyChanged(nameof(QuestionDifficulties));
+            OnPropertyChanged(nameof(AverageDifficulty));
+            OnPropertyChanged(nameof(DifficultyDistribution));
+        }
+
+        private string GetDifficultyLevel(double successRate)
+        {
+            return successRate switch
+            {
+                >= 80 => "Kolay",
+                >= 60 => "Orta",
+                >= 40 => "Zor",
+                _ => "Çok Zor"
+            };
+        }
+
+        private string GetDifficultyDistribution()
+        {
+            if (QuestionDifficulties.Count == 0) return "Veri yok";
+
+            var easy = QuestionDifficulties.Count(q => q.DifficultyLevel == "Kolay");
+            var medium = QuestionDifficulties.Count(q => q.DifficultyLevel == "Orta");
+            var hard = QuestionDifficulties.Count(q => q.DifficultyLevel == "Zor");
+            var veryHard = QuestionDifficulties.Count(q => q.DifficultyLevel == "Çok Zor");
+
+            return $"Kolay: {easy}, Orta: {medium}, Zor: {hard}, Çok Zor: {veryHard}";
         }
 
         private void UpdateChartData(System.Collections.Generic.List<QuestionStatisticItem> stats, System.Collections.Generic.List<StudentResult> students)

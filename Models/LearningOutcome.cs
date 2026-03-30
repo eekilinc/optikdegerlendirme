@@ -50,6 +50,9 @@ namespace OptikFormApp.Models
         private int _globalCorrectCount;
         public int GlobalCorrectCount { get => _globalCorrectCount; set { _globalCorrectCount = value; OnPropertyChanged(); } }
 
+        private int _globalTotalCount;
+        public int GlobalTotalCount { get => _globalTotalCount; set { _globalTotalCount = value; OnPropertyChanged(); } }
+
         private int _globalTotalQuestions;
         public int GlobalTotalQuestions { get => _globalTotalQuestions; set { _globalTotalQuestions = value; OnPropertyChanged(); } }
 

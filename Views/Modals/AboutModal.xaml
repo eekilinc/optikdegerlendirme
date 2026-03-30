@@ -11,7 +11,7 @@
                 <DropShadowEffect Color="Black" Opacity="0.2" BlurRadius="40" ShadowDepth="12"/>
             </Border.Effect>
             <StackPanel HorizontalAlignment="Center">
-                <Border Width="80" Height="80" CornerRadius="20" Background="{DynamicResource AltRowBg}" Margin="0,0,0,25" Padding="15">
+                <Border Width="100" Height="100" CornerRadius="20" Background="{DynamicResource AltRowBg}" Margin="0,0,0,25" Padding="20">
                     <Image Source="/Assets/app_logo.png" Stretch="Uniform"/>
                 </Border>
                 

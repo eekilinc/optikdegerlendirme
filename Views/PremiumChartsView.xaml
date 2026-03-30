@@ -41,7 +41,7 @@
                                   Foreground="{DynamicResource TextMain}" Margin="0,0,0,15"/>
                         
                         <Border Grid.Row="1" Name="QuestionSuccessChart" 
-                                   Background="Transparent"/>
+                                   Background="Transparent" Cursor="Hand"/>
                     </Grid>
                 </Border>
 
@@ -64,7 +64,7 @@
                                   Foreground="{DynamicResource TextMain}" Margin="0,0,0,15"/>
                         
                         <Border Grid.Row="1" Name="ScoreDistributionChart" 
-                                   Background="Transparent"/>
+                                   Background="Transparent" Cursor="Hand"/>
                     </Grid>
                 </Border>
 
@@ -88,7 +88,7 @@
                                       Foreground="{DynamicResource TextMain}" Margin="0,0,0,15"/>
                             
                             <Border Name="BookletPerformanceChart" 
-                                       Background="Transparent" Height="200"/>
+                                       Background="Transparent" Height="200" Cursor="Hand"/>
                         </StackPanel>
                         
                         <StackPanel Grid.Column="1" Margin="20,0,0,0">
@@ -136,7 +136,7 @@
                                   Foreground="{DynamicResource TextMain}" Margin="0,0,0,15"/>
                         
                         <Border Grid.Row="1" Name="TimeAnalysisChart" 
-                                   Background="Transparent"/>
+                                   Background="Transparent" Cursor="Hand"/>
                     </Grid>
                 </Border>
             </StackPanel>

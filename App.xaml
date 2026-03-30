@@ -6,6 +6,9 @@
     <Application.Resources>
         <!-- Shared Converters -->
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <vm:DifficultyCountConverter x:Key="DifficultyCountConverter"/>
+        <vm:ValueToWidthConverter x:Key="ValueToWidthConverter"/>
+        <vm:DifficultyToBackgroundConverter x:Key="DifficultyToBackgroundConverter"/>
         <vm:AnswerStateToBrushConverter x:Key="AnswerStateConverter"/>
         <vm:CountToVisibilityConverter x:Key="CountToVisConverter"/>
         <vm:CountToVisibilityConverter x:Key="DataToVisConverter" Invert="True"/>
@@ -132,6 +135,23 @@
         </Style>
 
         <!-- Global Styles -->
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F3F4F6"/>
+                    <Setter Property="Foreground" Value="Black"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#3B82F6"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <Style TargetType="Button">
             <Setter Property="Background" Value="#3B82F6"/>
             <Setter Property="Foreground" Value="White"/>

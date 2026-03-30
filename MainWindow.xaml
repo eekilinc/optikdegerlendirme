@@ -178,23 +178,28 @@
                             </Style>
                         </TabControl.Resources>
                         <!-- TAB 1: STUDENTS -->
-                        <TabItem Header="İşlem Kayıtları">
+                        <TabItem Header="Öğrenci İşlemleri">
                             <views:StudentListView />
                         </TabItem>
 
                         <!-- TAB 2: STATISTICS -->
-                        <TabItem Header="Sınav İstatistikleri (Madde Analizi)">
+                        <TabItem Header="Madde Analizi">
                             <views:StatisticsView />
                         </TabItem>
 
                         <!-- TAB 3: CHARTS -->
-                        <TabItem Header="Premium Grafikler">
+                        <TabItem Header="Grafiksel Analiz">
                             <views:PremiumChartsView />
                         </TabItem>
 
                         <!-- TAB 4: OUTCOMES -->
-                        <TabItem Header="Kazanım Odaklı Başarı">
+                        <TabItem Header="Kazanım Değerlendirmesi">
                             <views:OutcomesView />
+                        </TabItem>
+
+                        <!-- TAB 5: QUESTION DIFFICULTY -->
+                        <TabItem Header="Zorluk Seviyesi Analizi">
+                            <views:QuestionDifficultyView />
                         </TabItem>
                     </TabControl>
                 </Border>
