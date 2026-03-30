@@ -57,6 +57,9 @@ namespace OptikFormApp.ViewModels
         private double _wrongDeductionFactor = 0.25;
         private bool _isBusy;
         private string _busyMessage = "";
+        private string _newOutcomeName = "";
+        private string _newOutcomeRange = "";
+        private string _newOutcomeBooklet = "A";
 
         public ICollectionView StudentsView { get; }
 
@@ -143,7 +146,36 @@ namespace OptikFormApp.ViewModels
                 await AutoSaveSelectedExamAsync();
             });
             
-            AddOutcomeCommand = new RelayCommand(_ => LearningOutcomes.Add(new LearningOutcome { Name = "Yeni Konu" }));
+            AddLearningOutcomeCommand = new RelayCommand(_ => 
+            {
+                if (!string.IsNullOrWhiteSpace(NewOutcomeRange) && !string.IsNullOrWhiteSpace(NewOutcomeName))
+                {
+                    var outcome = new LearningOutcome 
+                    { 
+                        Name = NewOutcomeName,
+                        BookletName = NewOutcomeBooklet,
+                        QuestionNumbersRaw = NewOutcomeRange
+                    };
+                    LearningOutcomes.Add(outcome);
+                    
+                    // Clear input fields
+                    NewOutcomeName = string.Empty;
+                    NewOutcomeRange = string.Empty;
+                    NewOutcomeBooklet = "A";
+                    
+                    AddToLog($"Yeni kazanım eklendi: {outcome.Name} ({outcome.BookletName} kitapçığı)", LogLevel.Success);
+                    
+                    // Recalculate if we have students
+                    if (Students.Count > 0)
+                    {
+                        UpdateOutcomeStats();
+                    }
+                }
+                else
+                {
+                    ShowAlert("Eksik Bilgi", "Lütfen kazanım adı ve soru numaralarını girin.");
+                }
+            });
             RemoveOutcomeCommand = new RelayCommand(p => { if (p is LearningOutcome lo) LearningOutcomes.Remove(lo); });
 
             CloseAlertCommand = new RelayCommand(_ => IsAlertOpen = false);
@@ -492,6 +524,10 @@ namespace OptikFormApp.ViewModels
         public bool IsBusy { get => _isBusy; set { _isBusy = value; OnPropertyChanged(); } }
         public string BusyMessage { get => _busyMessage; set { _busyMessage = value; OnPropertyChanged(); } }
 
+        public string NewOutcomeName { get => _newOutcomeName; set { _newOutcomeName = value; OnPropertyChanged(); } }
+        public string NewOutcomeRange { get => _newOutcomeRange; set { _newOutcomeRange = value; OnPropertyChanged(); } }
+        public string NewOutcomeBooklet { get => _newOutcomeBooklet; set { _newOutcomeBooklet = value; OnPropertyChanged(); } }
+
         public bool HasUnsavedData { get => _hasUnsavedData; set { _hasUnsavedData = value; OnPropertyChanged(); OnPropertyChanged(nameof(SaveStatusText)); } }
         public string SaveStatusText => _hasUnsavedData ? "⚠️ Kaydedilmedi" : (Students.Count > 0 ? "✅ Kaydedildi" : "");
 
@@ -510,7 +546,8 @@ namespace OptikFormApp.ViewModels
         public ICommand CloseQuestionSettingsCommand { get; set; }
         public ICommand OpenLearningOutcomesCommand { get; set; }
         public ICommand CloseLearningOutcomesCommand { get; set; }
-        public ICommand AddOutcomeCommand { get; set; }
+        public ICommand AddLearningOutcomeCommand { get; set; }
+        public ICommand AddOutcomeCommand { get; set; } = new RelayCommand(_ => { });
         public ICommand RemoveOutcomeCommand { get; set; }
         public ICommand SelectFolderCommand { get; set; }
         public ICommand CloseAlertCommand { get; set; }
@@ -955,6 +992,9 @@ namespace OptikFormApp.ViewModels
                 }
             }
             OnPropertyChanged(nameof(LearningOutcomes));
+            
+            // Log the calculation completion
+            AddToLog($"Kazanım odaklı başarı analizi tamamlandı: {LearningOutcomes.Count} kazanımdan {groups.Count()} benzersiz konu hesaplandı.", LogLevel.Success);
         }
 
         private void UpdateChartData(System.Collections.Generic.List<QuestionStatisticItem> stats, System.Collections.Generic.List<StudentResult> students)

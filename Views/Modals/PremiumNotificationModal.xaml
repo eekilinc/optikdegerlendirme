@@ -1,0 +1,122 @@
+<UserControl x:Class="OptikFormApp.Views.Modals.PremiumNotificationModal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="200" d:DesignWidth="400">
+    
+    <UserControl.Resources>
+        <!-- Notification Animations -->
+        <Storyboard x:Key="NotificationSlideIn">
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" 
+                           From="400" To="0" Duration="0:0:0.5">
+                <DoubleAnimation.EasingFunction>
+                    <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                           From="0" To="1" Duration="0:0:0.3"/>
+        </Storyboard>
+        
+        <Storyboard x:Key="NotificationSlideOut">
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" 
+                           From="0" To="400" Duration="0:0:0.4">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseIn"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                           From="1" To="0" Duration="0:0:0.2"/>
+        </Storyboard>
+        
+        <Storyboard x:Key="NotificationPulse">
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" 
+                           From="1" To="1.05" Duration="0:0:0.2" AutoReverse="True"/>
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" 
+                           From="1" To="1.05" Duration="0:0:0.2" AutoReverse="True"/>
+        </Storyboard>
+    </UserControl.Resources>
+    
+    <Border HorizontalAlignment="Right" VerticalAlignment="Top" 
+            Margin="20" Style="{StaticResource GlassCard}"
+            MinWidth="300" MaxWidth="400"
+            RenderTransformOrigin="0.5,0.5">
+        <Border.RenderTransform>
+            <TransformGroup>
+                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                <TranslateTransform X="0" Y="0"/>
+            </TransformGroup>
+        </Border.RenderTransform>
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#10FFFFFF" Offset="0"/>
+                <GradientStop Color="#083B82F6" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
+        <Border.Effect>
+            <DropShadowEffect Color="#000000" Opacity="0.2" BlurRadius="15" ShadowDepth="3"/>
+        </Border.Effect>
+        
+        <Grid Margin="15">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Header with Icon -->
+            <Grid Grid.Row="0" Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16" 
+                        Background="#10B981" Margin="0,0,10,0">
+                    <TextBlock Text="✓" FontSize="16" FontWeight="Bold" 
+                              Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                
+                <TextBlock Grid.Column="1" x:Name="TitleText" 
+                          Text="Başarılı" FontSize="16" FontWeight="Bold"
+                          Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                
+                <Button Grid.Column="2" x:Name="CloseButton" 
+                        Style="{StaticResource GlassButton}" 
+                        Width="24" Height="24" Padding="0" Background="Transparent"
+                        Click="CloseButton_Click">
+                    <TextBlock Text="✕" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                </Button>
+            </Grid>
+            
+            <!-- Message -->
+            <TextBlock Grid.Row="1" x:Name="MessageText" 
+                      Text="İşlem başarıyla tamamlandı." 
+                      FontSize="14" TextWrapping="Wrap"
+                      Foreground="{DynamicResource TextMain}" 
+                      Margin="0,0,0,15"/>
+            
+            <!-- Action Buttons -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="ActionButton" Content="Detayları Gör" 
+                        Style="{StaticResource OutlineButton}" 
+                        FontSize="12" Padding="10,5" Margin="0,0,8,0"
+                        Click="ActionButton_Click"/>
+                <Button x:Name="DismissButton" Content="Kapat" 
+                        Style="{StaticResource GlassButton}" 
+                        FontSize="12" Padding="10,5"
+                        Click="DismissButton_Click"/>
+            </StackPanel>
+        </Grid>
+        
+        <!-- Auto-close timer ve animasyonlar -->
+        <Border.Triggers>
+            <EventTrigger RoutedEvent="Loaded">
+                <BeginStoryboard Storyboard="{StaticResource NotificationSlideIn}"/>
+                <BeginStoryboard Storyboard="{StaticResource NotificationPulse}"/>
+            </EventTrigger>
+        </Border.Triggers>
+    </Border>
+</UserControl>

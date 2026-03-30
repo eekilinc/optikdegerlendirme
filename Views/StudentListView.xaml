@@ -46,7 +46,23 @@
         </Border>
 
         <DataGrid Grid.Row="1" ItemsSource="{Binding StudentsView}" RowHeight="{Binding GridRowHeight}"
-                  Visibility="{Binding Students.Count, Converter={StaticResource DataToVisConverter}}">
+                  Visibility="{Binding Students.Count, Converter={StaticResource DataToVisConverter}}"
+                  VirtualizingPanel.IsVirtualizing="True"
+                  VirtualizingPanel.VirtualizationMode="Recycling"
+                  VirtualizingPanel.IsContainerVirtualizable="True"
+                  VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                  EnableRowVirtualization="True"
+                  EnableColumnVirtualization="False"
+                  ScrollViewer.CanContentScroll="True"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  GridLinesVisibility="None"
+                  HeadersVisibility="Column"
+                  Background="{DynamicResource CardBg}"
+                  Foreground="{DynamicResource TextMain}"
+                  RowBackground="{DynamicResource CardBg}"
+                  AlternatingRowBackground="{DynamicResource AltRowBg}"
+                  BorderThickness="0">
             <DataGrid.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="📄 Bu Öğrenci İçin PDF Karne Al" 

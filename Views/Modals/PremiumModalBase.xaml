@@ -1,0 +1,125 @@
+<UserControl x:Class="OptikFormApp.Views.Modals.PremiumModalBase"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="800">
+    
+    <UserControl.Resources>
+        <!-- Modal Animasyonları -->
+        <Storyboard x:Key="ModalFadeIn">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                           From="0" To="1" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+        
+        <Storyboard x:Key="ModalSlideIn">
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" 
+                           From="50" To="0" Duration="0:0:0.4">
+                <DoubleAnimation.EasingFunction>
+                    <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                           From="0" To="1" Duration="0:0:0.3"/>
+        </Storyboard>
+        
+        <Storyboard x:Key="ModalFadeOut">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                           From="1" To="0" Duration="0:0:0.2"/>
+        </Storyboard>
+        
+        <Storyboard x:Key="ModalSlideOut">
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" 
+                           From="0" To="50" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseIn"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                           From="1" To="0" Duration="0:0:0.2"/>
+        </Storyboard>
+    </UserControl.Resources>
+    
+    <Grid Background="#10000000">
+        <!-- Modal Container -->
+        <Border HorizontalAlignment="Center" VerticalAlignment="Center" 
+                Style="{StaticResource GlassCard}" 
+                MinWidth="400" MaxWidth="800" MinHeight="200" MaxHeight="600"
+                RenderTransformOrigin="0.5,0.5">
+            <Border.RenderTransform>
+                <TranslateTransform X="0" Y="0"/>
+            </Border.RenderTransform>
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#10FFFFFF" Offset="0"/>
+                    <GradientStop Color="#083B82F6" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" Opacity="0.3" BlurRadius="20" ShadowDepth="5"/>
+            </Border.Effect>
+            
+            <!-- Modal Content -->
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <!-- Header -->
+                <Border Grid.Row="0" Background="{x:Null}" BorderThickness="0,0,0,1" 
+                        BorderBrush="#30FFFFFF" Padding="20,15">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBlock Grid.Column="0" x:Name="TitleText" 
+                                  Text="Modal Başlığı" FontSize="18" FontWeight="Bold"
+                                  Foreground="{DynamicResource TextMain}"/>
+                        
+                        <Button Grid.Column="1" x:Name="CloseButton" 
+                                Style="{StaticResource GlassButton}" 
+                                Width="32" Height="32" Padding="0"
+                                Click="CloseButton_Click">
+                            <TextBlock Text="✕" FontSize="16" Foreground="White"/>
+                        </Button>
+                    </Grid>
+                </Border>
+                
+                <!-- Content -->
+                <Border Grid.Row="1" Padding="20">
+                    <ContentControl x:Name="ModalContent"/>
+                </Border>
+                
+                <!-- Footer -->
+                <Border Grid.Row="2" Background="{x:Null}" BorderThickness="0,1,0,0" 
+                        BorderBrush="#30FFFFFF" Padding="20,15">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="CancelButton" Content="İptal" 
+                                Style="{StaticResource OutlineButton}" 
+                                Margin="0,0,10,0" Click="CancelButton_Click"/>
+                        <Button x:Name="ConfirmButton" Content="Tamam" 
+                                Style="{StaticResource GlassButton}" 
+                                Click="ConfirmButton_Click"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+            
+            <!-- Modal Animasyonları -->
+            <Border.Triggers>
+                <EventTrigger RoutedEvent="Loaded">
+                    <BeginStoryboard Storyboard="{StaticResource ModalFadeIn}"/>
+                    <BeginStoryboard Storyboard="{StaticResource ModalSlideIn}"/>
+                </EventTrigger>
+            </Border.Triggers>
+        </Border>
+    </Grid>
+</UserControl>

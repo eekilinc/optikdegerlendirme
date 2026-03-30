@@ -30,19 +30,29 @@
                 <Border Grid.Row="1" Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="15" Margin="0,0,0,20">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                            <TextBlock Text="Konu Başlığı" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5"/>
+                        <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                            <TextBlock Text="Kazanım Adı" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5"/>
                             <TextBox Text="{Binding NewOutcomeName, UpdateSourceTrigger=PropertyChanged}" Padding="8" Background="{DynamicResource CardBg}"/>
                         </StackPanel>
-                        <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                        <StackPanel Grid.Column="1" Margin="0,0,15,0">
+                            <TextBlock Text="Kitapçık" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5"/>
+                            <ComboBox SelectedItem="{Binding NewOutcomeBooklet}" Padding="8" Background="{DynamicResource CardBg}">
+                                <ComboBoxItem>A</ComboBoxItem>
+                                <ComboBoxItem>B</ComboBoxItem>
+                                <ComboBoxItem>C</ComboBoxItem>
+                                <ComboBoxItem>D</ComboBoxItem>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Margin="0,0,15,0">
                             <TextBlock Text="Soru No (Örn: 1-5)" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5"/>
                             <TextBox Text="{Binding NewOutcomeRange, UpdateSourceTrigger=PropertyChanged}" Padding="8" Background="{DynamicResource CardBg}"/>
                         </StackPanel>
-                        <Button Grid.Column="2" Content="Ekle" Command="{Binding AddLearningOutcomeCommand}" 
+                        <Button Grid.Column="3" Content="Ekle" Command="{Binding AddLearningOutcomeCommand}" 
                                 VerticalAlignment="Bottom" Padding="20,8" Background="#3B82F6" Foreground="White"/>
                     </Grid>
                 </Border>
@@ -51,7 +61,8 @@
                           Background="Transparent" BorderThickness="0" RowHeaderWidth="0">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Konu Başlığı" Binding="{Binding Name}" Width="*" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Soru Aralığı" Binding="{Binding QuestionRangeText}" Width="120" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Kitapçık" Binding="{Binding BookletName}" Width="80" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Soru Aralığı" Binding="{Binding QuestionNumbersRaw}" Width="120" IsReadOnly="True"/>
                         <DataGridTemplateColumn Width="80">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>

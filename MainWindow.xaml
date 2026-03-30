@@ -88,13 +88,66 @@
                 </Grid.RowDefinitions>
 
                 <!-- MODERN WORKFLOW ACTION BAR -->
-                <views:WorkflowView Grid.Row="0" />
+                <Border Grid.Row="0" Style="{StaticResource GlassCard}" Padding="20" Margin="0,0,0,20">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#05FFFFFF" Offset="0"/>
+                            <GradientStop Color="#053B82F6" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.RenderTransform>
+                        <TranslateTransform X="0" Y="0"/>
+                    </Border.RenderTransform>
+                    <Border.Triggers>
+                        <EventTrigger RoutedEvent="Loaded">
+                            <EventTrigger.Actions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" 
+                                                       From="-30" To="0" Duration="0:0:0.6">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                                                       From="0" To="1" Duration="0:0:0.4"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger.Actions>
+                        </EventTrigger>
+                    </Border.Triggers>
+                    <views:WorkflowView />
+                </Border>
 
                 <!-- TAB CONTROL -->
-                <Border Grid.Row="1" CornerRadius="12" Background="{DynamicResource CardBg}" ClipToBounds="True">
-                    <Border.Effect>
-                        <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="15" ShadowDepth="2"/>
-                    </Border.Effect>
+                <Border Grid.Row="1" Style="{StaticResource GlassCard}" ClipToBounds="True">
+                    <Border.Background>
+                        <RadialGradientBrush Center="0.5,0.3" RadiusX="1" RadiusY="1">
+                            <GradientStop Color="#08FFFFFF" Offset="0"/>
+                            <GradientStop Color="#038B5CF6" Offset="1"/>
+                        </RadialGradientBrush>
+                    </Border.Background>
+                    <Border.RenderTransform>
+                        <TranslateTransform X="0" Y="0"/>
+                    </Border.RenderTransform>
+                    <Border.Triggers>
+                        <EventTrigger RoutedEvent="Loaded">
+                            <EventTrigger.Actions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" 
+                                                       From="50" To="0" Duration="0:0:0.8" BeginTime="0:0:0.2">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                                                       From="0" To="1" Duration="0:0:0.6" BeginTime="0:0:0.2"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger.Actions>
+                        </EventTrigger>
+                    </Border.Triggers>
 
                     <TabControl Background="Transparent" BorderThickness="0" Margin="0">
                         <TabControl.Resources>
@@ -135,8 +188,8 @@
                         </TabItem>
 
                         <!-- TAB 3: CHARTS -->
-                        <TabItem Header="Analiz Grafikleri (Görsel)">
-                            <views:ChartsView />
+                        <TabItem Header="Premium Grafikler">
+                            <views:PremiumChartsView />
                         </TabItem>
 
                         <!-- TAB 4: OUTCOMES -->
@@ -147,7 +200,30 @@
                 </Border>
 
                 <!-- STATUS PANEL & LOGS (BOTTOM) -->
-                <views:StatusPanelView Grid.Row="2" Margin="0,20,0,0" />
+                <Border Grid.Row="2" Margin="0,20,0,0">
+                    <Border.RenderTransform>
+                        <TranslateTransform X="0" Y="0"/>
+                    </Border.RenderTransform>
+                    <Border.Triggers>
+                        <EventTrigger RoutedEvent="Loaded">
+                            <EventTrigger.Actions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" 
+                                                       From="30" To="0" Duration="0:0:0.6" BeginTime="0:0:0.4">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.2"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                                                       From="0" To="1" Duration="0:0:0.4" BeginTime="0:0:0.4"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger.Actions>
+                        </EventTrigger>
+                    </Border.Triggers>
+                    <views:StatusPanelView />
+                </Border>
             </Grid>
         </Grid>
 

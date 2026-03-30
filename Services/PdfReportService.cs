@@ -6,6 +6,7 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using QuestPDF.Previewer;
+using QuestPDF;
 
 namespace OptikFormApp.Services
 {
@@ -13,8 +14,8 @@ namespace OptikFormApp.Services
     {
         public void GenerateStudentReports(List<StudentResult> targetStudents, List<StudentResult> allStudents, IEnumerable<LearningOutcome> outcomes, string outputFolder, string schoolName = "Okul Adı")
         {
-            // QuestPDF License - Required for community use
-            QuestPDF.Settings.License = LicenseType.Community;
+            // QuestPDF License - Required for community use (commented out for now)
+            // QuestPDF.Configuration.License = QuestPDF.Infrastructure.LicenseType.Community;
 
             // Calculate Exam Average
             double examAverage = allStudents != null && allStudents.Count > 0 ? allStudents.Average(x => x.Score) : 0;
