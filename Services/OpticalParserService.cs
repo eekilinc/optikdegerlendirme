@@ -43,7 +43,7 @@ namespace OptikFormApp.Services
                         string fullName = line.Substring(0, 22).Trim();
                         string studentId = line.Substring(22, 10).Trim();
                         string bookletType = line.Substring(32, 1).Trim().ToUpper();
-                        string rawAnswers = line.Length > 33 ? line.Substring(33) : "";
+                        string rawAnswers = line.Length > 33 ? line.Substring(33).TrimEnd() : "";
 
                         if (!IsValidOpticalFormat(bookletType, rawAnswers, studentId))
                         {
@@ -182,7 +182,7 @@ namespace OptikFormApp.Services
                 
                 double net = correct - (wrong * wrongDeductionFactor);
                 student.NetCount = Math.Max(0, net);
-                student.Score = (key.Answers.Length > 0) ? (student.NetCount / key.Answers.Length) * 100 : 0;
+                // Score will be calculated in ViewModel based on custom coefficients
             }
 
             // Assign Rank

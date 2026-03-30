@@ -1,0 +1,64 @@
+<UserControl x:Class="OptikFormApp.Views.Modals.BookletSettingsModal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="800">
+    <Grid Visibility="{Binding IsModalOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}">
+        <Border Background="{DynamicResource CardBg}" CornerRadius="16" Width="650" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="35">
+            <Border.Effect>
+                <DropShadowEffect Color="Black" Opacity="0.15" BlurRadius="30" ShadowDepth="10"/>
+            </Border.Effect>
+            
+            <StackPanel>
+                <DockPanel LastChildFill="False" Margin="0,0,0,20">
+                    <TextBlock Text="Cevap Anahtarı Yönetimi" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextMain}" DockPanel.Dock="Left" VerticalAlignment="Center"/>
+                    <Button Content="X" Command="{Binding CloseModalCommand}" Background="Transparent" Foreground="{DynamicResource TextMuted}" FontSize="18" Padding="10,5" DockPanel.Dock="Right" ToolTip="Kapat" Margin="0,-10,-10,0"/>
+                </DockPanel>
+
+                <TextBlock Text="Kitapçık türlerine göre cevap şablonlarını aşağıdan ekleyip silebilirsiniz." Foreground="{DynamicResource TextMuted}" Margin="0,0,0,20" TextWrapping="Wrap"/>
+
+                <ScrollViewer MaxHeight="400" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding AnswerKeys}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource AltRowBg}" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="8" Padding="15" Margin="0,0,0,10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,15,0">
+                                            <TextBlock Text="Kitapçık:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding BookletName, UpdateSourceTrigger=PropertyChanged}" Width="50" ToolTip="Örn: A" TextAlignment="Center" FontWeight="Bold"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Orientation="Vertical" Margin="0,0,15,0">
+                                            <TextBlock Text="Cevap Anahtarı Karakterleri:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding Answers, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas" MinWidth="300" HorizontalAlignment="Stretch"/>
+                                        </StackPanel>
+
+                                        <Button Grid.Column="2" Command="{Binding DataContext.RemoveAnswerKeyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Background="Transparent" BorderBrush="#EF4444" BorderThickness="1" Foreground="#EF4444" Content="Sil" Padding="15,8" VerticalAlignment="Bottom"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                    <Button Content="+ Yeni Ekle" Command="{Binding AddAnswerKeyCommand}" Style="{StaticResource OutlineButton}" Margin="0,0,15,0"/>
+                    <Button Content="Kaydet ve Kapat" Command="{Binding CloseModalCommand}" Background="#10B981" Padding="25,10"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

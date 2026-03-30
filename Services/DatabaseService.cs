@@ -24,17 +24,15 @@ namespace OptikFormApp.Services
             _dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "optik.db");
             _connection = new SqliteConnection($"Data Source={_dbPath}");
             _connection.Open();
-            EnableForeignKeys();
-            InitializeDatabase();
         }
 
         // ── Yardımcı ──────────────────────────────────────────────────────────
 
-        private void EnableForeignKeys()
+        private async Task EnableForeignKeysAsync()
         {
             using var cmd = _connection.CreateCommand();
             cmd.CommandText = "PRAGMA foreign_keys = ON;";
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync();
         }
 
         private SqliteCommand CreateCommand(string sql)
@@ -44,8 +42,9 @@ namespace OptikFormApp.Services
             return cmd;
         }
 
-        private void InitializeDatabase()
+        public async Task InitializeDatabaseAsync()
         {
+            await EnableForeignKeysAsync();
             using var cmd = CreateCommand(@"
                 CREATE TABLE IF NOT EXISTS Courses (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -76,17 +75,17 @@ namespace OptikFormApp.Services
                     QuestionResultsJson TEXT,
                     FOREIGN KEY(ExamId) REFERENCES Exams(Id) ON DELETE CASCADE
                 );");
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync();
         }
 
         // ── Courses ───────────────────────────────────────────────────────────
 
-        public List<Course> GetCourses()
+        public async Task<List<Course>> GetCoursesAsync()
         {
             var courses = new List<Course>();
             using var cmd = CreateCommand("SELECT Id, Code, Name FROM Courses ORDER BY Name");
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
             {
                 courses.Add(new Course
                 {
@@ -98,14 +97,14 @@ namespace OptikFormApp.Services
             return courses;
         }
 
-        public int SaveCourse(Course course)
+        public async Task<int> SaveCourseAsync(Course course)
         {
             if (course.Id == 0)
             {
                 using var cmd = CreateCommand("INSERT INTO Courses (Code, Name) VALUES (@code, @name); SELECT last_insert_rowid();");
                 cmd.Parameters.AddWithValue("@code", course.Code);
                 cmd.Parameters.AddWithValue("@name", course.Name);
-                return Convert.ToInt32(cmd.ExecuteScalar());
+                return Convert.ToInt32(await cmd.ExecuteScalarAsync());
             }
             else
             {
@@ -113,44 +112,44 @@ namespace OptikFormApp.Services
                 cmd.Parameters.AddWithValue("@code", course.Code);
                 cmd.Parameters.AddWithValue("@name", course.Name);
                 cmd.Parameters.AddWithValue("@id", course.Id);
-                cmd.ExecuteNonQuery();
+                await cmd.ExecuteNonQueryAsync();
                 return course.Id;
             }
         }
 
-        public void DeleteCourse(int courseId)
+        public async Task DeleteCourseAsync(int courseId)
         {
             using var cmd = CreateCommand("DELETE FROM Courses WHERE Id = @id");
             cmd.Parameters.AddWithValue("@id", courseId);
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync();
         }
 
-        public void RenameCourse(int courseId, string newCode, string newName)
+        public async Task RenameCourseAsync(int courseId, string newCode, string newName)
         {
             using var cmd = CreateCommand("UPDATE Courses SET Code = @code, Name = @name WHERE Id = @id");
             cmd.Parameters.AddWithValue("@code", newCode);
             cmd.Parameters.AddWithValue("@name", newName);
             cmd.Parameters.AddWithValue("@id", courseId);
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync();
         }
 
         // ── Exams ─────────────────────────────────────────────────────────────
 
-        public void RenameExam(int examId, string newTitle)
+        public async Task RenameExamAsync(int examId, string newTitle)
         {
             using var cmd = CreateCommand("UPDATE Exams SET Title = @title WHERE Id = @id");
             cmd.Parameters.AddWithValue("@title", newTitle);
             cmd.Parameters.AddWithValue("@id", examId);
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync();
         }
 
-        public List<ExamEntry> GetExamsForCourse(int courseId)
+        public async Task<List<ExamEntry>> GetExamsForCourseAsync(int courseId)
         {
             var exams = new List<ExamEntry>();
             using var cmd = CreateCommand("SELECT Id, CourseId, Title, ExamDate, ConfigJson FROM Exams WHERE CourseId = @cid ORDER BY ExamDate DESC");
             cmd.Parameters.AddWithValue("@cid", courseId);
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
             {
                 exams.Add(new ExamEntry
                 {
@@ -164,63 +163,63 @@ namespace OptikFormApp.Services
             return exams;
         }
 
-        public int SaveExam(ExamEntry exam, List<StudentResult> results)
+        public async Task<int> SaveExamAsync(ExamEntry exam, List<StudentResult> results)
         {
-            using var transaction = _connection.BeginTransaction();
+            using var transaction = await _connection.BeginTransactionAsync();
             try
             {
                 using var cmd = CreateCommand(
                     "INSERT INTO Exams (CourseId, Title, ExamDate, ConfigJson) VALUES (@cid, @title, @date, @config); SELECT last_insert_rowid();");
-                cmd.Transaction = transaction;
+                cmd.Transaction = (SqliteTransaction)transaction;
                 cmd.Parameters.AddWithValue("@cid", exam.CourseId);
                 cmd.Parameters.AddWithValue("@title", exam.Title);
                 cmd.Parameters.AddWithValue("@date", exam.Date.ToString("o"));
                 cmd.Parameters.AddWithValue("@config", exam.ConfigJson);
-                int examId = Convert.ToInt32(cmd.ExecuteScalar());
+                int examId = Convert.ToInt32(await cmd.ExecuteScalarAsync());
 
-                InsertResults(transaction, examId, results);
-                transaction.Commit();
+                await InsertResultsAsync((SqliteTransaction)transaction, examId, results);
+                await transaction.CommitAsync();
                 return examId;
             }
             catch
             {
-                transaction.Rollback();
+                await transaction.RollbackAsync();
                 throw;
             }
         }
 
-        public void UpdateExam(ExamEntry exam, List<StudentResult> results)
+        public async Task UpdateExamAsync(ExamEntry exam, List<StudentResult> results)
         {
-            using var transaction = _connection.BeginTransaction();
+            using var transaction = await _connection.BeginTransactionAsync();
             try
             {
                 using (var updateCmd = CreateCommand("UPDATE Exams SET Title=@title, ConfigJson=@config WHERE Id=@id"))
                 {
-                    updateCmd.Transaction = transaction;
+                    updateCmd.Transaction = (SqliteTransaction)transaction;
                     updateCmd.Parameters.AddWithValue("@title", exam.Title);
                     updateCmd.Parameters.AddWithValue("@config", exam.ConfigJson);
                     updateCmd.Parameters.AddWithValue("@id", exam.Id);
-                    updateCmd.ExecuteNonQuery();
+                    await updateCmd.ExecuteNonQueryAsync();
                 }
 
                 using (var delCmd = CreateCommand("DELETE FROM ExamResults WHERE ExamId = @eid"))
                 {
-                    delCmd.Transaction = transaction;
+                    delCmd.Transaction = (SqliteTransaction)transaction;
                     delCmd.Parameters.AddWithValue("@eid", exam.Id);
-                    delCmd.ExecuteNonQuery();
+                    await delCmd.ExecuteNonQueryAsync();
                 }
 
-                InsertResults(transaction, exam.Id, results);
-                transaction.Commit();
+                await InsertResultsAsync((SqliteTransaction)transaction, exam.Id, results);
+                await transaction.CommitAsync();
             }
             catch
             {
-                transaction.Rollback();
+                await transaction.RollbackAsync();
                 throw;
             }
         }
 
-        private void InsertResults(SqliteTransaction transaction, int examId, List<StudentResult> results)
+        private async Task InsertResultsAsync(SqliteTransaction transaction, int examId, List<StudentResult> results)
         {
             const string sql = @"
                 INSERT INTO ExamResults
@@ -228,25 +227,39 @@ namespace OptikFormApp.Services
                 VALUES
                     (@eid, @sid, @name, @booklet, @raw, @score, @corr, @inc, @emp, @qjson)";
 
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = sql;
+            cmd.Transaction = transaction;
+
+            var pEid = cmd.Parameters.Add("@eid", SqliteType.Integer);
+            var pSid = cmd.Parameters.Add("@sid", SqliteType.Text);
+            var pName = cmd.Parameters.Add("@name", SqliteType.Text);
+            var pBooklet = cmd.Parameters.Add("@booklet", SqliteType.Text);
+            var pRaw = cmd.Parameters.Add("@raw", SqliteType.Text);
+            var pScore = cmd.Parameters.Add("@score", SqliteType.Real);
+            var pCorr = cmd.Parameters.Add("@corr", SqliteType.Integer);
+            var pInc = cmd.Parameters.Add("@inc", SqliteType.Integer);
+            var pEmp = cmd.Parameters.Add("@emp", SqliteType.Integer);
+            var pQjson = cmd.Parameters.Add("@qjson", SqliteType.Text);
+
             foreach (var res in results)
             {
-                using var cmd = CreateCommand(sql);
-                cmd.Transaction = transaction;
-                cmd.Parameters.AddWithValue("@eid", examId);
-                cmd.Parameters.AddWithValue("@sid", res.StudentId);
-                cmd.Parameters.AddWithValue("@name", res.FullName);
-                cmd.Parameters.AddWithValue("@booklet", res.BookletType);
-                cmd.Parameters.AddWithValue("@raw", res.RawAnswers);
-                cmd.Parameters.AddWithValue("@score", res.Score);
-                cmd.Parameters.AddWithValue("@corr", res.CorrectCount);
-                cmd.Parameters.AddWithValue("@inc", res.IncorrectCount);
-                cmd.Parameters.AddWithValue("@emp", res.EmptyCount);
-                cmd.Parameters.AddWithValue("@qjson", JsonSerializer.Serialize(res.QuestionResults));
-                cmd.ExecuteNonQuery();
+                pEid.Value = examId;
+                pSid.Value = (object?)res.StudentId ?? DBNull.Value;
+                pName.Value = (object?)res.FullName ?? DBNull.Value;
+                pBooklet.Value = (object?)res.BookletType ?? DBNull.Value;
+                pRaw.Value = (object?)res.RawAnswers ?? DBNull.Value;
+                pScore.Value = res.Score;
+                pCorr.Value = res.CorrectCount;
+                pInc.Value = res.IncorrectCount;
+                pEmp.Value = res.EmptyCount;
+                pQjson.Value = System.Text.Json.JsonSerializer.Serialize(res.QuestionResults);
+                
+                await cmd.ExecuteNonQueryAsync();
             }
         }
 
-        public List<StudentResult> GetResultsForExam(int examId)
+        public async Task<List<StudentResult>> GetResultsForExamAsync(int examId)
         {
             var results = new List<StudentResult>();
             using var cmd = CreateCommand(@"
@@ -254,9 +267,9 @@ namespace OptikFormApp.Services
                        CorrectCount, IncorrectCount, EmptyCount, QuestionResultsJson
                 FROM ExamResults WHERE ExamId = @eid");
             cmd.Parameters.AddWithValue("@eid", examId);
-            using var reader = cmd.ExecuteReader();
+            using var reader = await cmd.ExecuteReaderAsync();
             int counter = 1;
-            while (reader.Read())
+            while (await reader.ReadAsync())
             {
                 var res = new StudentResult
                 {
@@ -278,18 +291,18 @@ namespace OptikFormApp.Services
                 }
 
                 var qjson = reader.GetString(8);
-                res.QuestionResults = JsonSerializer.Deserialize<List<bool>>(qjson) ?? new List<bool>();
+                res.QuestionResults = System.Text.Json.JsonSerializer.Deserialize<List<bool>>(qjson) ?? new List<bool>();
 
                 results.Add(res);
             }
             return results;
         }
 
-        public void DeleteExam(int examId)
+        public async Task DeleteExamAsync(int examId)
         {
             using var cmd = CreateCommand("DELETE FROM Exams WHERE Id = @id");
             cmd.Parameters.AddWithValue("@id", examId);
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync();
         }
 
         // ── IDisposable ───────────────────────────────────────────────────────

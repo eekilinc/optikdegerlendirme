@@ -24,6 +24,13 @@ namespace OptikFormApp.ViewModels
         private readonly AppSettingsService _settingsService;
         private readonly CsvExportService _csvService;
         
+        private readonly object _studentsLock = new();
+        private readonly object _coursesLock = new();
+        private readonly object _examsLock = new();
+        private readonly object _statsLock = new();
+        private readonly object _validationLock = new();
+        private readonly object _logsLock = new();
+        
         private Course? _selectedCourse;
         private ExamEntry? _selectedExam;
         private bool _isAddCourseOpen;
@@ -48,6 +55,8 @@ namespace OptikFormApp.ViewModels
         private double _netCoefficient = 1.0;
         private double _baseScore = 0.0;
         private double _wrongDeductionFactor = 0.25;
+        private bool _isBusy;
+        private string _busyMessage = "";
 
         public ICollectionView StudentsView { get; }
 
@@ -85,12 +94,12 @@ namespace OptikFormApp.ViewModels
             StudentsView = CollectionViewSource.GetDefaultView(Students);
             StudentsView.Filter = FilterStudents;
             
-            LoadCourses();
+            _initTask = InitializeAsync();
 
             AnswerKeys.Add(new AnswerKeyModel { BookletName = "A", Answers = "" });
 
             LoadTxtCommand = new RelayCommand(async _ => await LoadTxtFileAsync());
-            EvaluateCommand = new RelayCommand(_ => Evaluate(), _ => Students.Count > 0);
+            EvaluateCommand = new AsyncRelayCommand(async _ => await EvaluateAsync(), _ => Students.Count > 0);
             
             AddToLog("Uygulama hazır. Lütfen bir optik veri (.txt) dosyası yükleyin.", LogLevel.Info);
             
@@ -100,7 +109,7 @@ namespace OptikFormApp.ViewModels
             });
 
             OpenModalCommand = new RelayCommand(_ => IsModalOpen = true);
-            CloseModalCommand = new RelayCommand(_ => { IsModalOpen = false; if (Students.Count > 0) { Evaluate(); AutoSaveSelectedExam(); } });
+            CloseModalCommand = new AsyncRelayCommand(async _ => { IsModalOpen = false; if (Students.Count > 0) { await EvaluateAsync(); await AutoSaveSelectedExamAsync(); } });
             OpenQuestionSettingsCommand = new RelayCommand(_ => {
                 // Preserve existing settings that still apply
                 var existingSettings = new Dictionary<(string, int), QuestionSetting>();
@@ -121,13 +130,17 @@ namespace OptikFormApp.ViewModels
                 IsQuestionSettingsOpen = true;
                 AddToLog("Soru ayarları paneli açıldı (Kitapçık bazlı).");
             });
-            CloseQuestionSettingsCommand = new RelayCommand(_ => { IsQuestionSettingsOpen = false; if (Students.Count > 0) { Evaluate(); AutoSaveSelectedExam(); } });
+            CloseQuestionSettingsCommand = new AsyncRelayCommand(async _ => { 
+                IsQuestionSettingsOpen = false; 
+                await EvaluateAsync(); 
+                await AutoSaveSelectedExamAsync(); 
+            });
 
             OpenLearningOutcomesCommand = new RelayCommand(_ => IsLearningOutcomesOpen = true);
-            CloseLearningOutcomesCommand = new RelayCommand(_ => {
+            CloseLearningOutcomesCommand = new AsyncRelayCommand(async _ => {
                 IsLearningOutcomesOpen = false;
-                Evaluate();
-                AutoSaveSelectedExam();
+                await EvaluateAsync();
+                await AutoSaveSelectedExamAsync();
             });
             
             AddOutcomeCommand = new RelayCommand(_ => LearningOutcomes.Add(new LearningOutcome { Name = "Yeni Konu" }));
@@ -139,7 +152,11 @@ namespace OptikFormApp.ViewModels
             OpenUISettingsCommand = new RelayCommand(_ => IsUISettingsOpen = true);
             CloseUISettingsCommand = new RelayCommand(_ => IsUISettingsOpen = false);
             OpenGeneralConfigCommand = new RelayCommand(_ => IsGeneralConfigOpen = true);
-            CloseGeneralConfigCommand = new RelayCommand(_ => { IsGeneralConfigOpen = false; AutoSaveSelectedExam(); });
+            CloseGeneralConfigCommand = new AsyncRelayCommand(async _ => { 
+                IsGeneralConfigOpen = false; 
+                await EvaluateAsync();
+                await AutoSaveSelectedExamAsync(); 
+            });
 
             SelectFolderCommand = new RelayCommand(_ => {
                 var dialog = new Microsoft.Win32.OpenFolderDialog { Title = "Excel Dosyaları İçin Varsayılan Klasörü Seçin" };
@@ -152,26 +169,39 @@ namespace OptikFormApp.ViewModels
 
             ExitCommand = new RelayCommand(_ => System.Windows.Application.Current.Shutdown());
 
-            ExportExcelCommand = new RelayCommand(_ => {
+            ExportExcelCommand = new AsyncRelayCommand(async _ => {
                 if (Students.Count == 0) {
                     ShowAlert("Dışa Aktarma Hatası", "Dışa aktarılacak öğrenci kaydı bulunamadı.");
                     return;
                 }
+                
+                string? filePath = null;
                 if (!string.IsNullOrWhiteSpace(DefaultExcelPath) && System.IO.Directory.Exists(DefaultExcelPath)) {
-                    string filePath = System.IO.Path.Combine(DefaultExcelPath, $"OptikSonuclar_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
-                    _excelService.ExportToExcel(new System.Collections.Generic.List<StudentResult>(Students), new System.Collections.Generic.List<QuestionStatisticItem>(Statistics), LearningOutcomes, filePath);
-                    ShowAlert("Başarılı", $"Excel raporu varsayılan dizinize kaydedildi:\n{filePath}");
+                    filePath = System.IO.Path.Combine(DefaultExcelPath, $"OptikSonuclar_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
                 } else {
                     var sfd = new SaveFileDialog { Filter = "Excel Dosyası|*.xlsx", FileName = $"OptikSonuclar_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx" };
-                    if (sfd.ShowDialog() == true) {
-                        _excelService.ExportToExcel(new System.Collections.Generic.List<StudentResult>(Students), new System.Collections.Generic.List<QuestionStatisticItem>(Statistics), LearningOutcomes, sfd.FileName);
-                        StatusMessage = "Excel'e aktarım tamamlandı.";
-                        AddToLog($"Excel raporu oluşturuldu: {System.IO.Path.GetFileName(sfd.FileName)}", LogLevel.Success);
+                    if (sfd.ShowDialog() == true) filePath = sfd.FileName;
+                }
+
+                if (filePath != null) {
+                    IsBusy = true;
+                    BusyMessage = "Excel raporu oluşturuluyor...";
+                    try {
+                        var studentsCopy = new List<StudentResult>(Students);
+                        var statsCopy = new List<QuestionStatisticItem>(Statistics);
+                        var outcomesCopy = LearningOutcomes.ToList();
+                        await Task.Run(() => _excelService.ExportToExcel(studentsCopy, statsCopy, outcomesCopy, filePath));
+                        ShowAlert("Başarılı", $"Excel raporu kaydedildi:\n{filePath}");
+                        AddToLog($"Excel raporu oluşturuldu: {System.IO.Path.GetFileName(filePath)}", LogLevel.Success);
+                    } catch (Exception ex) {
+                        ShowAlert("Hata", $"Excel oluşturulurken hata: {ex.Message}");
+                    } finally {
+                        IsBusy = false;
                     }
                 }
             });
 
-            ExportCsvCommand = new RelayCommand(_ => {
+            ExportCsvCommand = new AsyncRelayCommand(async _ => {
                 if (Students.Count == 0) {
                     ShowAlert("Dışa Aktarma Hatası", "Dışa aktarılacak öğrenci kaydı bulunamadı.");
                     return;
@@ -182,40 +212,49 @@ namespace OptikFormApp.ViewModels
                     Title = "CSV Olarak Kaydet"
                 };
                 if (sfd.ShowDialog() == true) {
+                    IsBusy = true;
+                    BusyMessage = "CSV dosyası oluşturuluyor...";
                     try {
-                        _csvService.ExportToCsv(new System.Collections.Generic.List<StudentResult>(Students), sfd.FileName);
+                        var studentsCopy = new List<StudentResult>(Students);
+                        await Task.Run(() => _csvService.ExportToCsv(studentsCopy, sfd.FileName));
                         StatusMessage = "CSV'ye aktarım tamamlandı.";
                         AddToLog($"CSV raporu oluşturuldu: {System.IO.Path.GetFileName(sfd.FileName)}", LogLevel.Success);
                     } catch (Exception ex) {
                         AddToLog($"CSV hatası: {ex.Message}", LogLevel.Error);
                         ShowAlert("Hata", $"CSV oluşturulurken hata: {ex.Message}");
+                    } finally {
+                        IsBusy = false;
                     }
                 }
             });
 
-            ExportPdfCommand = new RelayCommand(async _ => {
+            ExportPdfCommand = new AsyncRelayCommand(async _ => {
                 if (Students.Count == 0) {
                     ShowAlert("Dışa Aktarma Hatası", "Önce veri yüklemeniz ve puanları hesaplamanız gerekmektedir.");
                     return;
                 }
                 var dialog = new Microsoft.Win32.OpenFolderDialog { Title = "Öğrenci Karnelerinin Kaydedileceği Klasörü Seçin" };
                 if (dialog.ShowDialog() == true) {
+                    IsBusy = true;
+                    BusyMessage = "Toplu PDF karneleri oluşturuluyor...";
                     try {
                         AddToLog("Toplu PDF karneleri oluşturuluyor...");
-                        var studentsCopy = new System.Collections.Generic.List<StudentResult>(Students);
+                        var studentsCopy = new List<StudentResult>(Students);
                         var outcomesCopy = LearningOutcomes.ToList();
                         string folder = dialog.FolderName;
-                        await System.Threading.Tasks.Task.Run(() => _pdfService.GenerateStudentReports(studentsCopy, studentsCopy, outcomesCopy, folder, SchoolName));
+                        await Task.Run(() => _pdfService.GenerateStudentReports(studentsCopy, studentsCopy, outcomesCopy, folder, SchoolName));
                         ShowAlert("Başarılı", "Tüm öğrenci karneleri seçilen klasöre PDF olarak kaydedildi.");
                         AddToLog($"{Students.Count} adet öğrenci karnesi PDF olarak dışa aktarıldı.", LogLevel.Success);
                     } catch (Exception ex) {
                         AddToLog($"PDF oluşturma hatası: {ex.Message}", LogLevel.Error);
                         ShowAlert("Hata", $"PDF raporu oluşturulurken hata oluştu: {ex.Message}");
+                    } finally {
+                        IsBusy = false;
                     }
                 }
             });
 
-            ExportSinglePdfCommand = new RelayCommand(async p => {
+            ExportSinglePdfCommand = new AsyncRelayCommand(async p => {
                 if (p is StudentResult student) {
                     var sfd = new SaveFileDialog { 
                         Filter = "PDF Dosyası|*.pdf", 
@@ -223,16 +262,20 @@ namespace OptikFormApp.ViewModels
                         Title = "Öğrenci Karnesini Kaydet"
                     };
                     if (sfd.ShowDialog() == true) {
+                        IsBusy = true;
+                        BusyMessage = $"{student.FullName} için karne hazırlanıyor...";
                         try {
-                            var allStudentsCopy = new System.Collections.Generic.List<StudentResult>(Students);
+                            var allStudentsCopy = new List<StudentResult>(Students);
                             var outcomesCopy = LearningOutcomes.ToList();
                             string dir = System.IO.Path.GetDirectoryName(sfd.FileName) ?? "";
-                            await System.Threading.Tasks.Task.Run(() => _pdfService.GenerateStudentReports(new System.Collections.Generic.List<StudentResult> { student }, allStudentsCopy, outcomesCopy, dir, SchoolName));
+                            await Task.Run(() => _pdfService.GenerateStudentReports(new List<StudentResult> { student }, allStudentsCopy, outcomesCopy, dir, SchoolName));
                             StatusMessage = $"{student.FullName} için karne oluşturuldu.";
                             AddToLog($"{student.FullName} için PDF karne oluşturuldu.", LogLevel.Success);
                         } catch (Exception ex) {
                             AddToLog($"Karne hatası: {ex.Message}", LogLevel.Error);
                             ShowAlert("Hata", $"Karne oluşturulurken hata oluştu: {ex.Message}");
+                        } finally {
+                            IsBusy = false;
                         }
                     }
                 }
@@ -240,34 +283,34 @@ namespace OptikFormApp.ViewModels
 
             ShowAddCourseCommand = new RelayCommand(_ => IsAddCourseOpen = true);
             CloseAddCourseCommand = new RelayCommand(_ => IsAddCourseOpen = false);
-            AddCourseCommand = new RelayCommand(_ => {
+            AddCourseCommand = new AsyncRelayCommand(async _ => {
                 if (string.IsNullOrWhiteSpace(NewCourseName)) return;
                 var c = new Course { Code = NewCourseCode, Name = NewCourseName };
-                _dbService.SaveCourse(c);
-                LoadCourses();
+                await _dbService.SaveCourseAsync(c);
+                await LoadCoursesAsync();
                 IsAddCourseOpen = false;
                 NewCourseCode = ""; NewCourseName = "";
                 AddToLog($"'{c.Name}' dersi eklendi.", LogLevel.Success);
             });
-            DeleteCourseCommand = new RelayCommand(obj => {
+            DeleteCourseCommand = new AsyncRelayCommand(async obj => {
                 if (obj is Course c) {
-                    _dbService.DeleteCourse(c.Id);
-                    LoadCourses();
+                    await _dbService.DeleteCourseAsync(c.Id);
+                    await LoadCoursesAsync();
                     AddToLog($"'{c.Name}' dersi silindi.", LogLevel.Warning);
                 }
             });
-            DeleteExamCommand = new RelayCommand(obj => {
+            DeleteExamCommand = new AsyncRelayCommand(async obj => {
                 if (obj is ExamEntry e) {
-                    _dbService.DeleteExam(e.Id);
-                    if (SelectedCourse != null) LoadExamsForCourse(SelectedCourse.Id);
+                    await _dbService.DeleteExamAsync(e.Id);
+                    if (SelectedCourse != null) await LoadExamsForCourseAsync(SelectedCourse.Id);
                     SelectedExam = null;
                     Students.Clear(); Statistics.Clear(); ValidationIssues.Clear(); AccuracyData.Clear(); ScoreDistData.Clear();
                     AddToLog($"'{e.Title}' sınavı silindi.", LogLevel.Warning);
                 }
             });
-            SaveExamCommand = new RelayCommand(_ => {
+            SaveExamCommand = new AsyncRelayCommand(async _ => {
                 string title = string.IsNullOrWhiteSpace(NewExamName) ? $"{DateTime.Now:dd.MM.yyyy} Sınavı" : NewExamName;
-                SaveCurrentExam(title, SelectedExam);
+                await SaveCurrentExamAsync(title, SelectedExam);
             });
 
             OpenRenameCourseCommand = new RelayCommand(obj => {
@@ -292,11 +335,11 @@ namespace OptikFormApp.ViewModels
                 }
             });
             CloseRenameModalCommand = new RelayCommand(_ => IsRenameModalOpen = false);
-            SaveRenameCommand = new RelayCommand(_ => {
+            SaveRenameCommand = new AsyncRelayCommand(async _ => {
                 if (_renameContext == "Course") {
                     if (string.IsNullOrWhiteSpace(RenameInput1) || string.IsNullOrWhiteSpace(RenameInput2)) return;
-                    _dbService.RenameCourse(_renameId, RenameInput1, RenameInput2);
-                    LoadCourses();
+                    await _dbService.RenameCourseAsync(_renameId, RenameInput1, RenameInput2);
+                    await LoadCoursesAsync();
                     if (SelectedCourse != null && SelectedCourse.Id == _renameId) {
                         SelectedCourse.Code = RenameInput1;
                         SelectedCourse.Name = RenameInput2;
@@ -305,8 +348,8 @@ namespace OptikFormApp.ViewModels
                     AddToLog($"Ders düzenlendi: {RenameInput2}", LogLevel.Success);
                 } else if (_renameContext == "Exam") {
                     if (string.IsNullOrWhiteSpace(RenameInput1)) return;
-                    _dbService.RenameExam(_renameId, RenameInput1);
-                    if (SelectedCourse != null) LoadExamsForCourse(SelectedCourse.Id);
+                    await _dbService.RenameExamAsync(_renameId, RenameInput1);
+                    if (SelectedCourse != null) await LoadExamsForCourseAsync(SelectedCourse.Id);
                     if (SelectedExam != null && SelectedExam.Id == _renameId) {
                         SelectedExam.Title = RenameInput1;
                         OnPropertyChanged(nameof(SelectedExam));
@@ -396,13 +439,13 @@ namespace OptikFormApp.ViewModels
         public Course? SelectedCourse
         {
             get => _selectedCourse;
-            set { _selectedCourse = value; OnPropertyChanged(); if (value != null) LoadExamsForCourse(value.Id); else CourseExams.Clear(); }
+            set { _selectedCourse = value; OnPropertyChanged(); if (value != null) _ = LoadExamsForCourseAsync(value.Id); else CourseExams.Clear(); }
         }
 
         public ExamEntry? SelectedExam
         {
             get => _selectedExam;
-            set { _selectedExam = value; OnPropertyChanged(); if (value != null) LoadExamData(value); }
+            set { _selectedExam = value; OnPropertyChanged(); if (value != null) _ = LoadExamDataAsync(value); }
         }
 
         public bool IsAddCourseOpen { get => _isAddCourseOpen; set { _isAddCourseOpen = value; OnPropertyChanged(); } }
@@ -445,6 +488,9 @@ namespace OptikFormApp.ViewModels
         private int _gridRowHeight = 32;
         public System.Windows.Thickness GridCellPadding { get => _gridCellPadding; set { _gridCellPadding = value; OnPropertyChanged(); } }
         private System.Windows.Thickness _gridCellPadding = new System.Windows.Thickness(10, 0, 10, 0);
+
+        public bool IsBusy { get => _isBusy; set { _isBusy = value; OnPropertyChanged(); } }
+        public string BusyMessage { get => _busyMessage; set { _busyMessage = value; OnPropertyChanged(); } }
 
         public bool HasUnsavedData { get => _hasUnsavedData; set { _hasUnsavedData = value; OnPropertyChanged(); OnPropertyChanged(nameof(SaveStatusText)); } }
         public string SaveStatusText => _hasUnsavedData ? "⚠️ Kaydedilmedi" : (Students.Count > 0 ? "✅ Kaydedildi" : "");
@@ -503,59 +549,82 @@ namespace OptikFormApp.ViewModels
             });
         }
 
-        private void LoadCourses()
+        private readonly Task _initTask;
+        private async Task InitializeAsync()
         {
-            var list = _dbService.GetCourses();
-            Courses.Clear();
-            foreach (var c in list) Courses.Add(c);
+            await _dbService.InitializeDatabaseAsync();
+            await LoadCoursesAsync();
         }
 
-        private void LoadExamsForCourse(int courseId)
+        private async Task LoadCoursesAsync()
         {
-            var list = _dbService.GetExamsForCourse(courseId);
-            CourseExams.Clear();
-            foreach (var e in list) CourseExams.Add(e);
-            if (SelectedExam == null) Students.Clear();
+            var list = await _dbService.GetCoursesAsync();
+            System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                Courses.Clear();
+                foreach (var c in list) Courses.Add(c);
+            });
         }
 
-        private void LoadExamData(ExamEntry exam)
+        private async Task LoadExamsForCourseAsync(int courseId)
+        {
+            var list = await _dbService.GetExamsForCourseAsync(courseId);
+            System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                CourseExams.Clear();
+                foreach (var e in list) CourseExams.Add(e);
+                if (SelectedExam == null) Students.Clear();
+            });
+        }
+
+        private async Task LoadExamDataAsync(ExamEntry exam)
         {
             try
             {
+                IsBusy = true;
+                BusyMessage = $"{exam.Title} yükleniyor...";
                 AddToLog($"{exam.Title} sınav verileri yükleniyor...");
-                var results = _dbService.GetResultsForExam(exam.Id);
-                Students.Clear();
-                foreach (var r in results) Students.Add(r);
+                
+                var results = await _dbService.GetResultsForExamAsync(exam.Id);
+                
+                System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                    Students.Clear();
+                    foreach (var r in results) Students.Add(r);
 
-                if (!string.IsNullOrEmpty(exam.ConfigJson))
-                {
-                    var config = JsonSerializer.Deserialize<ExamConfigData>(exam.ConfigJson);
-                    if (config != null)
+                    if (!string.IsNullOrEmpty(exam.ConfigJson))
                     {
-                        AnswerKeys.Clear();
-                        foreach (var k in config.AnswerKeys) AnswerKeys.Add(k);
-                        QuestionSettings.Clear();
-                        foreach (var s in config.QuestionSettings) QuestionSettings.Add(s);
-                        LearningOutcomes.Clear();
-                        foreach (var o in config.LearningOutcomes) LearningOutcomes.Add(o);
-                        
-                        SchoolName = config.SchoolName ?? "Okul Adı";
-                        NetCoefficient = config.NetCoefficient != 0 ? config.NetCoefficient : 1.0;
-                        BaseScore = config.BaseScore;
-                        WrongDeductionFactor = (config.WrongDeductionFactor != 0 || exam.ConfigJson.Contains("WrongDeductionFactor")) ? config.WrongDeductionFactor : 0.25;
+                        var config = JsonSerializer.Deserialize<ExamConfigData>(exam.ConfigJson);
+                        if (config != null)
+                        {
+                            AnswerKeys.Clear();
+                            foreach (var k in config.AnswerKeys) AnswerKeys.Add(k);
+                            QuestionSettings.Clear();
+                            foreach (var s in config.QuestionSettings) QuestionSettings.Add(s);
+                            LearningOutcomes.Clear();
+                            foreach (var o in config.LearningOutcomes) LearningOutcomes.Add(o);
+                            
+                            SchoolName = config.SchoolName ?? "Okul Adı";
+                            NetCoefficient = config.NetCoefficient != 0 ? config.NetCoefficient : 1.0;
+                            BaseScore = config.BaseScore;
+                            WrongDeductionFactor = (config.WrongDeductionFactor != 0 || exam.ConfigJson.Contains("WrongDeductionFactor")) ? config.WrongDeductionFactor : 0.25;
+                        }
                     }
-                }
-                Evaluate();
+                });
+
+                await EvaluateAsync();
                 HasUnsavedData = false;
                 AddToLog($"{exam.Title} başarıyla yüklendi.", LogLevel.Success);
             }
             catch (Exception ex)
             {
                 AddToLog($"Sınav yükleme hatası: {ex.Message}", LogLevel.Error);
+                ShowAlert("Hata", "Sınav verileri yüklenirken bir sorun oluştu.");
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 
-        public void SaveCurrentExam(string title, ExamEntry? existingExam = null)
+        public async Task SaveCurrentExamAsync(string title, ExamEntry? existingExam = null)
         {
             if (SelectedCourse == null)
             {
@@ -580,7 +649,7 @@ namespace OptikFormApp.ViewModels
                     // Update existing exam
                     existingExam.Title = title;
                     existingExam.ConfigJson = JsonSerializer.Serialize(config);
-                    _dbService.UpdateExam(existingExam, new List<StudentResult>(Students));
+                    await _dbService.UpdateExamAsync(existingExam, new List<StudentResult>(Students));
                     AddToLog($"'{title}' sınavı güncellendi.", LogLevel.Success);
                 }
                 else
@@ -593,10 +662,10 @@ namespace OptikFormApp.ViewModels
                         Date = DateTime.Now,
                         ConfigJson = JsonSerializer.Serialize(config)
                     };
-                    _dbService.SaveExam(exam, new List<StudentResult>(Students));
+                    await _dbService.SaveExamAsync(exam, new List<StudentResult>(Students));
                     AddToLog($"'{title}' sınavı veritabanına kaydedildi.", LogLevel.Success);
                 }
-                LoadExamsForCourse(SelectedCourse.Id);
+                await LoadExamsForCourseAsync(SelectedCourse.Id);
                 HasUnsavedData = false;
             }
             catch (Exception ex)
@@ -606,7 +675,7 @@ namespace OptikFormApp.ViewModels
             }
         }
 
-        private void AutoSaveSelectedExam()
+        private async Task AutoSaveSelectedExamAsync()
         {
             if (SelectedExam == null || SelectedExam.Id <= 0 || SelectedCourse == null) return;
             try
@@ -622,7 +691,7 @@ namespace OptikFormApp.ViewModels
                     WrongDeductionFactor = WrongDeductionFactor
                 };
                 SelectedExam.ConfigJson = JsonSerializer.Serialize(config);
-                _dbService.UpdateExam(SelectedExam, new List<StudentResult>(Students));
+                await _dbService.UpdateExamAsync(SelectedExam, new List<StudentResult>(Students));
                 AddToLog($"'{SelectedExam.Title}' değişiklikler otomatik kaydedildi.", LogLevel.Success);
             }
             catch (Exception ex)
@@ -712,7 +781,7 @@ namespace OptikFormApp.ViewModels
                         AddToLog($"{students.Count} öğrenci kaydı başarıyla yüklendi.", LogLevel.Success);
                         bool hasValidKey = false;
                         foreach(var key in AnswerKeys) { if(!string.IsNullOrWhiteSpace(key.Answers)) hasValidKey = true; }
-                        if (hasValidKey) Evaluate();
+                        if (hasValidKey) await EvaluateAsync();
                     }
                     else
                     {
@@ -728,7 +797,7 @@ namespace OptikFormApp.ViewModels
             }
         }
 
-        private void Evaluate()
+        private async Task EvaluateAsync()
         {
             bool hasValidKey = false;
             foreach(var key in AnswerKeys) { if(!string.IsNullOrWhiteSpace(key.Answers)) hasValidKey = true; }
@@ -739,36 +808,89 @@ namespace OptikFormApp.ViewModels
                 ShowAlert("Eksik Cevap Anahtarı", "Lütfen puanları hesaplamadan veya dosyayı içe aktarmadan önce 'Cevap Anahtarlarını Yönet' bölümünden bir cevap şablonu (Örn: A) doldurunuz.");
                 return;
             }
+
+            IsBusy = true;
+            BusyMessage = "Puanlar hesaplanıyor...";
             AddToLog("Puanlar hesaplanıyor ve madde analizi yapılıyor...");
+            
             try
             {
-                var list = new System.Collections.Generic.List<StudentResult>(Students);
-                var keys = new System.Collections.Generic.List<AnswerKeyModel>(AnswerKeys);
-                var settings = new System.Collections.Generic.List<QuestionSetting>(QuestionSettings);
-                _parserService.EvaluateStudents(list, keys, settings, WrongDeductionFactor);
-                
-                // Apply custom coefficients after basic evaluation
-                foreach (var student in list)
-                {
-                    student.Score = Math.Round((student.NetCount * NetCoefficient) + BaseScore, 2);
-                }
+                // Uİ dışı verileri kopyala (Dispatcher hatasını kökten bitirmek için DERİN KOPYALAMA)
+                var list = Students.Select(s => new StudentResult 
+                { 
+                    StudentId = s.StudentId, 
+                    FullName = s.FullName, 
+                    BookletType = s.BookletType, 
+                    RawAnswers = s.RawAnswers,
+                    Answers = new List<string>(s.Answers)
+                }).ToList();
 
-                Students.Clear(); foreach (var st in list) Students.Add(st);
-                Statistics.Clear();
+                var keys = new List<AnswerKeyModel>(AnswerKeys);
+                var settings = new List<QuestionSetting>(QuestionSettings);
+                var factor = WrongDeductionFactor;
+                var coeff = NetCoefficient;
+                var bScore = BaseScore;
+
+                await Task.Run(() => 
+                {
+                    // Arka planda kopyalar üzerinde hesapla
+                    _parserService.EvaluateStudents(list, keys, settings, factor);
+                });
+
+                // Sonuçları topla (Bu servisler read-only çalışır)
                 var statsList = _parserService.CalculateStatistics(list, keys);
-                foreach(var stat in statsList) Statistics.Add(stat);
-                ValidationIssues.Clear();
                 var issues = _validationService.Validate(list, keys);
-                foreach (var issue in issues) ValidationIssues.Add(issue);
-                UpdateChartData(statsList, list);
-                UpdateOutcomeStats();
+
+                // Ana iş parçacığında koleksiyonları ve ÖZELLİKLERİ güncelle
+                System.Windows.Application.Current.Dispatcher.Invoke(() => 
+                {
+                    // 1. Önce özellik değerlerini ve RENK kodlarını İNDEKS bazlı eşitle (En güvenli yöntem)
+                    for (int i = 0; i < Students.Count && i < list.Count; i++)
+                    {
+                        var original = Students[i];
+                        var evaluated = list[i]; // Sıralama aynı olduğu için doğrudan indeks kullanıyoruz
+                        
+                        original.CorrectCount = evaluated.CorrectCount;
+                        original.IncorrectCount = evaluated.IncorrectCount;
+                        original.EmptyCount = evaluated.EmptyCount;
+                        original.NetCount = evaluated.NetCount;
+                        original.Rank = evaluated.Rank;
+                        original.Score = Math.Round((evaluated.NetCount * coeff) + bScore, 2);
+                        
+                        // Detaylı sonuçları ve renkli cevapları kopyala
+                        original.QuestionResults = new List<bool>(evaluated.QuestionResults);
+                        original.ColoredAnswers.Clear();
+                        foreach (var answer in evaluated.ColoredAnswers)
+                        {
+                            original.ColoredAnswers.Add(answer);
+                        }
+                    }
+
+                    // 2. Diğer listeleri güncelle
+                    Statistics.Clear();
+                    foreach (var stat in statsList) Statistics.Add(stat);
+                    
+                    ValidationIssues.Clear();
+                    foreach (var issue in issues) ValidationIssues.Add(issue);
+                    
+                    StudentsView.Refresh();
+                    UpdateChartData(statsList, list);
+                    UpdateOutcomeStats();
+                    OnPropertyChanged(nameof(ValidationIssuesCount));
+                });
+
                 StatusMessage = "Değerlendirme başarıyla tamamlandı.";
                 AddToLog("Değerlendirme başarıyla tamamlandı.", LogLevel.Success);
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Değerlendirme hatası: {ex.Message}";
-                AddToLog($"Değerlendirme hatası: {ex.Message}", LogLevel.Error);
+                StatusMessage = "Hesaplama sırasında teknik bir sorun oluştu.";
+                AddToLog($"Hesaplama hatası (Teknik Detay): {ex.Message}", LogLevel.Error);
+                ShowAlert("Hesaplama Hatası", "Puanlar hesaplanırken bir sorun oluştu. Lütfen verilerinizi ve cevap anahtarını kontrol edin.");
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 

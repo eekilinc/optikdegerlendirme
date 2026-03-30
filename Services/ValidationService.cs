@@ -88,9 +88,9 @@ namespace OptikFormApp.Services
                             string.Equals(k.BookletName, s.BookletType, StringComparison.OrdinalIgnoreCase));
                         return key != null
                                && !string.IsNullOrWhiteSpace(key.Answers)
-                               && s.RawAnswers.Length != key.Answers.Length;
+                               && s.RawAnswers.TrimEnd().Length != key.Answers.Length;
                     })
-                    .Select(s => $"{s.StudentId}({s.RawAnswers.Length})")
+                    .Select(s => $"{s.StudentId}({s.RawAnswers.TrimEnd().Length})")
                     .ToList();
 
                 if (mismatchedStudents.Any())

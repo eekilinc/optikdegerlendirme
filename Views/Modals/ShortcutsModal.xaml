@@ -1,0 +1,140 @@
+<UserControl x:Class="OptikFormApp.Views.Modals.ShortcutsModal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="600">
+    <Grid Visibility="{Binding IsShortcutsOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}">
+        <Border Background="{DynamicResource CardBg}" CornerRadius="20" Width="560" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="0">
+            <Border.Effect>
+                <DropShadowEffect Color="Black" Opacity="0.2" BlurRadius="40" ShadowDepth="12"/>
+            </Border.Effect>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header Band -->
+                <Border Grid.Row="0" Background="#3B82F6" CornerRadius="20,20,0,0" Padding="30,25">
+                    <Grid>
+                        <StackPanel>
+                            <TextBlock Text="⌨️  Klavye Kısayolları" FontSize="22" FontWeight="Bold" Foreground="White"/>
+                            <TextBlock Text="Uygulamayı daha hızlı kullanmak için kısayolları öğrenin." FontSize="13" Foreground="#BFDBFE" Margin="0,6,0,0"/>
+                        </StackPanel>
+                        <Button Content="✕" Command="{Binding CloseShortcutsCommand}"
+                                HorizontalAlignment="Right" VerticalAlignment="Top"
+                                Background="Transparent" BorderThickness="0" Foreground="White"
+                                FontSize="18" Padding="8,4" Cursor="Hand" Opacity="0.8"/>
+                    </Grid>
+                </Border>
+
+                <!-- Shortcut Cards Grid -->
+                <Grid Grid.Row="1" Margin="25,20,25,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Dosya İşlemleri Başlığı -->
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="📂 Dosya İşlemleri"
+                               FontSize="11" FontWeight="Bold" Foreground="#3B82F6"
+                               Margin="0,0,0,8" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="⚡ İşlemler"
+                               FontSize="11" FontWeight="Bold" Foreground="#8B5CF6"
+                               Margin="0,0,0,8" VerticalAlignment="Center"/>
+
+                    <!-- Sol Sütun - Dosya -->
+                    <StackPanel Grid.Row="1" Grid.Column="0" Grid.RowSpan="3">
+                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
+                                    <TextBlock Text="Ctrl + O" FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#3B82F6"/>
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="TXT Dosyası Yükle" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
+                                    <TextBlock Text="Ctrl + S" FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#3B82F6"/>
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="Sınavı Kaydet" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Background="#FFF7ED" BorderBrush="#FED7AA" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
+                                    <TextBlock Text="Ctrl + E" FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#EA580C"/>
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="Excel Raporu Al" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
+                                    <TextBlock Text="Ctrl+⇧+C" FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#16A34A"/>
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="CSV Dışa Aktar" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Background="#FDF4FF" BorderBrush="#E9D5FF" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
+                                    <TextBlock Text="Ctrl + P" FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#7C3AED"/>
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="Toplu PDF Karne" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Sağ Sütun - İşlemler -->
+                    <StackPanel Grid.Row="1" Grid.Column="2" Grid.RowSpan="3">
+                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Background="#F5F3FF" BorderBrush="#DDD6FE" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
+                                    <TextBlock Text="   F5   " FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#7C3AED"/>
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="Puanları Hesapla" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Background="#F0F9FF" BorderBrush="#BAE6FD" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
+                                    <TextBlock Text="   F1   " FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#0284C7"/>
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="Bu Pencereyi Aç" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Footer -->
+                <Border Grid.Row="2" Background="{DynamicResource AltRowBg}" CornerRadius="0,0,20,20" Padding="30,15">
+                    <Grid>
+                        <TextBlock Text="💡  Tüm kısayollar Dosya menüsünde de gösterilmektedir." FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
+                        <Button Content="Kapat" Command="{Binding CloseShortcutsCommand}"
+                                HorizontalAlignment="Right" Background="#3B82F6" Foreground="White"
+                                Padding="25,8" FontSize="13"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

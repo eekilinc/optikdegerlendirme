@@ -1,0 +1,124 @@
+<UserControl x:Class="OptikFormApp.Views.WorkflowView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="100" d:DesignWidth="1200">
+    <Border Background="{DynamicResource CardBg}" CornerRadius="12" Padding="20" Margin="0,0,0,20">
+        <Border.Effect>
+            <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="15" ShadowDepth="2"/>
+        </Border.Effect>
+        
+        <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <!-- Left: Title -->
+            <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Orientation="Horizontal" Margin="0,0,30,10">
+                <Border Width="45" Height="45" CornerRadius="10" Background="{DynamicResource AltRowBg}" Margin="0,0,15,0" Padding="5">
+                    <Image Source="/Assets/app_logo.png" Stretch="Uniform"/>
+                </Border>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="AĞLASUN MYO Optik Değerlendirme" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextMain}"/>
+                    <TextBlock Text="Optik okuma, test hesaplama ve raporlama adımlarını sırasıyla yönetin." FontSize="13" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Right: Action Pipeline -->
+            <WrapPanel HorizontalAlignment="Left" VerticalAlignment="Center" Orientation="Horizontal">
+                
+                <Button Command="{Binding OpenModalCommand}" Style="{StaticResource OutlineButton}" Margin="0,0,15,10" Padding="15,8">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="📋" Margin="0,0,8,0" FontSize="14"/>
+                        <TextBlock Text="Cevap Anahtarı"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Command="{Binding OpenGeneralConfigCommand}" Style="{StaticResource OutlineButton}" Margin="0,0,15,10" Padding="15,8">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⚙️" Margin="0,0,8,0" FontSize="14"/>
+                        <TextBlock Text="Sınav Ayarları"/>
+                    </StackPanel>
+                </Button>
+                
+                 <Button Command="{Binding LoadTxtCommand}" Style="{StaticResource PipelineButton}" Background="{DynamicResource AltRowBg}" BorderBrush="{DynamicResource Border}" Foreground="{DynamicResource TextMain}" Margin="0,0,10,10" Padding="15,8">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="📁" Margin="0,0,8,0"/>
+                        <TextBlock Text="1. Yükle" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Button>
+
+                <TextBox Text="{Binding NewExamName, UpdateSourceTrigger=PropertyChanged}" Width="140" Margin="0,0,10,10" VerticalAlignment="Stretch" Padding="8,0" Background="Transparent" Foreground="{DynamicResource TextMain}" BorderBrush="{DynamicResource Border}" ToolTip="Kaydedilecek Sınav Adı (Opsiyonel)">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource Self}}" Value="">
+                                    <Setter Property="Tag" Value="Sınav adı (opsiyonel)"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+
+                <Button Command="{Binding SaveExamCommand}" Style="{StaticResource PipelineButton}" IsEnabled="{Binding Students.Count}" Background="#10B981" BorderBrush="#059669" Foreground="White" Margin="0,0,10,10" Padding="15,8">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="💾" Margin="0,0,8,0"/>
+                        <TextBlock Text="2. Kaydet" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <Button.ToolTip>Sınav verilerini seçili dersin altına kalıcı olarak kaydeder.</Button.ToolTip>
+                </Button>
+                
+                <!-- Save Status Indicator -->
+                <Border Margin="0,0,10,10" Padding="10,6" CornerRadius="6" VerticalAlignment="Center">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#DCFCE7"/>
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Students.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding HasUnsavedData}" Value="True">
+                                    <Setter Property="Background" Value="#FEF3C7"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <TextBlock FontSize="12" FontWeight="SemiBold">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="✅ Kaydedildi"/>
+                                <Setter Property="Foreground" Value="#16A34A"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasUnsavedData}" Value="True">
+                                        <Setter Property="Text" Value="⚠️ Kaydedilmedi"/>
+                                        <Setter Property="Foreground" Value="#D97706"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Border>
+                
+                <Button Command="{Binding EvaluateCommand}" Style="{StaticResource PipelineButton}" Background="#8B5CF6" BorderBrush="#7C3AED" Foreground="White" Margin="0,0,10,10" Padding="15,8">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⚡" Margin="0,0,8,0"/>
+                        <TextBlock Text="3. Hesapla" FontWeight="Bold"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Command="{Binding ExportExcelCommand}" Style="{StaticResource PipelineButton}" Background="#F59E0B" BorderBrush="#D97706" Foreground="White" Margin="0,0,10,10" Padding="15,8" ToolTip="Excel Raporu Al (Ctrl+E)">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="📊" Margin="0,0,8,0"/>
+                        <TextBlock Text="4. Excel" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Command="{Binding ExportCsvCommand}" Style="{StaticResource PipelineButton}" Background="#6366F1" BorderBrush="#4F46E5" Foreground="White" Margin="0,0,10,10" Padding="15,8" ToolTip="CSV Olarak Aktar (Ctrl+Shift+C)">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="📋" Margin="0,0,8,0"/>
+                        <TextBlock Text="CSV" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Button>
+            </WrapPanel>
+        </WrapPanel>
+    </Border>
+</UserControl>
