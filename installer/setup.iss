@@ -18,7 +18,6 @@ DisableProgramGroupPage=yes
 LicenseFile=..\LICENSE
 OutputDir=.
 OutputBaseFilename=OptikDegerlendirme-v{#MyAppVersion}-Setup
-SetupIconFile=..\Assets\app_icon.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
