@@ -265,11 +265,17 @@
                                      VerticalAlignment="Top"
                                      Margin="0,80,20,0"/>
 
+        <!-- PROGRESS MODAL OVERLAY -->
+        <modals:ProgressModal Panel.ZIndex="1500" />
+
         <!-- BOOKLET SETTINGS MODAL OVERLAY -->
         <modals:BookletSettingsModal Panel.ZIndex="200" />
 
         <!-- SHORTCUTS MODAL OVERLAY -->
         <modals:ShortcutsModal Panel.ZIndex="250" />
+
+        <!-- SHORTCUT SETTINGS MODAL OVERLAY -->
+        <modals:ShortcutSettingsModal Panel.ZIndex="260" />
 
         <!-- INTERFACE SETTINGS OVERLAY -->
         <modals:UISettingsModal Panel.ZIndex="300" />

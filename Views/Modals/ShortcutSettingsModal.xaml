@@ -1,0 +1,162 @@
+<UserControl x:Class="OptikFormApp.Views.Modals.ShortcutSettingsModal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="700">
+    <Grid Background="#80000000" 
+          Visibility="{Binding IsShortcutSettingsOpen, Converter={StaticResource BoolToVis}}"
+          Panel.ZIndex="1200">
+        
+        <Border Width="650" 
+                Height="550"
+                VerticalAlignment="Center" 
+                HorizontalAlignment="Center"
+                Background="White"
+                BorderBrush="#E5E7EB"
+                BorderThickness="1"
+                CornerRadius="16"
+                Padding="0">
+            
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" 
+                                  Opacity="0.25" 
+                                  BlurRadius="30" 
+                                  ShadowDepth="8"/>
+            </Border.Effect>
+            
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <!-- Header -->
+                <Border Grid.Row="0" 
+                        Background="#F9FAFB" 
+                        BorderBrush="#E5E7EB"
+                        BorderThickness="0,0,0,1"
+                        CornerRadius="16,16,0,0"
+                        Padding="24,20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Klavye Kısayolları" 
+                                      FontSize="20" 
+                                      FontWeight="Bold" 
+                                      Foreground="#1F2937"/>
+                            <TextBlock Text="Kısayol tuşlarını özelleştirin" 
+                                      FontSize="13" 
+                                      Foreground="#6B7280"
+                                      Margin="0,4,0,0"/>
+                        </StackPanel>
+                        
+                        <Button Grid.Column="1" 
+                               Content="✕" 
+                               Command="{Binding CloseShortcutSettingsCommand}"
+                               Style="{StaticResource OutlineButton}"
+                               FontSize="16"
+                               Padding="12,6"
+                               VerticalAlignment="Top"/>
+                    </Grid>
+                </Border>
+                
+                <!-- Content -->
+                <ScrollViewer Grid.Row="1" 
+                             VerticalScrollBarVisibility="Auto"
+                             Padding="24,16">
+                    <ItemsControl ItemsSource="{Binding ShortcutCategories}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,0,16" 
+                                       Background="#F9FAFB" 
+                                       CornerRadius="12"
+                                       Padding="16">
+                                    <StackPanel>
+                                        <!-- Category Header -->
+                                        <TextBlock Text="{Binding CategoryName}" 
+                                                  FontSize="14" 
+                                                  FontWeight="SemiBold"
+                                                  Foreground="#3B82F6"
+                                                  Margin="0,0,0,12"/>
+                                        
+                                        <!-- Shortcuts List -->
+                                        <ItemsControl ItemsSource="{Binding Shortcuts}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Margin="0,0,0,8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        
+                                                        <!-- Action Name -->
+                                                        <TextBlock Grid.Column="0" 
+                                                                  Text="{Binding DisplayName}" 
+                                                                  VerticalAlignment="Center"
+                                                                  FontSize="13"
+                                                                  Foreground="#374151"/>
+                                                        
+                                                        <!-- Current Shortcut Display -->
+                                                        <Border Grid.Column="1" 
+                                                               Background="#E5E7EB" 
+                                                               CornerRadius="6"
+                                                               Padding="12,6"
+                                                               Margin="0,0,12,0"
+                                                               MinWidth="100"
+                                                               HorizontalAlignment="Center">
+                                                            <TextBlock Text="{Binding CurrentShortcut}" 
+                                                                      HorizontalAlignment="Center"
+                                                                      FontSize="12"
+                                                                      FontWeight="SemiBold"
+                                                                      Foreground="#4B5563"/>
+                                                        </Border>
+                                                        
+                                                        <!-- Edit Button -->
+                                                        <Button Grid.Column="2" 
+                                                               Content="Düzenle" 
+                                                               Command="{Binding DataContext.EditShortcutCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                               CommandParameter="{Binding}"
+                                                               Padding="16,6"
+                                                               FontSize="12"/>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                
+                <!-- Footer -->
+                <Border Grid.Row="2" 
+                        Background="#F9FAFB" 
+                        BorderBrush="#E5E7EB"
+                        BorderThickness="0,1,0,0"
+                        CornerRadius="0,0,16,16"
+                        Padding="24,16">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Varsayılana Sıfırla" 
+                               Command="{Binding ResetShortcutsCommand}"
+                               Style="{StaticResource OutlineButton}"
+                               Padding="20,10"
+                               Margin="0,0,12,0"/>
+                        <Button Content="Kapat" 
+                               Command="{Binding CloseShortcutSettingsCommand}"
+                               Padding="24,10"
+                               FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

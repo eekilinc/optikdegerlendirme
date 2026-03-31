@@ -30,6 +30,7 @@ namespace OptikFormApp.ViewModels
         private readonly TemplateService _templateService;
         private readonly JsonDataService _jsonDataService;
         private readonly KeyboardShortcutService _shortcutService;
+        private readonly ProgressService _progressService;
         
         private readonly object _studentsLock = new();
         private readonly object _coursesLock = new();
@@ -52,13 +53,18 @@ namespace OptikFormApp.ViewModels
         private string _alertMessage = string.Empty;
         private bool _isAboutOpen;
         private bool _isUISettingsOpen;
-        private bool _isGeneralConfigOpen;
-        private string _defaultExcelPath = "";
-        private int _themeIndex;
-        private int _layoutIndex;
-        private bool _hasUnsavedData;
-        private string _searchText = "";
+        private bool _isRenameModalOpen;
+        private bool _isShortcutSettingsOpen;
+        private string _renameModalTitle = "";
+        private string _renameInput1 = "";
+        private string _renameInput2 = "";
+        private bool _showRenameInput2;
+        private int _renameId;
+        private string _renameContext = "";
         private string _schoolName = "Okul Adı";
+        private string _defaultExcelPath = "";
+        private int _themeIndex = 0;
+        private int _layoutIndex = 0;
         private double _netCoefficient = 1.0;
         private double _baseScore = 0.0;
         private double _wrongDeductionFactor = 0.25;
@@ -67,6 +73,9 @@ namespace OptikFormApp.ViewModels
         private string _newOutcomeName = "";
         private string _newOutcomeRange = "";
         private string _newOutcomeBooklet = "A";
+        private string _searchText = "";
+        private bool _isGeneralConfigOpen;
+        private bool _hasUnsavedData;
 
         public ICollectionView StudentsView { get; }
 
@@ -85,6 +94,7 @@ namespace OptikFormApp.ViewModels
             _templateService = new TemplateService();
             _jsonDataService = new JsonDataService();
             _shortcutService = new KeyboardShortcutService();
+            _progressService = ProgressService.Instance;
 
             // Undo/Redo event handlers
             _undoRedoManager.CanUndoChanged += (s, e) => { OnPropertyChanged(nameof(CanUndo)); OnPropertyChanged(nameof(UndoDescription)); };
@@ -427,6 +437,18 @@ namespace OptikFormApp.ViewModels
             ShowShortcutsCommand = new RelayCommand(_ => IsShortcutsOpen = true);
             CloseShortcutsCommand = new RelayCommand(_ => IsShortcutsOpen = false);
 
+            // Shortcut Settings Commands
+            OpenShortcutSettingsCommand = new RelayCommand(_ => IsShortcutSettingsOpen = true);
+            CloseShortcutSettingsCommand = new RelayCommand(_ => IsShortcutSettingsOpen = false);
+            EditShortcutCommand = new RelayCommand(param => {
+                // TODO: Implement shortcut editing dialog
+                ShowToastInfo("Kısayol düzenleme yakında gelecek!");
+            });
+            ResetShortcutsCommand = new RelayCommand(_ => {
+                _shortcutService.ResetToDefaults();
+                ShowToastSuccess("Kısayollar varsayılana sıfırlandı!");
+            });
+
             ExportGradeListCommand = new RelayCommand(_ =>
             {
                 if (Students.Count == 0) {
@@ -458,6 +480,9 @@ namespace OptikFormApp.ViewModels
                     _notificationService.Dismiss(notificationId);
                 }
             });
+
+            // Progress Commands
+            CancelProgressCommand = new RelayCommand(_ => _progressService.CancelOperation());
 
             // Undo/Redo Commands
             UndoCommand = new RelayCommand(_ => {
@@ -791,17 +816,10 @@ namespace OptikFormApp.ViewModels
         private string _newExamName = "";
 
         public bool IsRenameModalOpen { get => _isRenameModalOpen; set { _isRenameModalOpen = value; OnPropertyChanged(); } }
-        private bool _isRenameModalOpen;
         public string RenameModalTitle { get => _renameModalTitle; set { _renameModalTitle = value; OnPropertyChanged(); } }
-        private string _renameModalTitle = "";
         public string RenameInput1 { get => _renameInput1; set { _renameInput1 = value; OnPropertyChanged(); } }
-        private string _renameInput1 = "";
         public string RenameInput2 { get => _renameInput2; set { _renameInput2 = value; OnPropertyChanged(); } }
-        private string _renameInput2 = "";
         public bool ShowRenameInput2 { get => _showRenameInput2; set { _showRenameInput2 = value; OnPropertyChanged(); } }
-        private bool _showRenameInput2;
-        private string _renameContext = "";
-        private int _renameId = 0;
 
         public bool IsModalOpen { get => _isModalOpen; set { _isModalOpen = value; OnPropertyChanged(); } }
         public string StatusMessage { get => _statusMessage; set { _statusMessage = value; OnPropertyChanged(); } }
@@ -813,6 +831,11 @@ namespace OptikFormApp.ViewModels
         public bool IsAboutOpen { get => _isAboutOpen; set { _isAboutOpen = value; OnPropertyChanged(); } }
         public bool IsShortcutsOpen { get => _isShortcutsOpen; set { _isShortcutsOpen = value; OnPropertyChanged(); } }
         private bool _isShortcutsOpen;
+        public bool IsShortcutSettingsOpen { get => _isShortcutSettingsOpen; set { _isShortcutSettingsOpen = value; OnPropertyChanged(); } }
+        public ICommand OpenShortcutSettingsCommand { get; set; }
+        public ICommand CloseShortcutSettingsCommand { get; set; }
+        public ICommand EditShortcutCommand { get; set; }
+        public ICommand ResetShortcutsCommand { get; set; }
         public bool IsUISettingsOpen { get => _isUISettingsOpen; set { _isUISettingsOpen = value; OnPropertyChanged(); } }
         public bool IsGeneralConfigOpen { get => _isGeneralConfigOpen; set { _isGeneralConfigOpen = value; OnPropertyChanged(); } }
         public string DefaultExcelPath { get => _defaultExcelPath; set { _defaultExcelPath = value; OnPropertyChanged(); SaveSettings(); } }
@@ -917,6 +940,10 @@ namespace OptikFormApp.ViewModels
         // JSON Data Import/Export Commands
         public ICommand ExportJsonCommand { get; set; }
         public ICommand ImportJsonCommand { get; set; }
+
+        // Progress Service
+        public ProgressService Progress => _progressService;
+        public ICommand CancelProgressCommand { get; set; }
 
         public void AddToLog(string message, LogLevel level = LogLevel.Info)
         {
