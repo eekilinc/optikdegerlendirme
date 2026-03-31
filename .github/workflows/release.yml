@@ -21,6 +21,10 @@ jobs:
       with:
         dotnet-version: '9.0.x'
     
+    - name: Install Inno Setup
+      run: |
+        choco install innosetup -y
+    
     - name: Extract Version from Tag
       id: get_version
       shell: pwsh
@@ -48,19 +52,50 @@ jobs:
     - name: Build
       run: dotnet build -c Release --no-restore
     
-    - name: Publish
+    - name: Publish for Installer
       run: |
-        dotnet publish -c Release -o ./publish --self-contained false --no-build
-        cd publish
-        7z a -tzip ../OptikDegerlendirme-v${{ steps.get_version.outputs.version }}.zip *
+        dotnet publish -c Release -o ./installer/publish --self-contained true --runtime win-x64 --no-build
+    
+    - name: Create Installer with Inno Setup
+      shell: pwsh
+      run: |
+        $version = "${{ steps.get_version.outputs.version }}"
+        # Update version in ISS file
+        $issContent = Get-Content "installer\setup.iss" -Raw
+        $issContent = $issContent -replace '#define MyAppVersion ".*"', "#define MyAppVersion `"$version`""
+        Set-Content "installer\setup.iss" $issContent
+        # Build installer
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "installer\setup.iss"
+    
+    - name: Create ZIP Archive
+      run: |
+        cd installer/publish
+        7z a -tzip ../../OptikDegerlendirme-v${{ steps.get_version.outputs.version }}-portable.zip *
     
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        files: OptikDegerlendirme-v${{ steps.get_version.outputs.version }}.zip
+        files: |
+          installer/OptikDegerlendirme-v${{ steps.get_version.outputs.version }}-Setup.exe
+          OptikDegerlendirme-v${{ steps.get_version.outputs.version }}-portable.zip
         name: Optik Değerlendirme v${{ steps.get_version.outputs.version }}
         draft: false
         prerelease: false
         generate_release_notes: true
+        body: |
+          ## Yeni Sürüm: v${{ steps.get_version.outputs.version }}
+          
+          ### İndirme Seçenekleri
+          
+          **1. Kurulum Dosyası (Önerilen)**
+          - OptikDegerlendirme-v${{ steps.get_version.outputs.msiVersion }}.msi
+          - Windows'a kurulum yapar
+          - Başlat menüsüne ekler
+          - Otomatik kaldırma desteği
+          
+          **2. Taşınabilir Sürüm**
+          - OptikDegerlendirme-v${{ steps.get_version.outputs.version }}-portable.zip
+          - Kurulum gerekmez
+          - USB'den çalıştırılabilir
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
