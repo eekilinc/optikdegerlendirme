@@ -193,6 +193,12 @@ namespace OptikFormApp.ViewModels
             CloseAlertCommand = new RelayCommand(_ => IsAlertOpen = false);
             OpenAboutCommand = new RelayCommand(_ => IsAboutOpen = true);
             CloseAboutCommand = new RelayCommand(_ => IsAboutOpen = false);
+            OpenGitHubCommand = new RelayCommand(_ => {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
+                    FileName = "https://github.com/eekilinc",
+                    UseShellExecute = true
+                });
+            });
             OpenUISettingsCommand = new RelayCommand(_ => IsUISettingsOpen = true);
             CloseUISettingsCommand = new RelayCommand(_ => IsUISettingsOpen = false);
             OpenGeneralConfigCommand = new RelayCommand(_ => IsGeneralConfigOpen = true);
@@ -635,6 +641,7 @@ namespace OptikFormApp.ViewModels
         public ICommand SaveRenameCommand { get; set; }
         public ICommand UndoCommand { get; set; }
         public ICommand RedoCommand { get; set; }
+        public ICommand OpenGitHubCommand { get; set; }
 
         public void AddToLog(string message, LogLevel level = LogLevel.Info)
         {
