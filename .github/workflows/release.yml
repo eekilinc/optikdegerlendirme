@@ -50,11 +50,11 @@ jobs:
       run: dotnet restore --runtime win-x64
     
     - name: Build
-      run: dotnet build -c Release --no-restore
+      run: dotnet build -c Release --no-restore --runtime win-x64
     
     - name: Publish for Installer
       run: |
-        dotnet publish -c Release -o ./installer/publish --self-contained true --runtime win-x64 --no-build
+        dotnet publish -c Release -o ./installer/publish --self-contained true --runtime win-x64
     
     - name: Create Installer with Inno Setup
       shell: pwsh
