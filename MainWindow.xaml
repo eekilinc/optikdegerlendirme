@@ -27,10 +27,6 @@
         <KeyBinding Key="F1" Command="{Binding ShowShortcutsCommand}" />
     </Window.InputBindings>
 
-    <Window.Resources>
-        <!-- Window-specific Resources -->
-    </Window.Resources>
-
     <Grid>
         <!-- APP SHELL -->
         <Grid>
@@ -70,6 +66,8 @@
                         <MenuItem Header="Soru Ayarlarını Yönet (İptal/Çoklu)" Command="{Binding OpenQuestionSettingsCommand}"/>
                         <MenuItem Header="Öğrenim Çıktılarını (Konu) Yönet" Command="{Binding OpenLearningOutcomesCommand}"/>
                         <Separator/>
+                        <MenuItem Header="🔍 Gelişmiş Filtreleme" Command="{Binding OpenAdvancedFilterCommand}"/>
+                        <Separator/>
                         <MenuItem Header="Puanları Hesapla" Command="{Binding EvaluateCommand}" InputGestureText="F5"/>
                     </MenuItem>
                     <MenuItem Header="_Ders">
@@ -82,6 +80,9 @@
                         <MenuItem Header="Not Listesi (No + Puan) (.csv)" Command="{Binding ExportGradeListCommand}"/>
                         <Separator/>
                         <MenuItem Header="Toplu PDF Karne Al (.pdf)" Command="{Binding ExportPdfCommand}" InputGestureText="Ctrl+P"/>
+                        <Separator/>
+                        <MenuItem Header="📊 Gelişmiş Soru Analizi" Command="{Binding OpenItemAnalysisCommand}"/>
+                        <MenuItem Header="🔮 Başarı Tahmini" Command="{Binding OpenSuccessPredictionCommand}"/>
                     </MenuItem>
                     <MenuItem Header="_Ayarlar">
                         <MenuItem Header="Arayüz Ayarları..." Command="{Binding OpenUISettingsCommand}"/>
@@ -300,6 +301,18 @@
 
         <!-- TEMPLATE MANAGER MODAL OVERLAY -->
         <modals:TemplateManagerModal Panel.ZIndex="610" />
+
+        <!-- ITEM ANALYSIS MODAL OVERLAY -->
+        <modals:ItemAnalysisModal Panel.ZIndex="620" 
+                                  Visibility="{Binding IsItemAnalysisOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+        <!-- ADVANCED FILTER MODAL OVERLAY -->
+        <modals:AdvancedFilterModal Panel.ZIndex="630" 
+                                     Visibility="{Binding IsAdvancedFilterOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+        <!-- SUCCESS PREDICTION MODAL OVERLAY -->
+        <modals:SuccessPredictionModal Panel.ZIndex="640" 
+                                        Visibility="{Binding IsSuccessPredictionOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
         <!-- BUSY LOADING OVERLAY -->
         <modals:BusyOverlay Panel.ZIndex="1000" />

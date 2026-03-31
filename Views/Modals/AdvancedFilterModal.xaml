@@ -1,0 +1,200 @@
+<UserControl x:Class="OptikFormApp.Views.Modals.AdvancedFilterModal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             mc:Ignorable="d" d:DesignHeight="500" d:DesignWidth="450">
+    <Grid Background="#80000000">
+        <Border Background="White" 
+                CornerRadius="16" 
+                Width="400" 
+                Height="450"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            
+            <Grid Margin="24">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <TextBlock Grid.Row="0" 
+                           Text="Gelişmiş Filtreleme" 
+                           FontSize="22" 
+                           FontWeight="Bold" 
+                           Foreground="Black"
+                           Margin="0,0,0,20"/>
+
+                <!-- Score Range -->
+                <Grid Grid.Row="1" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Min Puan" 
+                                   Foreground="Gray" 
+                                   FontSize="12"
+                                   Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding MinScoreFilter, TargetNullValue=''}" 
+                                 ToolTip="Minimum puan değeri"
+                                 Padding="8,4"/>
+                    </StackPanel>
+                    
+                    <TextBlock Grid.Column="1" 
+                               Text="-" 
+                               VerticalAlignment="Bottom"
+                               Margin="8,0"
+                               Foreground="Gray"/>
+                    
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Max Puan" 
+                                   Foreground="Gray" 
+                                   FontSize="12"
+                                   Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding MaxScoreFilter, TargetNullValue=''}" 
+                                 ToolTip="Maximum puan değeri"
+                                 Padding="8,4"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Booklet Filter -->
+                <StackPanel Grid.Row="2" Margin="0,0,0,16">
+                    <TextBlock Text="Kitapçık Tipi" 
+                               Foreground="Gray" 
+                               FontSize="12"
+                               Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding AvailableBookletTypes}"
+                              SelectedItem="{Binding SelectedBookletFilter}"
+                              ToolTip="Filtrelemek için kitapçık tipi seçin"
+                              Padding="8,4">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" FontWeight="SemiBold"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+
+                <!-- Correct/Wrong Count -->
+                <Grid Grid.Row="3" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Min Doğru Sayısı" 
+                                   Foreground="Gray" 
+                                   FontSize="12"
+                                   Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding MinCorrectFilter, TargetNullValue=''}" 
+                                 ToolTip="Minimum doğru cevap sayısı"
+                                 Padding="8,4"/>
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Max Yanlış Sayısı" 
+                                   Foreground="Gray" 
+                                   FontSize="12"
+                                   Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding MaxWrongFilter, TargetNullValue=''}" 
+                                 ToolTip="Maximum yanlış cevap sayısı"
+                                 Padding="8,4"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Sorting -->
+                <Border Grid.Row="4" 
+                        Background="#F0F0F0" 
+                        CornerRadius="8" 
+                        Padding="12"
+                        Margin="0,0,0,16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" 
+                                   Text="📊 Sıralama Ayarları" 
+                                   FontWeight="SemiBold"
+                                   Foreground="Black"
+                                   Margin="0,0,0,8"/>
+                        
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <ComboBox Grid.Column="0"
+                                      SelectedItem="{Binding SelectedSortColumn}"
+                                      Padding="8,4">
+                                <ComboBox.ItemsSource>
+                                    <x:Array Type="{x:Type sys:String}">
+                                        <sys:String>Score</sys:String>
+                                        <sys:String>FullName</sys:String>
+                                        <sys:String>StudentId</sys:String>
+                                        <sys:String>CorrectCount</sys:String>
+                                        <sys:String>IncorrectCount</sys:String>
+                                        <sys:String>NetCount</sys:String>
+                                        <sys:String>Rank</sys:String>
+                                    </x:Array>
+                                </ComboBox.ItemsSource>
+                            </ComboBox>
+                            
+                            <Button Grid.Column="1"
+                                    Content="{Binding IsSortDescending, Converter={StaticResource SortDirectionConverter}}"
+                                    Command="{Binding ToggleSortDirectionCommand}"
+                                    Margin="8,0,0,0"
+                                    Padding="12,6"
+                                    ToolTip="Sıralama yönünü değiştir"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- Active Filters Summary -->
+                <Border Grid.Row="5" 
+                        Background="LightBlue" 
+                        Opacity="0.3"
+                        CornerRadius="8" 
+                        Padding="12"
+                        Margin="0,0,0,16"
+                        Visibility="{Binding HasActiveFilters, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{Binding ActiveFiltersSummary}" 
+                               Foreground="Blue"
+                               TextWrapping="Wrap"
+                               FontSize="12"/>
+                </Border>
+
+                <!-- Spacer -->
+                <Grid Grid.Row="6" Height="10"/>
+
+                <!-- Buttons -->
+                <StackPanel Grid.Row="7" 
+                            Orientation="Horizontal" 
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom">
+                    <Button Content="🗑️ Filtreleri Temizle" 
+                            Command="{Binding ClearFiltersCommand}"
+                            Margin="0,0,12,0"/>
+                    <Button Content="✓ Uygula ve Kapat" 
+                            Command="{Binding CloseAdvancedFilterCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

@@ -4,137 +4,552 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="500">
-    <Grid Visibility="{Binding IsUISettingsOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}">
-        <Border Background="{DynamicResource CardBg}" CornerRadius="20" Width="500" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="0">
+             d:DesignHeight="550" d:DesignWidth="550">
+    
+    <!-- Animasyonlar -->
+    <UserControl.Resources>
+        <Storyboard x:Key="ModalOpenAnimation">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" From="0.9" To="1" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" From="0.9" To="1" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+    </UserControl.Resources>
+    
+    <Grid Visibility="{Binding IsUISettingsOpen, Converter={StaticResource BoolToVis}}" 
+          Background="#CC000000">
+        
+        <!-- Glassmorphism Modal - Tema Uyumlu -->
+        <Border Width="520" 
+                VerticalAlignment="Center" 
+                HorizontalAlignment="Center"
+                CornerRadius="24"
+                Padding="0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#F8FAFC"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <Border.Effect>
-                <DropShadowEffect Color="Black" Opacity="0.2" BlurRadius="40" ShadowDepth="12"/>
+                <DropShadowEffect Color="Black" Opacity="0.25" BlurRadius="60" ShadowDepth="20"/>
             </Border.Effect>
+            <Border.RenderTransform>
+                <ScaleTransform ScaleX="1" ScaleY="1"/>
+            </Border.RenderTransform>
+            
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Header -->
-                <Border Grid.Row="0" Background="{DynamicResource Accent}" CornerRadius="20,20,0,0" Padding="30,25">
+                <!-- Premium Header with Gradient -->
+                <Border Grid.Row="0" 
+                        Height="100"
+                        CornerRadius="24,24,0,0" 
+                        Padding="28,24">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#667EEA" Offset="0"/>
+                                        <GradientStop Color="#764BA2" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Border.Style>
+                    
                     <Grid>
-                        <StackPanel>
-                            <TextBlock Text="🎨  Arayüz Ayarları" FontSize="22" FontWeight="Bold" Foreground="White"/>
-                            <TextBlock Text="Görünüm ve yerleşim ayarlarını kişiselleştirin." FontSize="13" Foreground="White" Opacity="0.9" Margin="0,6,0,0"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Arayüz Ayarları" 
+                                       FontSize="26" 
+                                       FontWeight="Bold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="Görünüm ve yerleşim ayarlarını kişiselleştirin" 
+                                       FontSize="13" 
+                                       Margin="0,6,0,0"
+                                       Opacity="0.9">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#E0E0E0"/>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
-                        <Button Content="✕" Command="{Binding CloseUISettingsCommand}"
-                                HorizontalAlignment="Right" VerticalAlignment="Top"
-                                Background="Transparent" BorderThickness="0" Foreground="White"
-                                FontSize="18" Padding="8,4" Cursor="Hand" Opacity="0.8"/>
+                        
+                        <!-- Close Button -->
+                        <Button Command="{Binding CloseUISettingsCommand}"
+                                HorizontalAlignment="Right" 
+                                VerticalAlignment="Top"
+                                Background="#20FFFFFF" 
+                                BorderThickness="0" 
+                                Foreground="White"
+                                Width="36" 
+                                Height="36"
+                                FontSize="16" 
+                                Padding="0"
+                                Cursor="Hand">
+                            <Button.Content>✕</Button.Content>
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" 
+                                            CornerRadius="18"
+                                            BorderThickness="0">
+                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                          VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <Button.Triggers>
+                                <EventTrigger RoutedEvent="MouseEnter">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)" 
+                                                            To="#35FFFFFF" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                                <EventTrigger RoutedEvent="MouseLeave">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)" 
+                                                            To="#20FFFFFF" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Button.Triggers>
+                        </Button>
                     </Grid>
                 </Border>
 
-                <!-- Content -->
-                <StackPanel Grid.Row="1" Margin="25,20,25,10">
+                <!-- Content Cards -->
+                <StackPanel Grid.Row="1" Margin="24,20,24,10">
                     
-                    <!-- Tema Kartı -->
-                    <Border Background="{DynamicResource AppBg}" CornerRadius="12" Padding="20,16" Margin="0,0,0,12" 
-                           BorderThickness="1" BorderBrush="{DynamicResource Border}">
+                    <!-- Theme Card with Icon -->
+                    <Border CornerRadius="16" 
+                            Padding="20,18" 
+                            Margin="0,0,0,12"
+                            BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#F1F5F9"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="Background" Value="#334155"/>
+                                        <Setter Property="BorderBrush" Value="#475569"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
                         <Grid>
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextMain}">
-                                    <Run Text="🌓  "/> <Run Text="Renk Teması"/>
-                                </TextBlock>
-                                <TextBlock Text="Açık veya koyu mod arasında geçiş yapın." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,0"/>
-                            </StackPanel>
-                            <Border Grid.Column="1" CornerRadius="8" Background="White" BorderBrush="#E5E7EB">
-                                <Border.Effect>
-                                    <DropShadowEffect Color="#000000" Opacity="0.1" BlurRadius="4" ShadowDepth="1"/>
-                                </Border.Effect>
-                                <ComboBox SelectedIndex="{Binding ThemeIndex}" Width="160" Padding="12,10"
-                                          Background="Transparent" Foreground="Black" BorderThickness="0"
-                                          VerticalAlignment="Center" FontSize="13">
-                                    <ComboBox.Resources>
-                                        <Style TargetType="ComboBoxItem">
-                                            <Setter Property="Background" Value="White"/>
-                                            <Setter Property="Foreground" Value="Black"/>
-                                            <Setter Property="Padding" Value="12,8"/>
-                                            <Setter Property="FontSize" Value="13"/>
+                            
+                            <!-- Theme Icon -->
+                            <Border Grid.Column="0" 
+                                    Width="44" 
+                                    Height="44" 
+                                    CornerRadius="12"
+                                    Background="#FEF3C7"
+                                    Margin="0,0,14,0">
+                                <TextBlock Text="🎨" 
+                                           FontSize="22" 
+                                           HorizontalAlignment="Center" 
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="Renk Teması" 
+                                           FontSize="15" 
+                                           FontWeight="SemiBold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E293B"/>
                                             <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#F8FAFC"/>
-                                                    <Setter Property="Foreground" Value="#1F2937"/>
-                                                </Trigger>
-                                                <Trigger Property="IsSelected" Value="True">
-                                                    <Setter Property="Background" Value="#3B82F6"/>
-                                                    <Setter Property="Foreground" Value="White"/>
-                                                </Trigger>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </ComboBox.Resources>
-                                    <ComboBoxItem Content="🌞  Aydınlık Tema" Background="White" Foreground="Black"/>
-                                    <ComboBoxItem Content="🌙  Karanlık Tema" Background="White" Foreground="Black"/>
-                                </ComboBox>
-                            </Border>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="Açık veya koyu mod arasında geçiş yapın" 
+                                           FontSize="12" 
+                                           Margin="0,3,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#64748B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                            
+                            <ComboBox Grid.Column="2" 
+                                      SelectedIndex="{Binding ThemeIndex}" 
+                                      Width="150" 
+                                      Padding="12,10"
+                                      Background="White"
+                                      Foreground="#1E293B" 
+                                      BorderThickness="1"
+                                      BorderBrush="#E2E8F0"
+                                      VerticalAlignment="Center" 
+                                      FontSize="13"
+                                      Style="{StaticResource {x:Type ComboBox}}">
+                                <ComboBox.Resources>
+                                    <Style TargetType="ComboBoxItem">
+                                        <Setter Property="Background" Value="White"/>
+                                        <Setter Property="Foreground" Value="#1E293B"/>
+                                        <Setter Property="Padding" Value="12,10"/>
+                                        <Setter Property="FontSize" Value="13"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#F1F5F9"/>
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="#667EEA"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ComboBox.Resources>
+                                <ComboBoxItem Content="🌞 Aydınlık"/>
+                                <ComboBoxItem Content="🌙 Karanlık"/>
+                            </ComboBox>
                         </Grid>
                     </Border>
 
-                    <!-- Yerleşim Kartı -->
-                    <Border Background="{DynamicResource AppBg}" CornerRadius="12" Padding="20,16" Margin="0,0,0,4"
-                           BorderThickness="1" BorderBrush="{DynamicResource Border}">
+                    <!-- Layout Card with Icon -->
+                    <Border CornerRadius="16" 
+                            Padding="20,18" 
+                            Margin="0,0,0,12"
+                            BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#F1F5F9"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="Background" Value="#334155"/>
+                                        <Setter Property="BorderBrush" Value="#475569"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
                         <Grid>
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextMain}">
-                                    <Run Text="📋  "/> <Run Text="Tablo Yerleşimi"/>
-                                </TextBlock>
-                                <TextBlock Text="Satır yüksekliğini ve hücre boşluğunu ayarlayın." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,0"/>
-                            </StackPanel>
-                            <Border Grid.Column="1" CornerRadius="8" Background="White" BorderBrush="#E5E7EB">
-                                <Border.Effect>
-                                    <DropShadowEffect Color="#000000" Opacity="0.1" BlurRadius="4" ShadowDepth="1"/>
-                                </Border.Effect>
-                                <ComboBox SelectedIndex="{Binding LayoutIndex}" Width="160" Padding="12,10"
-                                          Background="Transparent" Foreground="Black" BorderThickness="0"
-                                          VerticalAlignment="Center" FontSize="13">
-                                    <ComboBox.Resources>
-                                        <Style TargetType="ComboBoxItem">
-                                            <Setter Property="Background" Value="White"/>
-                                            <Setter Property="Foreground" Value="Black"/>
-                                            <Setter Property="Padding" Value="12,8"/>
-                                            <Setter Property="FontSize" Value="13"/>
+                            
+                            <!-- Layout Icon -->
+                            <Border Grid.Column="0" 
+                                    Width="44" 
+                                    Height="44" 
+                                    CornerRadius="12"
+                                    Background="#DBEAFE"
+                                    Margin="0,0,14,0">
+                                <TextBlock Text="📐" 
+                                           FontSize="22" 
+                                           HorizontalAlignment="Center" 
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="Tablo Yerleşimi" 
+                                           FontSize="15" 
+                                           FontWeight="SemiBold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E293B"/>
                                             <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#F8FAFC"/>
-                                                    <Setter Property="Foreground" Value="#1F2937"/>
-                                                </Trigger>
-                                                <Trigger Property="IsSelected" Value="True">
-                                                    <Setter Property="Background" Value="#3B82F6"/>
-                                                    <Setter Property="Foreground" Value="White"/>
-                                                </Trigger>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </ComboBox.Resources>
-                                    <ComboBoxItem Content="📊  Kompakt" Background="White" Foreground="Black"/>
-                                    <ComboBoxItem Content="📄  Geniş / Rahat" Background="White" Foreground="Black"/>
-                                </ComboBox>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="Satır yüksekliği ve hücre boşluğu" 
+                                           FontSize="12" 
+                                           Margin="0,3,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#64748B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                            
+                            <ComboBox Grid.Column="2" 
+                                      SelectedIndex="{Binding LayoutIndex}" 
+                                      Width="150" 
+                                      Padding="12,10"
+                                      Background="White"
+                                      Foreground="#1E293B" 
+                                      BorderThickness="1"
+                                      BorderBrush="#E2E8F0"
+                                      VerticalAlignment="Center" 
+                                      FontSize="13">
+                                <ComboBox.Resources>
+                                    <Style TargetType="ComboBoxItem">
+                                        <Setter Property="Background" Value="White"/>
+                                        <Setter Property="Foreground" Value="#1E293B"/>
+                                        <Setter Property="Padding" Value="12,10"/>
+                                        <Setter Property="FontSize" Value="13"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#F1F5F9"/>
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="#667EEA"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ComboBox.Resources>
+                                <ComboBoxItem Content="📊 Kompakt"/>
+                                <ComboBoxItem Content="📄 Geniş"/>
+                            </ComboBox>
+                        </Grid>
+                    </Border>
+
+                    <!-- Font Size Card -->
+                    <Border CornerRadius="16" 
+                            Padding="20,18" 
+                            Margin="0,0,0,4"
+                            BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#F1F5F9"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="Background" Value="#334155"/>
+                                        <Setter Property="BorderBrush" Value="#475569"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <Border Grid.Column="0" 
+                                    Width="44" 
+                                    Height="44" 
+                                    CornerRadius="12"
+                                    Background="#DCFCE7"
+                                    Margin="0,0,14,0">
+                                <TextBlock Text="Aa" 
+                                           FontSize="20" 
+                                           FontWeight="Bold"
+                                           Foreground="#16A34A"
+                                           HorizontalAlignment="Center" 
+                                           VerticalAlignment="Center"/>
                             </Border>
+                            
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="Yazı Boyutu" 
+                                           FontSize="15" 
+                                           FontWeight="SemiBold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="Arayüz yazı boyutunu ayarlayın" 
+                                           FontSize="12" 
+                                           Margin="0,3,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#64748B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                            
+                            <Slider Grid.Column="2" 
+                                    Width="120"
+                                    Minimum="12" 
+                                    Maximum="18" 
+                                    Value="{Binding FontSize}"
+                                    TickFrequency="1"
+                                    IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center"/>
                         </Grid>
                     </Border>
                 </StackPanel>
 
-                <!-- Footer -->
-                <Border Grid.Row="2" Background="{DynamicResource AppBg}" CornerRadius="0,0,20,20" Padding="25,15"
-                       BorderThickness="1,1,1,0" BorderBrush="{DynamicResource Border}">
+                <!-- Info Banner -->
+                <Border Grid.Row="2" 
+                        CornerRadius="12" 
+                        Padding="16,12"
+                        Margin="24,0,24,10"
+                        BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#EFF6FF"/>
+                            <Setter Property="BorderBrush" Value="#BFDBFE"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                    <Setter Property="Background" Value="#1E3A5F"/>
+                                    <Setter Property="BorderBrush" Value="#3B5998"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="💡" FontSize="16" Margin="0,0,10,0"/>
+                        <TextBlock Text="Ayarlar anında uygulanır ve otomatik olarak kaydedilir" 
+                                   FontSize="12" 
+                                   VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#3B82F6"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Foreground" Value="#60A5FA"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <!-- Premium Footer -->
+                <Border Grid.Row="3" 
+                        CornerRadius="0,0,24,24" 
+                        Padding="24,18"
+                        BorderThickness="0,1,0,0">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#F8FAFC"/>
+                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                    <Setter Property="Background" Value="#0F172A"/>
+                                    <Setter Property="BorderBrush" Value="#334155"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
                     <Grid>
-                        <TextBlock Text="💡  Ayarlar anında uygulanır ve kaydedilir." FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
-                        <Button Content="Kapat" Command="{Binding CloseUISettingsCommand}"
-                                HorizontalAlignment="Right" Background="{DynamicResource Accent}" Foreground="White"
-                                Padding="25,8" FontSize="13" BorderThickness="0"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Width="8" 
+                                    Height="8" 
+                                    CornerRadius="4"
+                                    Background="#10B981"
+                                    Margin="0,0,8,0"/>
+                            <TextBlock Text="Değişiklikler kaydedildi" 
+                                       FontSize="12" 
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#64748B"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#94A3B8"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                        
+                        <Button Content="Kapat" 
+                                Command="{Binding CloseUISettingsCommand}"
+                                HorizontalAlignment="Right" 
+                                Background="#667EEA" 
+                                Foreground="White"
+                                Padding="28,10" 
+                                FontSize="13" 
+                                FontWeight="SemiBold"
+                                BorderThickness="0"
+                                Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" 
+                                            CornerRadius="10"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                          VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <Button.Triggers>
+                                <EventTrigger RoutedEvent="MouseEnter">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)" 
+                                                            To="#5A67D8" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                                <EventTrigger RoutedEvent="MouseLeave">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)" 
+                                                            To="#667EEA" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Button.Triggers>
+                        </Button>
                     </Grid>
                 </Border>
             </Grid>

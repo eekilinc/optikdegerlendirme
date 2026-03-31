@@ -9,5 +9,6 @@ namespace OptikFormApp.Models
         public double WrongDeductionFactor { get; set; } = 0.25;
         public int ThemeIndex { get; set; } = 0;
         public int LayoutIndex { get; set; } = 0;
+        public double FontSize { get; set; } = 14;
     }
 }

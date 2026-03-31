@@ -31,7 +31,9 @@ namespace OptikFormApp.ViewModels
         private readonly JsonDataService _jsonDataService;
         private readonly KeyboardShortcutService _shortcutService;
         private readonly ProgressService _progressService;
-        
+        private readonly ItemAnalysisService _itemAnalysisService;
+        private readonly SuccessPredictionService _successPredictionService;
+
         private readonly object _studentsLock = new();
         private readonly object _coursesLock = new();
         private readonly object _examsLock = new();
@@ -65,6 +67,7 @@ namespace OptikFormApp.ViewModels
         private string _defaultExcelPath = "";
         private int _themeIndex = 0;
         private int _layoutIndex = 0;
+        private double _fontSize = 14;
         private double _netCoefficient = 1.0;
         private double _baseScore = 0.0;
         private double _wrongDeductionFactor = 0.25;
@@ -74,8 +77,27 @@ namespace OptikFormApp.ViewModels
         private string _newOutcomeRange = "";
         private string _newOutcomeBooklet = "A";
         private string _searchText = "";
+        private double? _minScoreFilter;
+        private double? _maxScoreFilter;
+        private string? _selectedBookletFilter;
+        private int? _minCorrectFilter;
+        private int? _maxWrongFilter;
+        private string _selectedSortColumn = "Score";
+        private bool _isSortDescending = true;
+        private bool _isAdvancedFilterOpen;
+        private bool _isItemAnalysisOpen;
+        private bool _isSuccessPredictionOpen;
+        
         private bool _isGeneralConfigOpen;
         private bool _hasUnsavedData;
+        
+        private ObservableCollection<ItemAnalysisService.QuestionItemStats> _questionStats = new();
+        private ObservableCollection<ItemAnalysisService.AnomalyResult> _anomalies = new();
+        private ItemAnalysisService.ReliabilityStats _reliabilityStats = new(0,0,0,0,0,0,0,0);
+        
+        private ObservableCollection<SuccessPredictionService.PredictionResult> _studentPredictions = new();
+        private SuccessPredictionService.ClassPredictionSummary _classPredictionSummary = new();
+        private double _passingScore = 50;
 
         public ICollectionView StudentsView { get; }
 
@@ -95,6 +117,8 @@ namespace OptikFormApp.ViewModels
             _jsonDataService = new JsonDataService();
             _shortcutService = new KeyboardShortcutService();
             _progressService = ProgressService.Instance;
+            _itemAnalysisService = new ItemAnalysisService();
+            _successPredictionService = new SuccessPredictionService();
 
             // Undo/Redo event handlers
             _undoRedoManager.CanUndoChanged += (s, e) => { OnPropertyChanged(nameof(CanUndo)); OnPropertyChanged(nameof(UndoDescription)); };
@@ -110,6 +134,7 @@ namespace OptikFormApp.ViewModels
             _wrongDeductionFactor = saved.WrongDeductionFactor;
             _themeIndex = saved.ThemeIndex;
             _layoutIndex = saved.LayoutIndex;
+            _fontSize = saved.FontSize > 0 ? saved.FontSize : 14;
             _gridRowHeight = _layoutIndex == 0 ? 32 : 50;
             _gridCellPadding = _layoutIndex == 0
                 ? new System.Windows.Thickness(10, 0, 10, 0)
@@ -127,6 +152,7 @@ namespace OptikFormApp.ViewModels
             
             // Temayı uygula (saved ayarları yüklendikten sonra)
             ApplyTheme(_themeIndex == 1);
+            ApplyFontSize(_fontSize);
             
             _initTask = InitializeAsync();
 
@@ -743,12 +769,76 @@ namespace OptikFormApp.ViewModels
                     }
                 }
             });
+
+            // Item Analysis Commands
+            OpenItemAnalysisCommand = new RelayCommand(_ => {
+                IsItemAnalysisOpen = true;
+                RunItemAnalysisAsync().ConfigureAwait(false);
+            });
+            CloseItemAnalysisCommand = new RelayCommand(_ => IsItemAnalysisOpen = false);
+            RunItemAnalysisCommand = new AsyncRelayCommand(async _ => await RunItemAnalysisAsync());
+
+            // Advanced Filter Commands
+            OpenAdvancedFilterCommand = new RelayCommand(_ => IsAdvancedFilterOpen = true);
+            CloseAdvancedFilterCommand = new RelayCommand(_ => IsAdvancedFilterOpen = false);
+            ClearFiltersCommand = new RelayCommand(_ => ClearAdvancedFilters());
+            ToggleSortDirectionCommand = new RelayCommand(_ => { IsSortDescending = !IsSortDescending; });
+
+            // Success Prediction Commands
+            OpenSuccessPredictionCommand = new RelayCommand(_ => {
+                IsSuccessPredictionOpen = true;
+                RunSuccessPredictionAsync().ConfigureAwait(false);
+            });
+            CloseSuccessPredictionCommand = new RelayCommand(_ => IsSuccessPredictionOpen = false);
+            RunSuccessPredictionCommand = new AsyncRelayCommand(async _ => await RunSuccessPredictionAsync());
         }
 
         public string SearchText 
         { 
             get => _searchText; 
             set { _searchText = value; OnPropertyChanged(); StudentsView.Refresh(); } 
+        }
+
+        // Advanced Filtering Properties
+        public bool IsAdvancedFilterOpen { get => _isAdvancedFilterOpen; set { _isAdvancedFilterOpen = value; OnPropertyChanged(); } }
+        public double? MinScoreFilter { get => _minScoreFilter; set { _minScoreFilter = value; OnPropertyChanged(); StudentsView.Refresh(); } }
+        public double? MaxScoreFilter { get => _maxScoreFilter; set { _maxScoreFilter = value; OnPropertyChanged(); StudentsView.Refresh(); } }
+        public string? SelectedBookletFilter { get => _selectedBookletFilter; set { _selectedBookletFilter = value; OnPropertyChanged(); StudentsView.Refresh(); } }
+        public int? MinCorrectFilter { get => _minCorrectFilter; set { _minCorrectFilter = value; OnPropertyChanged(); StudentsView.Refresh(); } }
+        public int? MaxWrongFilter { get => _maxWrongFilter; set { _maxWrongFilter = value; OnPropertyChanged(); StudentsView.Refresh(); } }
+        public string SelectedSortColumn { get => _selectedSortColumn; set { _selectedSortColumn = value; OnPropertyChanged(); ApplySorting(); } }
+        public bool IsSortDescending { get => _isSortDescending; set { _isSortDescending = value; OnPropertyChanged(); ApplySorting(); } }
+        
+        // Available Booklet Types for Filter
+        public ObservableCollection<string> AvailableBookletTypes => new ObservableCollection<string>(AnswerKeys.Select(k => k.BookletName).Distinct());
+        
+        // Active Filter Status
+        public bool HasActiveFilters => 
+            !string.IsNullOrWhiteSpace(SearchText) ||
+            MinScoreFilter.HasValue ||
+            MaxScoreFilter.HasValue ||
+            !string.IsNullOrEmpty(SelectedBookletFilter) ||
+            MinCorrectFilter.HasValue ||
+            MaxWrongFilter.HasValue;
+        
+        public string ActiveFiltersSummary
+        {
+            get
+            {
+                var filters = new System.Collections.Generic.List<string>();
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                    filters.Add($"Arama: '{SearchText}'");
+                if (MinScoreFilter.HasValue || MaxScoreFilter.HasValue)
+                    filters.Add($"Puan: {MinScoreFilter?.ToString() ?? "-∞"} - {MaxScoreFilter?.ToString() ?? "∞"}");
+                if (!string.IsNullOrEmpty(SelectedBookletFilter))
+                    filters.Add($"Kitapçık: {SelectedBookletFilter}");
+                if (MinCorrectFilter.HasValue)
+                    filters.Add($"Min Doğru: {MinCorrectFilter}");
+                if (MaxWrongFilter.HasValue)
+                    filters.Add($"Max Yanlış: {MaxWrongFilter}");
+                
+                return filters.Count > 0 ? "Aktif Filtreler: " + string.Join(", ", filters) : "Filtre yok";
+            }
         }
 
         public string SchoolName { get => _schoolName; set { _schoolName = value; OnPropertyChanged(); SaveSettings(); } }
@@ -769,16 +859,53 @@ namespace OptikFormApp.ViewModels
 
         private bool FilterStudents(object obj)
         {
-            if (string.IsNullOrWhiteSpace(SearchText)) return true;
-            if (obj is StudentResult student)
+            if (obj is not StudentResult student) return false;
+            
+            // Text search filter
+            if (!string.IsNullOrWhiteSpace(SearchText))
             {
-                // Tam eşleşme veya fuzzy search
-                return student.FullName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                       student.StudentId.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                       FuzzySearchService.ContainsFuzzy(student.FullName, SearchText, 0.6) ||
-                       FuzzySearchService.ContainsFuzzy(student.StudentId, SearchText, 0.7);
+                bool matchesSearch = student.FullName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                                     student.StudentId.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                                     FuzzySearchService.ContainsFuzzy(student.FullName, SearchText, 0.6) ||
+                                     FuzzySearchService.ContainsFuzzy(student.StudentId, SearchText, 0.7);
+                if (!matchesSearch) return false;
             }
+            
+            // Score range filter
+            if (MinScoreFilter.HasValue && student.Score < MinScoreFilter.Value) return false;
+            if (MaxScoreFilter.HasValue && student.Score > MaxScoreFilter.Value) return false;
+            
+            // Booklet type filter
+            if (!string.IsNullOrEmpty(SelectedBookletFilter) && student.BookletType != SelectedBookletFilter) return false;
+            
+            // Correct count filter
+            if (MinCorrectFilter.HasValue && student.CorrectCount < MinCorrectFilter.Value) return false;
+            
+            // Wrong count filter
+            if (MaxWrongFilter.HasValue && student.IncorrectCount > MaxWrongFilter.Value) return false;
+            
             return true;
+        }
+
+        private void ApplySorting()
+        {
+            StudentsView.SortDescriptions.Clear();
+            
+            var sortDirection = IsSortDescending ? ListSortDirection.Descending : ListSortDirection.Ascending;
+            
+            StudentsView.SortDescriptions.Add(new SortDescription(SelectedSortColumn, sortDirection));
+            StudentsView.Refresh();
+        }
+
+        private void ClearAdvancedFilters()
+        {
+            MinScoreFilter = null;
+            MaxScoreFilter = null;
+            SelectedBookletFilter = null;
+            MinCorrectFilter = null;
+            MaxWrongFilter = null;
+            SearchText = "";
+            StudentsView.Refresh();
         }
 
 
@@ -840,8 +967,19 @@ namespace OptikFormApp.ViewModels
         public bool IsGeneralConfigOpen { get => _isGeneralConfigOpen; set { _isGeneralConfigOpen = value; OnPropertyChanged(); } }
         public string DefaultExcelPath { get => _defaultExcelPath; set { _defaultExcelPath = value; OnPropertyChanged(); SaveSettings(); } }
         
-        public int ThemeIndex { get => _themeIndex; set { _themeIndex = value; OnPropertyChanged(); ApplyTheme(value == 1); SaveSettings(); } }
+        public int ThemeIndex { get => _themeIndex; set { _themeIndex = value; OnPropertyChanged(); ApplyTheme(value == 1); OnPropertyChanged(nameof(IsDarkTheme)); SaveSettings(); } }
+        public bool IsDarkTheme => _themeIndex == 1;
         public int LayoutIndex { get => _layoutIndex; set { _layoutIndex = value; OnPropertyChanged(); GridRowHeight = value == 0 ? 32 : 50; GridCellPadding = value == 0 ? new System.Windows.Thickness(10, 0, 10, 0) : new System.Windows.Thickness(15, 0, 15, 0); SaveSettings(); } }
+        public double FontSize { get => _fontSize; set { _fontSize = value; OnPropertyChanged(); ApplyFontSize(value); SaveSettings(); } }
+
+        private void ApplyFontSize(double size)
+        {
+            if (System.Windows.Application.Current == null) return;
+            var res = System.Windows.Application.Current.Resources;
+            res["GlobalFontSize"] = size;
+            res["GlobalHeaderFontSize"] = size + 4;
+            res["GlobalSmallFontSize"] = size - 2;
+        }
         public int GridRowHeight { get => _gridRowHeight; set { _gridRowHeight = value; OnPropertyChanged(); } }
         private int _gridRowHeight = 32;
         public System.Windows.Thickness GridCellPadding { get => _gridCellPadding; set { _gridCellPadding = value; OnPropertyChanged(); } }
@@ -940,6 +1078,33 @@ namespace OptikFormApp.ViewModels
         // JSON Data Import/Export Commands
         public ICommand ExportJsonCommand { get; set; }
         public ICommand ImportJsonCommand { get; set; }
+        
+        public bool IsItemAnalysisOpen { get => _isItemAnalysisOpen; set { _isItemAnalysisOpen = value; OnPropertyChanged(); } }
+        public ObservableCollection<ItemAnalysisService.QuestionItemStats> QuestionStats { get => _questionStats; set { _questionStats = value; OnPropertyChanged(); } }
+        public ObservableCollection<ItemAnalysisService.AnomalyResult> Anomalies { get => _anomalies; set { _anomalies = value; OnPropertyChanged(); } }
+        public ItemAnalysisService.ReliabilityStats ReliabilityStats { get => _reliabilityStats; set { _reliabilityStats = value; OnPropertyChanged(); } }
+        
+        // Item Analysis Commands
+        public ICommand OpenItemAnalysisCommand { get; set; }
+        public ICommand CloseItemAnalysisCommand { get; set; }
+        public ICommand RunItemAnalysisCommand { get; set; }
+
+        // Advanced Filter Commands
+        public ICommand OpenAdvancedFilterCommand { get; set; }
+        public ICommand CloseAdvancedFilterCommand { get; set; }
+        public ICommand ClearFiltersCommand { get; set; }
+        public ICommand ToggleSortDirectionCommand { get; set; }
+
+        // Success Prediction Properties
+        public bool IsSuccessPredictionOpen { get => _isSuccessPredictionOpen; set { _isSuccessPredictionOpen = value; OnPropertyChanged(); } }
+        public ObservableCollection<SuccessPredictionService.PredictionResult> StudentPredictions { get => _studentPredictions; set { _studentPredictions = value; OnPropertyChanged(); } }
+        public SuccessPredictionService.ClassPredictionSummary ClassPredictionSummary { get => _classPredictionSummary; set { _classPredictionSummary = value; OnPropertyChanged(); } }
+        public double PassingScore { get => _passingScore; set { _passingScore = value; OnPropertyChanged(); } }
+        
+        // Success Prediction Commands
+        public ICommand OpenSuccessPredictionCommand { get; set; }
+        public ICommand CloseSuccessPredictionCommand { get; set; }
+        public ICommand RunSuccessPredictionCommand { get; set; }
 
         // Progress Service
         public ProgressService Progress => _progressService;
@@ -1120,7 +1285,8 @@ namespace OptikFormApp.ViewModels
                 BaseScore = _baseScore,
                 WrongDeductionFactor = _wrongDeductionFactor,
                 ThemeIndex = _themeIndex,
-                LayoutIndex = _layoutIndex
+                LayoutIndex = _layoutIndex,
+                FontSize = _fontSize
             });
         }
 
@@ -1342,7 +1508,10 @@ namespace OptikFormApp.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = "Hesaplama sırasında teknik bir sorun oluştu.";
-                AddToLog($"Hesaplama hatası (Teknik Detay): {ex.Message}", LogLevel.Error);
+                var detailedError = $"Hata: {ex.Message}\nStackTrace: {ex.StackTrace}";
+                if (ex.InnerException != null)
+                    detailedError += $"\nInner: {ex.InnerException.Message}";
+                AddToLog($"Hesaplama hatası (Teknik Detay): {detailedError}", LogLevel.Error);
                 ShowAlert("Hesaplama Hatası", "Puanlar hesaplanırken bir sorun oluştu. Lütfen verilerinizi ve cevap anahtarını kontrol edin.");
             }
             finally
@@ -1411,12 +1580,15 @@ namespace OptikFormApp.ViewModels
 
             QuestionDifficulties.Clear();
             double totalDifficulty = 0;
-            int questionCount = Math.Min(Students.FirstOrDefault()?.QuestionResults.Count ?? 0, 50);
+            // Tüm öğrencilerin minimum soru sayısını al (farklı kitapçıklar için)
+            int minQuestionCount = Students.Min(s => s.QuestionResults?.Count ?? 0);
+            int questionCount = Math.Min(minQuestionCount, 50);
 
             for (int i = 0; i < questionCount; i++)
             {
                 var questionNum = i + 1;
-                var correctCount = Students.Count(s => s.QuestionResults[i]);
+                // Her öğrenci için bounds kontrolü
+                var correctCount = Students.Count(s => s.QuestionResults != null && i < s.QuestionResults.Count && s.QuestionResults[i]);
                 var successRate = Students.Count > 0 ? (double)correctCount / Students.Count * 100 : 0;
 
                 var difficulty = new QuestionDifficulty
@@ -1507,6 +1679,121 @@ namespace OptikFormApp.ViewModels
             // Report Text
             ReportText = _statsReportService.GenerateReportSummary(studentsList, SelectedExam?.Title ?? "Mevcut Sınav");
             OnPropertyChanged(nameof(ReportText));
+        }
+
+        private async Task RunItemAnalysisAsync()
+        {
+            if (Students.Count == 0 || AnswerKeys.Count == 0)
+            {
+                ShowToastWarning("Analiz için öğrenci ve cevap anahtarı gerekli!");
+                return;
+            }
+
+            IsBusy = true;
+            BusyMessage = "Gelişmiş soru analizi yapılıyor...";
+            AddToLog("Madde analizi başlatıldı...", LogLevel.Info);
+
+            try
+            {
+                var studentsCopy = Students.ToList();
+                var answerKey = AnswerKeys.FirstOrDefault()?.Answers?.ToCharArray()?.Select(c => c.ToString()).ToArray() ?? Array.Empty<string>();
+                int questionCount = AnswerKeys.FirstOrDefault()?.Answers?.Length ?? 0;
+
+                await Task.Run(() =>
+                {
+                    // Soru istatistikleri
+                    var questionStats = _itemAnalysisService.AnalyzeQuestions(studentsCopy, answerKey, questionCount);
+                    
+                    // Güvenilirlik analizi
+                    var reliability = _itemAnalysisService.CalculateReliability(studentsCopy, answerKey, questionCount);
+                    
+                    // Anomali tespiti
+                    var anomalies = _itemAnalysisService.DetectAnomalies(studentsCopy, answerKey, questionCount);
+
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        QuestionStats.Clear();
+                        foreach (var stat in questionStats) QuestionStats.Add(stat);
+
+                        ReliabilityStats = reliability;
+                        OnPropertyChanged(nameof(ReliabilityStats));
+
+                        Anomalies.Clear();
+                        foreach (var anomaly in anomalies) Anomalies.Add(anomaly);
+                    });
+                });
+
+                AddToLog($"Madde analizi tamamlandı. KR-20: {ReliabilityStats.KR20:F3}, Cronbach's α: {ReliabilityStats.CronbachAlpha:F3}", LogLevel.Success);
+                
+                if (Anomalies.Count > 0)
+                {
+                    ShowToastWarning($"{Anomalies.Count} anomali tespit edildi!");
+                }
+            }
+            catch (Exception ex)
+            {
+                AddToLog($"Madde analizi hatası: {ex.Message}", LogLevel.Error);
+                ShowToastError("Analiz sırasında hata oluştu!");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        private async Task RunSuccessPredictionAsync()
+        {
+            if (Students.Count == 0)
+            {
+                ShowToastWarning("Tahmin için öğrenci verisi gerekli!");
+                return;
+            }
+
+            IsBusy = true;
+            BusyMessage = "Başarı tahmini yapılıyor...";
+            AddToLog("Başarı tahmini analizi başlatıldı...", LogLevel.Info);
+
+            try
+            {
+                var studentsCopy = Students.ToList();
+
+                await Task.Run(() =>
+                {
+                    // Sınıf bazlı tahmin özeti
+                    var classSummary = _successPredictionService.PredictClassSuccess(studentsCopy, PassingScore);
+                    
+                    // Bireysel öğrenci tahminleri
+                    var predictions = studentsCopy
+                        .Select(s => _successPredictionService.PredictStudentSuccess(s, studentsCopy, PassingScore))
+                        .OrderByDescending(p => p.PredictedScore)
+                        .ToList();
+
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        StudentPredictions.Clear();
+                        foreach (var pred in predictions) StudentPredictions.Add(pred);
+
+                        ClassPredictionSummary = classSummary;
+                        OnPropertyChanged(nameof(ClassPredictionSummary));
+                    });
+                });
+
+                AddToLog($"Başarı tahmini tamamlandı. Geçme oranı: %{ClassPredictionSummary.PassRate * 100:F1}, Yüksek riskli: {ClassPredictionSummary.HighRiskCount}", LogLevel.Success);
+                
+                if (ClassPredictionSummary.HighRiskCount > 0)
+                {
+                    ShowToastWarning($"{ClassPredictionSummary.HighRiskCount} öğrenci yüksek riskli!");
+                }
+            }
+            catch (Exception ex)
+            {
+                AddToLog($"Başarı tahmini hatası: {ex.Message}", LogLevel.Error);
+                ShowToastError("Tahmin sırasında hata oluştu!");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
 
         private void RefreshTemplates()

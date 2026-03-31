@@ -1,0 +1,194 @@
+<UserControl x:Class="OptikFormApp.Views.Modals.SuccessPredictionModal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" d:DesignHeight="700" d:DesignWidth="1000">
+    <Grid Background="#80000000">
+        <Border Background="White" 
+                CornerRadius="16" 
+                Width="900" 
+                Height="600"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            
+            <Grid Margin="24">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <TextBlock Grid.Row="0" 
+                           Text="Başarı Tahmini" 
+                           FontSize="24" 
+                           FontWeight="Bold" 
+                           Foreground="Black"
+                           Margin="0,0,0,16"/>
+
+                <!-- Class Summary -->
+                <Border Grid.Row="1" 
+                        Background="#F0F0F0" 
+                        CornerRadius="12" 
+                        Padding="16"
+                        Margin="0,0,0,16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                            <TextBlock Text="Toplam Öğrenci" 
+                                       Foreground="Gray" 
+                                       FontSize="12"/>
+                            <TextBlock Text="{Binding ClassPredictionSummary.TotalStudents}" 
+                                       Foreground="Black" 
+                                       FontSize="20" 
+                                       FontWeight="Bold"/>
+                        </StackPanel>
+                        
+                        <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                            <TextBlock Text="Tahmini Geçme Oranı" 
+                                       Foreground="Gray" 
+                                       FontSize="12"/>
+                            <TextBlock Text="{Binding ClassPredictionSummary.PassRate, StringFormat={}{0:P0}}" 
+                                       Foreground="Green" 
+                                       FontSize="20" 
+                                       FontWeight="Bold"/>
+                        </StackPanel>
+                        
+                        <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                            <TextBlock Text="Yüksek Riskli" 
+                                       Foreground="Gray" 
+                                       FontSize="12"/>
+                            <TextBlock Text="{Binding ClassPredictionSummary.HighRiskCount}" 
+                                       Foreground="Red" 
+                                       FontSize="20" 
+                                       FontWeight="Bold"/>
+                        </StackPanel>
+                        
+                        <StackPanel Grid.Column="3" HorizontalAlignment="Center">
+                            <TextBlock Text="Ortalama Tahmini Puan" 
+                                       Foreground="Gray" 
+                                       FontSize="12"/>
+                            <TextBlock Text="{Binding ClassPredictionSummary.AveragePredictedScore, StringFormat={}{0:F1}}" 
+                                       Foreground="Blue" 
+                                       FontSize="20" 
+                                       FontWeight="Bold"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Passing Score Setting -->
+                <Grid Grid.Row="2" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="200"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBlock Grid.Column="0" 
+                               Text="Geçme Puanı: " 
+                               VerticalAlignment="Center"
+                               Foreground="Black"
+                               Margin="0,0,12,0"/>
+                    <Slider Grid.Column="1" 
+                            Minimum="0" 
+                            Maximum="100" 
+                            Value="{Binding PassingScore}" 
+                            TickFrequency="5"
+                            IsSnapToTickEnabled="True"/>
+                    <TextBlock Grid.Column="2" 
+                               Text="{Binding PassingScore, StringFormat={}{0:F0}}" 
+                               VerticalAlignment="Center"
+                               Foreground="Blue"
+                               FontWeight="Bold"
+                               Margin="12,0,0,0"/>
+                </Grid>
+
+                <!-- Predictions DataGrid -->
+                <Border Grid.Row="3" 
+                        Background="#F0F0F0" 
+                        CornerRadius="12" 
+                        Padding="12">
+                    <DataGrid ItemsSource="{Binding StudentPredictions}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              GridLinesVisibility="None"
+                              HeadersVisibility="Column"
+                              Background="Transparent"
+                              BorderThickness="0"
+                              CanUserSortColumns="True">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Foreground" Value="Gray"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="Padding" Value="8,4"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Foreground" Value="Black"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Risk}" Value="High">
+                                        <Setter Property="Background" Value="#30EF4444"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Risk}" Value="Medium">
+                                        <Setter Property="Background" Value="#30F59E0B"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Risk}" Value="Low">
+                                        <Setter Property="Background" Value="#3010B981"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Öğrenci No" 
+                                                Binding="{Binding StudentId}" 
+                                                Width="100"/>
+                            <DataGridTextColumn Header="Ad Soyad" 
+                                                Binding="{Binding FullName}" 
+                                                Width="150"/>
+                            <DataGridTextColumn Header="Mevcut Puan" 
+                                                Binding="{Binding CurrentScore, StringFormat={}{0:F1}}" 
+                                                Width="90"/>
+                            <DataGridTextColumn Header="Tahmini Puan" 
+                                                Binding="{Binding PredictedScore, StringFormat={}{0:F1}}" 
+                                                Width="90"/>
+                            <DataGridTextColumn Header="Geçme Olasılığı" 
+                                                Binding="{Binding GradeProbability, StringFormat={}{0:P0}}" 
+                                                Width="110"/>
+                            <DataGridTextColumn Header="Güven" 
+                                                Binding="{Binding Confidence, StringFormat={}{0:P0}}" 
+                                                Width="70"/>
+                            <DataGridTextColumn Header="Risk" 
+                                                Binding="{Binding RiskDescription}" 
+                                                Width="200"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+
+                <!-- Footer -->
+                <StackPanel Grid.Row="4" 
+                            Orientation="Horizontal" 
+                            HorizontalAlignment="Right"
+                            Margin="0,16,0,0">
+                    <Button Content="🔄 Yeniden Tahmin Et" 
+                            Command="{Binding RunSuccessPredictionCommand}"
+                            Margin="0,0,12,0"/>
+                    <Button Content="Kapat" 
+                            Command="{Binding CloseSuccessPredictionCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
