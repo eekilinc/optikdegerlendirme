@@ -9,7 +9,7 @@ namespace OptikFormApp.Views.Modals
             DependencyProperty.Register("Title", typeof(string), typeof(PremiumModalBase), 
                 new PropertyMetadata("Modal Başlığı"));
 
-        public static readonly DependencyProperty ContentProperty =
+        public static new readonly DependencyProperty ContentProperty =
             DependencyProperty.Register("Content", typeof(object), typeof(PremiumModalBase), 
                 new PropertyMetadata(null));
 

@@ -3,12 +3,14 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
+using System.Runtime.Versioning;
 
 namespace OptikFormApp.Services
 {
     /// <summary>
     /// Sistem performansını optimize etmek için yardımcı sınıf
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public static class PerformanceOptimizer
     {
         // Memory management

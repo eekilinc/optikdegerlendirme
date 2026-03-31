@@ -1,13 +1,15 @@
-﻿using System.Configuration;
+using System.Configuration;
 using System.Data;
 using System.Windows;
 using OptikFormApp.Services;
+using System.Runtime.Versioning;
 
 namespace OptikFormApp;
 
 /// <summary>
 /// Interaction logic for App.xaml
 /// </summary>
+[SupportedOSPlatform("windows")]
 public partial class App : Application
 {
     protected override void OnStartup(StartupEventArgs e)
