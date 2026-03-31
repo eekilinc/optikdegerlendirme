@@ -48,29 +48,46 @@
                 <Menu Background="Transparent" Padding="10,5">
                     <MenuItem Header="_Dosya">
                         <MenuItem Header="Optik Verisi Yükle (.txt)" Command="{Binding LoadTxtCommand}" InputGestureText="Ctrl+O"/>
-                        <MenuItem Header="Sınavı Veritabanına Kaydet" Command="{Binding SaveExamCommand}" InputGestureText="Ctrl+S"/>
                         <Separator/>
-                        <MenuItem Header="Excel Raporu Al (.xlsx)" Command="{Binding ExportExcelCommand}" InputGestureText="Ctrl+E"/>
-                        <MenuItem Header="CSV Olarak Dışa Aktar (.csv)" Command="{Binding ExportCsvCommand}" InputGestureText="Ctrl+Shift+C"/>
-                        <MenuItem Header="Not Listesi (No + Puan) (.csv)" Command="{Binding ExportGradeListCommand}"/>
-                        <MenuItem Header="Toplu PDF Karne Al (.pdf)" Command="{Binding ExportPdfCommand}" InputGestureText="Ctrl+P"/>
+                        <MenuItem Header="Veri Alışverişi">
+                            <MenuItem Header="JSON'dan Yükle..." Command="{Binding ImportJsonCommand}"/>
+                            <MenuItem Header="JSON'a Aktar..." Command="{Binding ExportJsonCommand}"/>
+                            <Separator/>
+                            <MenuItem Header="Şablonu İçe Aktar..." Command="{Binding ImportTemplateCommand}"/>
+                            <MenuItem Header="Şablonu Dışa Aktar..." Command="{Binding ExportTemplateCommand}"/>
+                        </MenuItem>
                         <Separator/>
                         <MenuItem Header="Çıkış" Command="{Binding ExitCommand}"/>
                     </MenuItem>
-                    <MenuItem Header="_Ders Yönetimi">
-                        <MenuItem Header="Yeni Ders Ekle..." Command="{Binding ShowAddCourseCommand}"/>
-                        <MenuItem Header="Seçili Dersi Sil" Command="{Binding DeleteCourseCommand}" CommandParameter="{Binding SelectedCourse}"/>
+                    <MenuItem Header="_Düzen">
+                        <MenuItem Header="Geri Al" Command="{Binding UndoCommand}" InputGestureText="Ctrl+Z"/>
+                        <MenuItem Header="Yinele" Command="{Binding RedoCommand}" InputGestureText="Ctrl+Y"/>
                     </MenuItem>
-                    <MenuItem Header="_İşlemler">
+                    <MenuItem Header="_Sınav">
+                        <MenuItem Header="Sınavı Veritabanına Kaydet" Command="{Binding SaveExamCommand}" InputGestureText="Ctrl+S"/>
+                        <Separator/>
                         <MenuItem Header="Cevap Anahtarlarını Yönet" Command="{Binding OpenModalCommand}"/>
                         <MenuItem Header="Soru Ayarlarını Yönet (İptal/Çoklu)" Command="{Binding OpenQuestionSettingsCommand}"/>
                         <MenuItem Header="Öğrenim Çıktılarını (Konu) Yönet" Command="{Binding OpenLearningOutcomesCommand}"/>
                         <Separator/>
-                        <MenuItem Header="Puanları Hesapla" Command="{Binding EvaluateCommand}"/>
+                        <MenuItem Header="Puanları Hesapla" Command="{Binding EvaluateCommand}" InputGestureText="F5"/>
                     </MenuItem>
-                    <MenuItem Header="_Seçenekler">
+                    <MenuItem Header="_Ders">
+                        <MenuItem Header="Yeni Ders Ekle..." Command="{Binding ShowAddCourseCommand}"/>
+                        <MenuItem Header="Seçili Dersi Sil" Command="{Binding DeleteCourseCommand}" CommandParameter="{Binding SelectedCourse}"/>
+                    </MenuItem>
+                    <MenuItem Header="_Raporlar">
+                        <MenuItem Header="Excel Raporu Al (.xlsx)" Command="{Binding ExportExcelCommand}" InputGestureText="Ctrl+E"/>
+                        <MenuItem Header="CSV Olarak Dışa Aktar (.csv)" Command="{Binding ExportCsvCommand}" InputGestureText="Ctrl+Shift+C"/>
+                        <MenuItem Header="Not Listesi (No + Puan) (.csv)" Command="{Binding ExportGradeListCommand}"/>
+                        <Separator/>
+                        <MenuItem Header="Toplu PDF Karne Al (.pdf)" Command="{Binding ExportPdfCommand}" InputGestureText="Ctrl+P"/>
+                    </MenuItem>
+                    <MenuItem Header="_Ayarlar">
                         <MenuItem Header="Arayüz Ayarları..." Command="{Binding OpenUISettingsCommand}"/>
-                        <MenuItem Header="Sınav ve Puanlama Ayarları..." Command="{Binding OpenGeneralConfigCommand}"/>
+                        <MenuItem Header="Genel Hesaplama Ayarları..." Command="{Binding OpenGeneralConfigCommand}"/>
+                        <Separator/>
+                        <MenuItem Header="Sınav Şablonlarını Yönet..." Command="{Binding OpenTemplateManagerCommand}"/>
                     </MenuItem>
                     <MenuItem Header="_Yardım">
                         <MenuItem Header="Klavye Kısayolları" Command="{Binding ShowShortcutsCommand}" InputGestureText="F1"/>
@@ -205,6 +222,11 @@
                         <TabItem Header="Zorluk Seviyesi Analizi">
                             <views:QuestionDifficultyView />
                         </TabItem>
+
+                        <!-- TAB 6: STATISTICAL REPORTS -->
+                        <TabItem Header="İstatistiksel Raporlar">
+                            <views:StatisticsReportView />
+                        </TabItem>
                     </TabControl>
                 </Border>
 
@@ -269,6 +291,9 @@
 
         <!-- RENAME MODAL OVERLAY -->
         <modals:RenameModal Panel.ZIndex="605" />
+
+        <!-- TEMPLATE MANAGER MODAL OVERLAY -->
+        <modals:TemplateManagerModal Panel.ZIndex="610" />
 
         <!-- BUSY LOADING OVERLAY -->
         <modals:BusyOverlay Panel.ZIndex="1000" />

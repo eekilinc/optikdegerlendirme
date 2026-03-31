@@ -1,0 +1,224 @@
+<UserControl x:Class="OptikFormApp.Views.StatisticsReportView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0" Text="📊 Detaylı İstatistiksel Analiz" 
+                   FontSize="20" FontWeight="Bold" 
+                   Foreground="{DynamicResource TextMain}" 
+                   Margin="0,0,0,15"/>
+
+        <!-- Summary Cards -->
+        <Grid Grid.Row="1" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Ortalama -->
+            <Border Grid.Column="0" Background="{DynamicResource AltRowBg}" CornerRadius="12" Padding="15" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="Ortalama" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5"/>
+                    <TextBlock Text="{Binding ClassStats.AverageScore, StringFormat='{}{0:F2}'}" 
+                              FontSize="24" FontWeight="Bold" Foreground="{DynamicResource Accent}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Medyan -->
+            <Border Grid.Column="1" Background="{DynamicResource AltRowBg}" CornerRadius="12" Padding="15" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="Medyan" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5"/>
+                    <TextBlock Text="{Binding ClassStats.MedianScore, StringFormat='{}{0:F2}'}" 
+                              FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextMain}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Std Sapma -->
+            <Border Grid.Column="2" Background="{DynamicResource AltRowBg}" CornerRadius="12" Padding="15" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="Standart Sapma" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5"/>
+                    <TextBlock Text="{Binding ClassStats.StandardDeviation, StringFormat='{}{0:F2}'}" 
+                              FontSize="24" FontWeight="Bold" Foreground="{DynamicResource Warning}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Başarı Oranı -->
+            <Border Grid.Column="3" Background="{DynamicResource AltRowBg}" CornerRadius="12" Padding="15">
+                <StackPanel>
+                    <TextBlock Text="Başarı Oranı" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5"/>
+                    <TextBlock Text="{Binding ClassStats.SuccessRate, StringFormat='{}{0:F1}%'}" 
+                              FontSize="24" FontWeight="Bold" Foreground="{DynamicResource Success}"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Content Tabs -->
+        <TabControl Grid.Row="2" Background="Transparent" BorderThickness="0">
+            <TabControl.Resources>
+                <Style TargetType="TabItem">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="TabItem">
+                                <Border Name="Border" Padding="15,10" BorderThickness="0,0,0,2" BorderBrush="Transparent" Background="{DynamicResource CardBg}">
+                                    <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                                        <Setter Property="TextElement.Foreground" Value="{DynamicResource Accent}"/>
+                                        <Setter Property="TextElement.FontWeight" Value="Bold"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="False">
+                                        <Setter Property="TextElement.Foreground" Value="{DynamicResource TextMuted}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </TabControl.Resources>
+
+            <!-- Tab 1: Score Distribution -->
+            <TabItem Header="Puan Dağılımı">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10">
+                        <TextBlock Text="Puan Aralığı Dağılımı" FontSize="14" FontWeight="SemiBold" 
+                                  Foreground="{DynamicResource TextMain}" Margin="0,0,0,10"/>
+                        
+                        <DataGrid ItemsSource="{Binding ScoreDistribution}" 
+                                 AutoGenerateColumns="False" 
+                                 HeadersVisibility="Column"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 IsReadOnly="True"
+                                 GridLinesVisibility="Horizontal"
+                                 RowHeight="35">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Puan Aralığı" Binding="{Binding Range}" Width="*"/>
+                                <DataGridTextColumn Header="Öğrenci Sayısı" Binding="{Binding Count}" Width="*"/>
+                                <DataGridTextColumn Header="Yüzde" Binding="{Binding Percentage, StringFormat='{}{0:F1}%'}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Tab 2: Percentiles -->
+            <TabItem Header="Yüzdelikler">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10">
+                        <TextBlock Text="Yüzdelik Değerler (Percentile)" FontSize="14" FontWeight="SemiBold" 
+                                  Foreground="{DynamicResource TextMain}" Margin="0,0,0,10"/>
+                        
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0" Grid.Column="0" Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12" Margin="0,0,5,5">
+                                <StackPanel>
+                                    <TextBlock Text="Üst %10" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                                    <TextBlock Text="{Binding Percentiles[%10 (Üst)]}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Success}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Row="0" Grid.Column="1" Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12" Margin="5,0,0,5">
+                                <StackPanel>
+                                    <TextBlock Text="Üst %25 (Q1)" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                                    <TextBlock Text="{Binding Percentiles[%25 (Q1)]}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextMain}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Row="1" Grid.Column="0" Background="{DynamicResource Accent}" CornerRadius="8" Padding="12" Margin="0,0,5,5">
+                                <StackPanel>
+                                    <TextBlock Text="Medyan %50" FontSize="11" Foreground="White" Opacity="0.8"/>
+                                    <TextBlock Text="{Binding Percentiles[%50 (Medyan)]}" FontSize="20" FontWeight="Bold" Foreground="White"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Row="1" Grid.Column="1" Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12" Margin="5,0,0,5">
+                                <StackPanel>
+                                    <TextBlock Text="Alt %75 (Q3)" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                                    <TextBlock Text="{Binding Percentiles[%75 (Q3)]}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextMain}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12" Margin="0,5,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Alt %10" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                                    <TextBlock Text="{Binding Percentiles[%90 (Alt)]}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Error}"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Tab 3: Question Correlations -->
+            <TabItem Header="Soru Korelasyonları">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10">
+                        <TextBlock Text="Sorular Arası Korelasyon Analizi" FontSize="14" FontWeight="SemiBold" 
+                                  Foreground="{DynamicResource TextMain}" Margin="0,0,0,10"/>
+                        <TextBlock Text="Öğrencilerin aynı soruları doğru/yanlış yapma eğilimlerini gösterir." 
+                                  FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10" TextWrapping="Wrap"/>
+                        
+                        <DataGrid ItemsSource="{Binding QuestionCorrelations}" 
+                                 AutoGenerateColumns="False" 
+                                 HeadersVisibility="Column"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 IsReadOnly="True"
+                                 GridLinesVisibility="Horizontal"
+                                 RowHeight="35">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Soru 1" Binding="{Binding Question1}" Width="*"/>
+                                <DataGridTextColumn Header="Soru 2" Binding="{Binding Question2}" Width="*"/>
+                                <DataGridTextColumn Header="Korelasyon" Binding="{Binding Correlation}" Width="*"/>
+                                <DataGridTextColumn Header="İlişki" Binding="{Binding Relationship}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Tab 4: Export -->
+            <TabItem Header="Rapor Dışa Aktar">
+                <StackPanel Margin="10">
+                    <TextBlock Text="İstatistiksel Rapor" FontSize="14" FontWeight="SemiBold" 
+                              Foreground="{DynamicResource TextMain}" Margin="0,0,0,10"/>
+                    
+                    <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+                        <ScrollViewer Height="300" VerticalScrollBarVisibility="Auto">
+                            <TextBlock Text="{Binding ReportText}" 
+                                      FontFamily="Consolas" FontSize="12" 
+                                      Foreground="{DynamicResource TextMain}"
+                                      TextWrapping="Wrap"/>
+                        </ScrollViewer>
+                    </Border>
+
+                    <Button Content="📋 Raporu Kopyala" Command="{Binding CopyReportCommand}"
+                            Background="{DynamicResource Accent}" Foreground="White" 
+                            Padding="20,10" HorizontalAlignment="Left"/>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

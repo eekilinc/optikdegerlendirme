@@ -1,0 +1,140 @@
+<UserControl x:Class="OptikFormApp.Views.Modals.TemplateManagerModal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="550" d:DesignWidth="600">
+    <Grid Visibility="{Binding IsTemplateManagerOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}">
+        <Border Background="{DynamicResource CardBg}" CornerRadius="20" Width="560" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="0">
+            <Border.Effect>
+                <DropShadowEffect Color="Black" Opacity="0.2" BlurRadius="40" ShadowDepth="12"/>
+            </Border.Effect>
+            
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <!-- Header -->
+                <Border Grid.Row="0" Background="{DynamicResource Accent}" CornerRadius="20,20,0,0" Padding="25,20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="📋 Sınav Şablonları" FontSize="20" FontWeight="Bold" Foreground="White"/>
+                        <Button Grid.Column="1" Content="✕" Command="{Binding CloseTemplateManagerCommand}"
+                                Background="Transparent" Foreground="White" BorderThickness="0"
+                                FontSize="18" Padding="5,0"/>
+                    </Grid>
+                </Border>
+                
+                <!-- Content -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="400">
+                    <StackPanel Margin="25">
+                        <!-- Save Current as Template -->
+                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="12" Padding="20" Margin="0,0,0,20">
+                            <StackPanel>
+                                <TextBlock Text="Mevcut Ayarları Şablon Olarak Kaydet" 
+                                          FontSize="14" FontWeight="SemiBold" 
+                                          Foreground="{DynamicResource TextMain}" Margin="0,0,0,10"/>
+                                
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Şablon Adı" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5"/>
+                                        <TextBox Text="{Binding NewTemplateName}" 
+                                                Background="{DynamicResource CardBg}"
+                                                Foreground="{DynamicResource TextMain}"
+                                                BorderBrush="{DynamicResource Border}"
+                                                Padding="10,8" FontSize="13"/>
+                                    </StackPanel>
+                                </Grid>
+                                
+                                <TextBlock Text="Açıklama (isteğe bağlı)" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5"/>
+                                <TextBox Text="{Binding NewTemplateDescription}" 
+                                        Background="{DynamicResource CardBg}"
+                                        Foreground="{DynamicResource TextMain}"
+                                        BorderBrush="{DynamicResource Border}"
+                                        Padding="10,8" FontSize="13" Margin="0,0,0,15"/>
+                                
+                                <Button Content="💾 Şablon Olarak Kaydet" 
+                                        Command="{Binding SaveAsTemplateCommand}"
+                                        Background="{DynamicResource Success}" Foreground="White"
+                                        Padding="20,10" HorizontalAlignment="Left"/>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Templates List -->
+                        <TextBlock Text="Kayıtlı Şablonlar" 
+                                  FontSize="14" FontWeight="SemiBold" 
+                                  Foreground="{DynamicResource TextMain}" Margin="0,0,0,10"/>
+                        
+                        <ItemsControl ItemsSource="{Binding Templates}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{DynamicResource AltRowBg}" CornerRadius="10" Padding="15" Margin="0,0,0,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" 
+                                                          Foreground="{DynamicResource TextMain}"/>
+                                                <TextBlock Text="{Binding Description}" FontSize="12" 
+                                                          Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"
+                                                          Margin="0,3,0,0" Visibility="{Binding Description, Converter={StaticResource NullToVis}}"/>
+                                                <TextBlock Text="{Binding UpdatedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" 
+                                                          FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                            
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                <Button Content="📂 Yükle" 
+                                                        Command="{Binding DataContext.LoadTemplateCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding Id}"
+                                                        Background="{DynamicResource Accent}" Foreground="White"
+                                                        Padding="12,6" Margin="0,0,8,0"/>
+                                                <Button Content="🗑️" 
+                                                        Command="{Binding DataContext.DeleteTemplateCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding Id}"
+                                                        Background="{DynamicResource Error}" Foreground="White"
+                                                        Padding="10,6"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        
+                        <TextBlock Text="Henüz kaydedilmiş şablon yok." 
+                                  FontSize="13" Foreground="{DynamicResource TextMuted}" 
+                                  HorizontalAlignment="Center" Margin="0,20"
+                                  Visibility="{Binding Templates.Count, Converter={StaticResource CountToVisConverter}}"/>
+                    </StackPanel>
+                </ScrollViewer>
+                
+                <!-- Footer -->
+                <Border Grid.Row="2" Background="{DynamicResource AltRowBg}" CornerRadius="0,0,20,20" Padding="25,15">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="📁 Dışa Aktar..." 
+                                Command="{Binding ExportTemplateCommand}"
+                                Background="{DynamicResource CardBg}" Foreground="{DynamicResource TextMain}"
+                                BorderBrush="{DynamicResource Border}" Padding="15,8" Margin="0,0,10,0"/>
+                        <Button Content="📂 İçe Aktar..." 
+                                Command="{Binding ImportTemplateCommand}"
+                                Background="{DynamicResource CardBg}" Foreground="{DynamicResource TextMain}"
+                                BorderBrush="{DynamicResource Border}" Padding="15,8"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

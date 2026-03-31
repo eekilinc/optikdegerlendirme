@@ -1,16 +1,17 @@
 using System;
+using System.Windows.Data;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Linq;
 using System.Threading.Tasks;
+using System.IO;
 using Microsoft.Win32;
 using OptikFormApp.Models;
 using OptikFormApp.Services;
 using System.Text.Json;
 using System.Collections.Generic;
 using System.Windows.Input;
-using System.Windows.Data;
 
 namespace OptikFormApp.ViewModels
 {
@@ -25,6 +26,10 @@ namespace OptikFormApp.ViewModels
         private readonly CsvExportService _csvService;
         private readonly NotificationService _notificationService;
         private readonly UndoRedoManager _undoRedoManager;
+        private readonly StatisticsReportService _statsReportService;
+        private readonly TemplateService _templateService;
+        private readonly JsonDataService _jsonDataService;
+        private readonly KeyboardShortcutService _shortcutService;
         
         private readonly object _studentsLock = new();
         private readonly object _coursesLock = new();
@@ -76,6 +81,10 @@ namespace OptikFormApp.ViewModels
             _csvService = new CsvExportService();
             _notificationService = new NotificationService();
             _undoRedoManager = new UndoRedoManager(50);
+            _statsReportService = new StatisticsReportService();
+            _templateService = new TemplateService();
+            _jsonDataService = new JsonDataService();
+            _shortcutService = new KeyboardShortcutService();
 
             // Undo/Redo event handlers
             _undoRedoManager.CanUndoChanged += (s, e) => { OnPropertyChanged(nameof(CanUndo)); OnPropertyChanged(nameof(UndoDescription)); };
@@ -468,6 +477,247 @@ namespace OptikFormApp.ViewModels
                     EvaluateAsync().ConfigureAwait(false);
                 }
             }, _ => CanRedo);
+
+            CopyReportCommand = new RelayCommand(_ => {
+                if (!string.IsNullOrEmpty(ReportText))
+                {
+                    System.Windows.Clipboard.SetText(ReportText);
+                    ShowToastSuccess("Rapor panoya kopyalandı!");
+                }
+            });
+
+            // Template Manager Commands
+            OpenTemplateManagerCommand = new RelayCommand(_ => {
+                RefreshTemplates();
+                IsTemplateManagerOpen = true;
+                OnPropertyChanged(nameof(IsTemplateManagerOpen));
+            });
+
+            CloseTemplateManagerCommand = new RelayCommand(_ => {
+                IsTemplateManagerOpen = false;
+                OnPropertyChanged(nameof(IsTemplateManagerOpen));
+            });
+
+            SaveAsTemplateCommand = new RelayCommand(_ => {
+                if (string.IsNullOrWhiteSpace(NewTemplateName))
+                {
+                    ShowToastError("Şablon adı girmelisiniz!");
+                    return;
+                }
+
+                var template = _templateService.CreateFromCurrent(
+                    NewTemplateName,
+                    NewTemplateDescription,
+                    AnswerKeys,
+                    QuestionSettings,
+                    LearningOutcomes,
+                    NetCoefficient,
+                    BaseScore,
+                    WrongDeductionFactor,
+                    SchoolName
+                );
+
+                _templateService.SaveTemplate(template);
+                RefreshTemplates();
+                
+                NewTemplateName = "";
+                NewTemplateDescription = "";
+                OnPropertyChanged(nameof(NewTemplateName));
+                OnPropertyChanged(nameof(NewTemplateDescription));
+                
+                ShowToastSuccess("Şablon başarıyla kaydedildi!");
+            });
+
+            LoadTemplateCommand = new RelayCommand(param => {
+                if (param is string templateId)
+                {
+                    var template = _templateService.LoadTemplate(templateId);
+                    if (template != null)
+                    {
+                        AnswerKeys.Clear();
+                        foreach (var key in template.AnswerKeys) AnswerKeys.Add(key);
+
+                        QuestionSettings.Clear();
+                        foreach (var setting in template.QuestionSettings) QuestionSettings.Add(setting);
+
+                        LearningOutcomes.Clear();
+                        foreach (var outcome in template.LearningOutcomes) LearningOutcomes.Add(outcome);
+
+                        NetCoefficient = template.NetCoefficient;
+                        BaseScore = template.BaseScore;
+                        WrongDeductionFactor = template.WrongDeductionFactor;
+                        SchoolName = template.SchoolName;
+
+                        OnPropertyChanged(nameof(NetCoefficient));
+                        OnPropertyChanged(nameof(BaseScore));
+                        OnPropertyChanged(nameof(WrongDeductionFactor));
+                        OnPropertyChanged(nameof(SchoolName));
+
+                        IsTemplateManagerOpen = false;
+                        OnPropertyChanged(nameof(IsTemplateManagerOpen));
+
+                        ShowToastSuccess($"'{template.Name}' şablonu yüklendi!");
+                        AddToLog($"Şablon yüklendi: {template.Name}", LogLevel.Success);
+                    }
+                }
+            });
+
+            DeleteTemplateCommand = new RelayCommand(param => {
+                if (param is string templateId)
+                {
+                    _templateService.DeleteTemplate(templateId);
+                    RefreshTemplates();
+                    ShowToastInfo("Şablon silindi.");
+                }
+            });
+
+            ExportTemplateCommand = new RelayCommand(_ => {
+                var dialog = new SaveFileDialog {
+                    Filter = "JSON Dosyası|*.json",
+                    FileName = $"SınavŞablonu_{DateTime.Now:yyyyMMdd}.json"
+                };
+                if (dialog.ShowDialog() == true)
+                {
+                    // Export current settings as template
+                    var template = _templateService.CreateFromCurrent(
+                        "Dışa Aktarılan Şablon",
+                        "",
+                        AnswerKeys,
+                        QuestionSettings,
+                        LearningOutcomes,
+                        NetCoefficient,
+                        BaseScore,
+                        WrongDeductionFactor,
+                        SchoolName
+                    );
+                    _templateService.SaveTemplate(template);
+                    _templateService.ExportTemplate(template.Id, dialog.FileName);
+                    ShowToastSuccess("Şablon dışa aktarıldı!");
+                }
+            });
+
+            ImportTemplateCommand = new RelayCommand(_ => {
+                var dialog = new OpenFileDialog {
+                    Filter = "JSON Dosyası|*.json",
+                    Title = "Şablon Dosyası Seçin"
+                };
+                if (dialog.ShowDialog() == true)
+                {
+                    var template = _templateService.ImportTemplate(dialog.FileName);
+                    if (template != null)
+                    {
+                        RefreshTemplates();
+                        ShowToastSuccess($"'{template.Name}' şablonu içe aktarıldı!");
+                    }
+                    else
+                    {
+                        ShowToastError("Şablon içe aktarılamadı!");
+                    }
+                }
+            });
+
+            // JSON Export/Import Commands
+            ExportJsonCommand = new AsyncRelayCommand(async _ => {
+                if (Students.Count == 0)
+                {
+                    ShowToastError("Dışa aktarılacak veri yok!");
+                    return;
+                }
+
+                var dialog = new SaveFileDialog {
+                    Filter = "JSON Dosyası|*.json",
+                    FileName = $"Sınav_{DateTime.Now:yyyyMMdd_HHmmss}.json"
+                };
+                if (dialog.ShowDialog() == true)
+                {
+                    IsBusy = true;
+                    BusyMessage = "JSON dosyası oluşturuluyor...";
+                    try
+                    {
+                        await _jsonDataService.ExportToJsonAsync(
+                            dialog.FileName,
+                            SelectedExam?.Title ?? "Dışa Aktarılan Sınav",
+                            SelectedCourse?.Name ?? "",
+                            SchoolName,
+                            NetCoefficient,
+                            BaseScore,
+                            WrongDeductionFactor,
+                            AnswerKeys,
+                            QuestionSettings,
+                            LearningOutcomes,
+                            Students
+                        );
+                        ShowToastSuccess("Veriler JSON olarak dışa aktarıldı!");
+                        AddToLog($"JSON dışa aktarma: {Path.GetFileName(dialog.FileName)}", LogLevel.Success);
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowToastError($"Dışa aktarma hatası: {ex.Message}");
+                    }
+                    finally
+                    {
+                        IsBusy = false;
+                    }
+                }
+            });
+
+            ImportJsonCommand = new AsyncRelayCommand(async _ => {
+                var dialog = new OpenFileDialog {
+                    Filter = "JSON Dosyası|*.json",
+                    Title = "Sınav Verisi JSON Dosyası Seçin"
+                };
+                if (dialog.ShowDialog() == true)
+                {
+                    IsBusy = true;
+                    BusyMessage = "JSON dosyası okunuyor...";
+                    try
+                    {
+                        var data = await _jsonDataService.ImportFromJsonAsync(dialog.FileName);
+                        if (data == null)
+                        {
+                            ShowToastError("JSON dosyası okunamadı veya geçersiz format!");
+                            return;
+                        }
+
+                        // Clear existing data
+                        SelectedExam = null;
+                        Students.Clear();
+                        AnswerKeys.Clear();
+                        QuestionSettings.Clear();
+                        LearningOutcomes.Clear();
+
+                        // Load new data
+                        foreach (var key in data.AnswerKeys) AnswerKeys.Add(key);
+                        foreach (var setting in data.QuestionSettings) QuestionSettings.Add(setting);
+                        foreach (var outcome in data.LearningOutcomes) LearningOutcomes.Add(outcome);
+                        foreach (var student in data.Students) Students.Add(student);
+
+                        NetCoefficient = data.NetCoefficient;
+                        BaseScore = data.BaseScore;
+                        WrongDeductionFactor = data.WrongDeductionFactor;
+                        SchoolName = data.SchoolName;
+
+                        OnPropertyChanged(nameof(NetCoefficient));
+                        OnPropertyChanged(nameof(BaseScore));
+                        OnPropertyChanged(nameof(WrongDeductionFactor));
+                        OnPropertyChanged(nameof(SchoolName));
+
+                        HasUnsavedData = true;
+                        ShowToastSuccess($"'{data.ExamTitle}' JSON'dan yüklendi! Öğrenci: {data.Students.Count}");
+                        AddToLog($"JSON içe aktarma: {data.ExamTitle} ({data.Students.Count} öğrenci)", LogLevel.Success);
+
+                        await EvaluateAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowToastError($"İçe aktarma hatası: {ex.Message}");
+                    }
+                    finally
+                    {
+                        IsBusy = false;
+                    }
+                }
+            });
         }
 
         public string SearchText 
@@ -586,6 +836,14 @@ namespace OptikFormApp.ViewModels
         public double AverageDifficulty { get; set; } = 0;
         public string DifficultyDistribution { get; set; } = "";
 
+        // İstatistiksel Raporlar için yeni property'ler
+        public StatisticsReportService.ClassStatistics ClassStats { get; private set; } = new();
+        public ObservableCollection<StatisticsReportService.ScoreDistribution> ScoreDistribution { get; } = new();
+        public ObservableCollection<StatisticsReportService.QuestionCorrelation> QuestionCorrelations { get; } = new();
+        public Dictionary<string, double> Percentiles { get; private set; } = new();
+        public string ReportText { get; private set; } = "";
+        public ICommand CopyReportCommand { get; set; }
+
         // Toast Notifications
         public System.Collections.ObjectModel.ObservableCollection<ToastNotificationModel> Notifications => _notificationService.ActiveNotifications;
         public ICommand DismissNotificationCommand { get; set; }
@@ -642,6 +900,23 @@ namespace OptikFormApp.ViewModels
         public ICommand UndoCommand { get; set; }
         public ICommand RedoCommand { get; set; }
         public ICommand OpenGitHubCommand { get; set; }
+
+        // Template Manager Properties and Commands
+        public bool IsTemplateManagerOpen { get; set; }
+        public string NewTemplateName { get; set; } = "";
+        public string NewTemplateDescription { get; set; } = "";
+        public ObservableCollection<TemplateService.ExamTemplate> Templates { get; } = new();
+        public ICommand OpenTemplateManagerCommand { get; set; }
+        public ICommand CloseTemplateManagerCommand { get; set; }
+        public ICommand SaveAsTemplateCommand { get; set; }
+        public ICommand LoadTemplateCommand { get; set; }
+        public ICommand DeleteTemplateCommand { get; set; }
+        public ICommand ExportTemplateCommand { get; set; }
+        public ICommand ImportTemplateCommand { get; set; }
+
+        // JSON Data Import/Export Commands
+        public ICommand ExportJsonCommand { get; set; }
+        public ICommand ImportJsonCommand { get; set; }
 
         public void AddToLog(string message, LogLevel level = LogLevel.Info)
         {
@@ -1030,6 +1305,7 @@ namespace OptikFormApp.ViewModels
                     StudentsView.Refresh();
                     UpdateChartData(statsList, list);
                     UpdateOutcomeStats();
+                    UpdateStatisticsReport();
                     OnPropertyChanged(nameof(ValidationIssuesCount));
                 });
 
@@ -1175,6 +1451,42 @@ namespace OptikFormApp.ViewModels
             for(int i = 0; i < bins.Length; i++) {
                 ScoreDistData.Add(new ChartItem { Label = (i*10).ToString(), Value = bins[i], Tooltip = $"{i*10}-{(i*10)+10} Puan: {bins[i]} Öğrenci" });
             }
+        }
+
+        private void UpdateStatisticsReport()
+        {
+            if (Students.Count == 0) return;
+
+            var studentsList = Students.ToList();
+
+            // Class Statistics
+            ClassStats = _statsReportService.CalculateClassStatistics(studentsList);
+            OnPropertyChanged(nameof(ClassStats));
+
+            // Score Distribution
+            ScoreDistribution.Clear();
+            foreach (var dist in _statsReportService.GetScoreDistribution(studentsList, 10))
+                ScoreDistribution.Add(dist);
+
+            // Percentiles
+            Percentiles = _statsReportService.CalculatePercentiles(studentsList);
+            OnPropertyChanged(nameof(Percentiles));
+
+            // Question Correlations
+            QuestionCorrelations.Clear();
+            foreach (var corr in _statsReportService.AnalyzeQuestionCorrelations(studentsList, 50))
+                QuestionCorrelations.Add(corr);
+
+            // Report Text
+            ReportText = _statsReportService.GenerateReportSummary(studentsList, SelectedExam?.Title ?? "Mevcut Sınav");
+            OnPropertyChanged(nameof(ReportText));
+        }
+
+        private void RefreshTemplates()
+        {
+            Templates.Clear();
+            foreach (var template in _templateService.GetAllTemplates())
+                Templates.Add(template);
         }
 
         private void ShowAlert(string title, string message)
