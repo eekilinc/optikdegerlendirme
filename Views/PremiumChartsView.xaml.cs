@@ -117,7 +117,7 @@ namespace OptikFormApp.Views
                 var centerY = 100;
                 
                 // A Kitapçığı
-                var aArc = new Path
+                var aArc = new System.Windows.Shapes.Path
                 {
                     Fill = success,
                     Stroke = new SolidColorBrush(Colors.White),
@@ -129,7 +129,7 @@ namespace OptikFormApp.Views
                 bookletCanvas.Children.Add(aArc);
                 
                 // B Kitapçığı
-                var bArc = new Path
+                var bArc = new System.Windows.Shapes.Path
                 {
                     Fill = warning,
                     Stroke = new SolidColorBrush(Colors.White),
