@@ -4,61 +4,387 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="800">
-    <Grid Visibility="{Binding IsModalOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}">
-        <Border Background="{DynamicResource CardBg}" CornerRadius="16" Width="650" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="35">
+             d:DesignHeight="650" d:DesignWidth="750">
+    
+    <UserControl.Resources>
+        <Storyboard x:Key="ModalOpenAnimation">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" From="0.9" To="1" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" From="0.9" To="1" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+    </UserControl.Resources>
+    
+    <Grid Visibility="{Binding IsModalOpen, Converter={StaticResource BoolToVis}}" 
+          Background="#CC000000">
+        
+        <!-- Premium Modal -->
+        <Border Width="680" 
+                VerticalAlignment="Center" 
+                HorizontalAlignment="Center"
+                CornerRadius="24"
+                Padding="0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#F8FAFC"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <Border.Effect>
-                <DropShadowEffect Color="Black" Opacity="0.15" BlurRadius="30" ShadowDepth="10"/>
+                <DropShadowEffect Color="Black" Opacity="0.25" BlurRadius="60" ShadowDepth="20"/>
             </Border.Effect>
+            <Border.RenderTransform>
+                <ScaleTransform ScaleX="1" ScaleY="1"/>
+            </Border.RenderTransform>
             
-            <StackPanel>
-                <DockPanel LastChildFill="False" Margin="0,0,0,20">
-                    <TextBlock Text="Cevap Anahtarı Yönetimi" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextMain}" DockPanel.Dock="Left" VerticalAlignment="Center"/>
-                    <Button Content="X" Command="{Binding CloseModalCommand}" Background="Transparent" Foreground="{DynamicResource TextMuted}" FontSize="18" Padding="10,5" DockPanel.Dock="Right" ToolTip="Kapat" Margin="0,-10,-10,0"/>
-                </DockPanel>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                <TextBlock Text="Kitapçık türlerine göre cevap şablonlarını aşağıdan ekleyip silebilirsiniz." Foreground="{DynamicResource TextMuted}" Margin="0,0,0,20" TextWrapping="Wrap"/>
+                <!-- Premium Purple Header -->
+                <Border Grid.Row="0" 
+                        Height="100"
+                        CornerRadius="24,24,0,0" 
+                        Padding="28,24">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#8B5CF6" Offset="0"/>
+                            <GradientStop Color="#7C3AED" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    
+                    <Grid>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="📝 Cevap Anahtarı Yönetimi" 
+                                       FontSize="26" 
+                                       FontWeight="Bold"
+                                       Foreground="White"/>
+                            <TextBlock Text="Kitapçık türlerine göre cevap şablonlarını yönetin" 
+                                       FontSize="13" 
+                                       Foreground="#E9D5FF"
+                                       Margin="0,6,0,0"
+                                       Opacity="0.9"/>
+                        </StackPanel>
+                        
+                        <Button Command="{Binding CloseModalCommand}"
+                                HorizontalAlignment="Right" 
+                                VerticalAlignment="Top"
+                                Background="#20FFFFFF" 
+                                BorderThickness="0" 
+                                Foreground="White"
+                                Width="36" 
+                                Height="36"
+                                FontSize="16" 
+                                Padding="0"
+                                Cursor="Hand">
+                            <Button.Content>✕</Button.Content>
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" 
+                                            CornerRadius="18"
+                                            BorderThickness="0">
+                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                          VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </Grid>
+                </Border>
 
-                <ScrollViewer MaxHeight="400" VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding AnswerKeys}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Vertical" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Background="{DynamicResource AltRowBg}" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="8" Padding="15" Margin="0,0,0,10">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
+                <!-- Content -->
+                <StackPanel Grid.Row="1" Margin="28,24,28,16">
+                    
+                    <!-- Info Banner -->
+                    <Border CornerRadius="12" 
+                            Padding="14,10"
+                            Margin="0,0,0,16"
+                            BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#F5F3FF"/>
+                                <Setter Property="BorderBrush" Value="#DDD6FE"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="Background" Value="#4C1D95"/>
+                                        <Setter Property="BorderBrush" Value="#6D28D9"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="💡" FontSize="16" Margin="0,0,10,0"/>
+                            <TextBlock Text="Her kitapçık türü için ayrı cevap anahtarı tanımlayabilirsiniz. Öğrencilerin kitapçık türü otomatik olarak algılanır." 
+                                       FontSize="12"
+                                       TextWrapping="Wrap"
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#7C3AED"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#C4B5FD"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
 
-                                        <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,15,0">
-                                            <TextBlock Text="Kitapçık:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,0,0,4"/>
-                                            <TextBox Text="{Binding BookletName, UpdateSourceTrigger=PropertyChanged}" Width="50" ToolTip="Örn: A" TextAlignment="Center" FontWeight="Bold"/>
-                                        </StackPanel>
+                    <!-- Answer Keys List -->
+                    <ScrollViewer MaxHeight="400" 
+                                  VerticalScrollBarVisibility="Auto"
+                                  PanningMode="VerticalOnly">
+                        <ItemsControl ItemsSource="{Binding AnswerKeys}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Vertical" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border CornerRadius="16" 
+                                            Padding="18"
+                                            Margin="0,0,0,12"
+                                            BorderThickness="1">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#F1F5F9"/>
+                                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                        <Setter Property="Background" Value="#334155"/>
+                                                        <Setter Property="BorderBrush" Value="#475569"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
 
-                                        <StackPanel Grid.Column="1" Orientation="Vertical" Margin="0,0,15,0">
-                                            <TextBlock Text="Cevap Anahtarı Karakterleri:" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,0,0,4"/>
-                                            <TextBox Text="{Binding Answers, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas" MinWidth="300" HorizontalAlignment="Stretch"/>
-                                        </StackPanel>
+                                            <!-- Booklet Name -->
+                                            <StackPanel Grid.Column="0" 
+                                                        Orientation="Vertical" 
+                                                        Margin="0,0,16,0"
+                                                        Width="70">
+                                                <TextBlock Text="Kitapçık" 
+                                                           FontSize="11" 
+                                                           Margin="0,0,0,6">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#64748B"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBox Text="{Binding BookletName, UpdateSourceTrigger=PropertyChanged}" 
+                                                         FontSize="18"
+                                                         FontWeight="Bold"
+                                                         Foreground="#7C3AED"
+                                                         Background="White"
+                                                         BorderBrush="#8B5CF6"
+                                                         BorderThickness="2"
+                                                         TextAlignment="Center"
+                                                         VerticalContentAlignment="Center"
+                                                         Padding="12,8"
+                                                         MinWidth="50"
+                                                         MinHeight="42"
+                                                         ToolTip="Kitapçık tipi (örn: A, B, C)"/>
+                                            </StackPanel>
 
-                                        <Button Grid.Column="2" Command="{Binding DataContext.RemoveAnswerKeyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Background="Transparent" BorderBrush="#EF4444" BorderThickness="1" Foreground="#EF4444" Content="Sil" Padding="15,8" VerticalAlignment="Bottom"/>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                                            <!-- Answers Input -->
+                                            <StackPanel Grid.Column="1" 
+                                                        Orientation="Vertical">
+                                                <TextBlock Text="Cevap Anahtarı" 
+                                                           FontSize="11" 
+                                                           Margin="0,0,0,6">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#64748B"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBox Text="{Binding Answers, UpdateSourceTrigger=PropertyChanged}" 
+                                                         FontFamily="Consolas" 
+                                                         FontSize="14"
+                                                         Padding="12,10"
+                                                         BorderThickness="1"
+                                                         BorderBrush="#E2E8F0">
+                                                    <TextBox.Style>
+                                                        <Style TargetType="TextBox">
+                                                            <Setter Property="Background" Value="White"/>
+                                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                                    <Setter Property="Background" Value="#0F172A"/>
+                                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                                    <Setter Property="BorderBrush" Value="#334155"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBox.Style>
+                                                </TextBox>
+                                            </StackPanel>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-                    <Button Content="+ Yeni Ekle" Command="{Binding AddAnswerKeyCommand}" Style="{StaticResource OutlineButton}" Margin="0,0,15,0"/>
-                    <Button Content="Kaydet ve Kapat" Command="{Binding CloseModalCommand}" Background="#10B981" Padding="25,10"/>
+                                            <!-- Delete Button -->
+                                            <Button Grid.Column="2" 
+                                                    Command="{Binding DataContext.RemoveAnswerKeyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                    CommandParameter="{Binding}"
+                                                    VerticalAlignment="Bottom"
+                                                    Margin="12,0,0,0"
+                                                    Padding="16,10"
+                                                    Background="Transparent" 
+                                                    BorderBrush="#EF4444" 
+                                                    BorderThickness="1" 
+                                                    Foreground="#EF4444"
+                                                    FontSize="13"
+                                                    FontWeight="SemiBold"
+                                                    Cursor="Hand">
+                                                <Button.Content>🗑️ Sil</Button.Content>
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" 
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                                CornerRadius="10"
+                                                                Padding="{TemplateBinding Padding}">
+                                                            <ContentPresenter HorizontalAlignment="Center" 
+                                                                              VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
                 </StackPanel>
-            </StackPanel>
+
+                <!-- Premium Footer -->
+                <Border Grid.Row="2" 
+                        CornerRadius="0,0,24,24" 
+                        Padding="28,20"
+                        BorderThickness="0,1,0,0">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#F8FAFC"/>
+                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                    <Setter Property="Background" Value="#0F172A"/>
+                                    <Setter Property="BorderBrush" Value="#334155"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Width="8" 
+                                    Height="8" 
+                                    CornerRadius="4"
+                                    Background="#8B5CF6"
+                                    Margin="0,0,10,0"/>
+                            <TextBlock Text="Değişiklikler otomatik kaydedilir" 
+                                       FontSize="12"
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#64748B"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#94A3B8"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" 
+                                    HorizontalAlignment="Right">
+                            <Button Content="➕ Yeni Ekle" 
+                                    Command="{Binding AddAnswerKeyCommand}"
+                                    Padding="18,10"
+                                    Background="Transparent"
+                                    BorderBrush="#8B5CF6"
+                                    BorderThickness="2"
+                                    Foreground="#8B5CF6"
+                                    FontSize="13"
+                                    FontWeight="SemiBold"
+                                    Margin="0,0,12,0"
+                                    Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" 
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                CornerRadius="10"
+                                                Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" 
+                                                              VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            
+                            <Button Content="Kaydet ve Kapat" 
+                                    Command="{Binding CloseModalCommand}"
+                                    Background="#8B5CF6" 
+                                    Foreground="White"
+                                    Padding="24,10" 
+                                    FontSize="13" 
+                                    FontWeight="SemiBold"
+                                    BorderThickness="0"
+                                    Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" 
+                                                CornerRadius="10"
+                                                Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" 
+                                                              VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

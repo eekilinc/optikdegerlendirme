@@ -4,11 +4,29 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="500" d:DesignWidth="480">
-    <Grid Visibility="{Binding IsAboutOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}">
-        <Border Background="{DynamicResource CardBg}" CornerRadius="24" Width="460" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="0">
+             d:DesignHeight="600" d:DesignWidth="500">
+    
+    <Grid Visibility="{Binding IsAboutOpen, Converter={StaticResource BoolToVis}}" 
+          Background="#CC000000">
+        
+        <!-- Premium Modal -->
+        <Border Width="650" 
+                VerticalAlignment="Center" 
+                HorizontalAlignment="Center"
+                CornerRadius="24"
+                Padding="0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#F8FAFC"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <Border.Effect>
-                <DropShadowEffect Color="Black" Opacity="0.25" BlurRadius="50" ShadowDepth="15"/>
+                <DropShadowEffect Color="Black" Opacity="0.3" BlurRadius="70" ShadowDepth="25"/>
             </Border.Effect>
             
             <Grid>
@@ -18,8 +36,10 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 
-                <!-- Header with Gradient Background -->
-                <Border Grid.Row="0" CornerRadius="24,24,0,0" Height="140">
+                <!-- Premium Blue Header with Logo -->
+                <Border Grid.Row="0" 
+                        CornerRadius="24,24,0,0" 
+                        Height="180">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                             <GradientStop Color="#3B82F6" Offset="0"/>
@@ -28,82 +48,220 @@
                     </Border.Background>
                     
                     <!-- Large Logo -->
-                    <Border Width="120" Height="120" CornerRadius="24" Background="White" 
-                            VerticalAlignment="Bottom" Margin="0,0,0,-40">
+                    <Border Width="220" 
+                            Height="220" 
+                            CornerRadius="44" 
+                            Background="White" 
+                            VerticalAlignment="Bottom" 
+                            Margin="0,0,0,-80">
                         <Border.Effect>
-                            <DropShadowEffect Color="Black" Opacity="0.2" BlurRadius="20" ShadowDepth="8"/>
+                            <DropShadowEffect Color="Black" Opacity="0.35" BlurRadius="40" ShadowDepth="18"/>
                         </Border.Effect>
-                        <Image Source="/Assets/app_logo.png" Stretch="Uniform" Margin="22"/>
+                        <Image Source="/Assets/app_logo.png" Stretch="Uniform" Margin="5"/>
                     </Border>
                 </Border>
                 
                 <!-- Content -->
-                <StackPanel Grid.Row="1" Margin="35,55,35,30">
+                <StackPanel Grid.Row="1" Margin="50,90,50,25">
                     <!-- Title -->
-                    <TextBlock Text="Optik Değerlendirme" FontSize="26" FontWeight="Bold" 
-                               Foreground="{DynamicResource TextMain}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Optik Değerlendirme" 
+                               FontSize="28" 
+                               FontWeight="Bold" 
+                               HorizontalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#1E293B"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="Foreground" Value="#F8FAFC"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                     
                     <!-- Version Badge -->
-                    <Border Background="{DynamicResource Accent}" CornerRadius="15" Padding="15,5" 
-                            HorizontalAlignment="Center" Margin="0,12,0,20">
-                        <TextBlock Text="v2.1.0 Premium" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
+                    <Border CornerRadius="20" 
+                            Padding="18,6" 
+                            HorizontalAlignment="Center" 
+                            Margin="0,14,0,22">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#3B82F6" Offset="0"/>
+                                <GradientStop Color="#1D4ED8" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <TextBlock Text="{Binding CurrentVersion}" 
+                                   FontSize="12" 
+                                   FontWeight="SemiBold" 
+                                   Foreground="White"/>
                     </Border>
                     
                     <!-- Description -->
                     <TextBlock Text="AĞLASUN MYO sınav değerlendirme süreçlerini dijitalleştirmek ve hızlandırmak amacıyla geliştirilmiş modern, hızlı ve kullanıcı dostu bir değerlendirme platformudur." 
-                               FontSize="14" Foreground="{DynamicResource TextMain}" 
-                               TextAlignment="Center" TextWrapping="Wrap" LineHeight="24"
-                               Margin="0,0,0,25"/>
+                               FontSize="14" 
+                               TextAlignment="Center" 
+                               TextWrapping="Wrap" 
+                               LineHeight="26"
+                               Margin="0,0,0,28">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#475569"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                     
                     <!-- Features Row -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,25">
-                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,8" Margin="0,0,8,0">
-                            <TextBlock Text="⚡ Hızlı" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,28">
+                        <Border CornerRadius="10" Padding="14,8" Margin="0,0,8,0">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#334155"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock Text="⚡ Hızlı" FontSize="12">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#64748B"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#94A3B8"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </Border>
-                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,8" Margin="0,0,8,0">
-                            <TextBlock Text="🔒 Güvenli" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                        <Border CornerRadius="10" Padding="14,8" Margin="0,0,8,0">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#334155"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock Text="🔒 Güvenli" FontSize="12">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#64748B"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#94A3B8"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </Border>
-                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,8">
-                            <TextBlock Text="📊 Analitik" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                        <Border CornerRadius="10" Padding="14,8">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#334155"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock Text="📊 Analitik" FontSize="12">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#64748B"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#94A3B8"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </Border>
                     </StackPanel>
                     
                     <!-- Developer Card -->
-                    <Border Background="{DynamicResource AltRowBg}" CornerRadius="12" Padding="20,15" Margin="0,0,0,20">
+                    <Border CornerRadius="16" Padding="22,18" Margin="0,0,0,24">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#F1F5F9"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="Background" Value="#334155"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
                         <StackPanel>
-                            <TextBlock Text="Geliştirici" FontSize="11" FontWeight="Bold" 
-                                       Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" Margin="0,0,0,6"/>
-                            <TextBlock Text="Ekrem KILINÇ" FontSize="16" FontWeight="SemiBold" 
-                                       Foreground="{DynamicResource Accent}" HorizontalAlignment="Center"/>
-                            <TextBlock Text="Bilgisayar Programcılığı" FontSize="12" 
-                                       Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                            <TextBlock Text="Geliştirici" 
+                                       FontSize="11" 
+                                       FontWeight="Bold" 
+                                       HorizontalAlignment="Center" 
+                                       Margin="0,0,0,8">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#64748B"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#94A3B8"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="Ekrem KILINÇ" 
+                                       FontSize="18" 
+                                       FontWeight="SemiBold" 
+                                       HorizontalAlignment="Center"
+                                       Foreground="#3B82F6"/>
+                            <TextBlock Text="Bilgisayar Programcılığı" 
+                                       FontSize="13" 
+                                       HorizontalAlignment="Center" 
+                                       Margin="0,5,0,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#64748B"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#94A3B8"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
                     </Border>
                     
                     <!-- GitHub Link -->
                     <Button Command="{Binding OpenGitHubCommand}" 
-                            Background="Transparent" BorderThickness="0" 
-                            HorizontalAlignment="Center" Cursor="Hand"
-                            Margin="0,0,0,20">
+                            Background="#24292E" 
+                            BorderThickness="0" 
+                            HorizontalAlignment="Center" 
+                            Cursor="Hand"
+                            Margin="0,0,0,10"
+                            Padding="20,14">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
-                                <Border Background="#24292E" CornerRadius="10" Padding="18,12"
-                                        Cursor="Hand">
-                                    <Border.Triggers>
-                                        <EventTrigger RoutedEvent="MouseEnter">
-                                            <BeginStoryboard>
-                                                <Storyboard>
-                                                    <DoubleAnimation Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Opacity)" 
-                                                                     To="0.9" Duration="0:0:0.2"/>
-                                                </Storyboard>
-                                            </BeginStoryboard>
-                                        </EventTrigger>
-                                    </Border.Triggers>
+                                <Border Background="{TemplateBinding Background}" 
+                                        CornerRadius="12"
+                                        Padding="{TemplateBinding Padding}">
                                     <StackPanel Orientation="Horizontal">
                                         <!-- GitHub Icon -->
                                         <Path Data="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" 
-                                              Fill="White" Stretch="Uniform" Width="22" Height="22"/>
-                                        <TextBlock Text="github.com/eekilinc" FontSize="14" 
+                                              Fill="White" Stretch="Uniform" Width="24" Height="24"/>
+                                        <TextBlock Text="github.com/eekilinc" FontSize="15" 
                                                    FontWeight="SemiBold" Foreground="White" 
                                                    VerticalAlignment="Center" Margin="12,0,0,0"/>
                                     </StackPanel>
@@ -114,10 +272,29 @@
                 </StackPanel>
                 
                 <!-- Close Button -->
-                <Button Grid.Row="2" Content="Kapat" Command="{Binding CloseAboutCommand}" 
-                        Background="{DynamicResource Accent}" Foreground="White" 
-                        Padding="50,12" HorizontalAlignment="Center" Margin="0,0,0,30"
-                        FontSize="14" FontWeight="SemiBold"/>
+                <Button Grid.Row="2" 
+                        Command="{Binding CloseAboutCommand}" 
+                        Background="#3B82F6" 
+                        Foreground="White" 
+                        Padding="80,12" 
+                        HorizontalAlignment="Center" 
+                        Margin="0,0,0,25"
+                        FontSize="14" 
+                        FontWeight="SemiBold"
+                        BorderThickness="0"
+                        Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" 
+                                    CornerRadius="12"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" 
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <Button.Content>Kapat</Button.Content>
+                </Button>
             </Grid>
         </Border>
     </Grid>

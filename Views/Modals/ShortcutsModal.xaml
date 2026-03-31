@@ -4,12 +4,54 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="600">
-    <Grid Visibility="{Binding IsShortcutsOpen, Converter={StaticResource BoolToVis}}" Background="{DynamicResource ModalBackdrop}">
-        <Border Background="{DynamicResource CardBg}" CornerRadius="20" Width="560" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="0">
+             d:DesignHeight="650" d:DesignWidth="600">
+    
+    <UserControl.Resources>
+        <Storyboard x:Key="ModalOpenAnimation">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" From="0.9" To="1" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" From="0.9" To="1" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+    </UserControl.Resources>
+    
+    <Grid Visibility="{Binding IsShortcutsOpen, Converter={StaticResource BoolToVis}}" 
+          Background="#CC000000">
+        
+        <!-- Premium Modal -->
+        <Border Width="580" 
+                VerticalAlignment="Center" 
+                HorizontalAlignment="Center"
+                CornerRadius="24"
+                Padding="0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#F8FAFC"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <Border.Effect>
-                <DropShadowEffect Color="Black" Opacity="0.2" BlurRadius="40" ShadowDepth="12"/>
+                <DropShadowEffect Color="Black" Opacity="0.25" BlurRadius="60" ShadowDepth="20"/>
             </Border.Effect>
+            <Border.RenderTransform>
+                <ScaleTransform ScaleX="1" ScaleY="1"/>
+            </Border.RenderTransform>
+            
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -17,121 +59,643 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Header Band -->
-                <Border Grid.Row="0" Background="#3B82F6" CornerRadius="20,20,0,0" Padding="30,25">
+                <!-- Premium Blue Header -->
+                <Border Grid.Row="0" 
+                        Height="100"
+                        CornerRadius="24,24,0,0" 
+                        Padding="28,24">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#3B82F6" Offset="0"/>
+                            <GradientStop Color="#2563EB" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    
                     <Grid>
-                        <StackPanel>
-                            <TextBlock Text="⌨️  Klavye Kısayolları" FontSize="22" FontWeight="Bold" Foreground="White"/>
-                            <TextBlock Text="Uygulamayı daha hızlı kullanmak için kısayolları öğrenin." FontSize="13" Foreground="#BFDBFE" Margin="0,6,0,0"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="⌨️ Klavye Kısayolları" 
+                                       FontSize="26" 
+                                       FontWeight="Bold"
+                                       Foreground="White"/>
+                            <TextBlock Text="Uygulamayı daha hızlı kullanmak için kısayolları öğrenin" 
+                                       FontSize="13" 
+                                       Foreground="#BFDBFE"
+                                       Margin="0,6,0,0"
+                                       Opacity="0.9"/>
                         </StackPanel>
-                        <Button Content="✕" Command="{Binding CloseShortcutsCommand}"
-                                HorizontalAlignment="Right" VerticalAlignment="Top"
-                                Background="Transparent" BorderThickness="0" Foreground="White"
-                                FontSize="18" Padding="8,4" Cursor="Hand" Opacity="0.8"/>
+                        
+                        <Button Command="{Binding CloseShortcutsCommand}"
+                                HorizontalAlignment="Right" 
+                                VerticalAlignment="Top"
+                                Background="#20FFFFFF" 
+                                BorderThickness="0" 
+                                Foreground="White"
+                                Width="36" 
+                                Height="36"
+                                FontSize="16" 
+                                Padding="0"
+                                Cursor="Hand">
+                            <Button.Content>✕</Button.Content>
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" 
+                                            CornerRadius="18"
+                                            BorderThickness="0">
+                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                          VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
                     </Grid>
                 </Border>
 
-                <!-- Shortcut Cards Grid -->
-                <Grid Grid.Row="1" Margin="25,20,25,10">
+                <!-- Premium Shortcut Cards -->
+                <Grid Grid.Row="1" Margin="24,24,24,16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="16"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
 
-                    <!-- Dosya İşlemleri Başlığı -->
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="📂 Dosya İşlemleri"
-                               FontSize="11" FontWeight="Bold" Foreground="#3B82F6"
-                               Margin="0,0,0,8" VerticalAlignment="Center"/>
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="⚡ İşlemler"
-                               FontSize="11" FontWeight="Bold" Foreground="#8B5CF6"
-                               Margin="0,0,0,8" VerticalAlignment="Center"/>
+                    <!-- Left Column - File Operations -->
+                    <StackPanel Grid.Column="0">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Border Width="36" 
+                                    Height="36" 
+                                    CornerRadius="8"
+                                    Background="#DBEAFE"
+                                    Margin="0,0,10,0">
+                                <TextBlock Text="📂" 
+                                           FontSize="18" 
+                                           HorizontalAlignment="Center" 
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Dosya İşlemleri" 
+                                       FontSize="14" 
+                                       FontWeight="Bold"
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#3B82F6"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#60A5FA"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
 
-                    <!-- Sol Sütun - Dosya -->
-                    <StackPanel Grid.Row="1" Grid.Column="0" Grid.RowSpan="3">
-                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                        <!-- File Shortcuts -->
+                        <Border CornerRadius="12" 
+                                Padding="14,12" 
+                                Margin="0,0,0,8"
+                                BorderThickness="1">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#334155"/>
+                                            <Setter Property="BorderBrush" Value="#475569"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
-                                    <TextBlock Text="Ctrl + O" FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#3B82F6"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Background="#EFF6FF" 
+                                        BorderBrush="#BFDBFE" 
+                                        BorderThickness="1" 
+                                        CornerRadius="6" 
+                                        Padding="8,4" 
+                                        Margin="0,0,12,0">
+                                    <TextBlock Text="Ctrl + O" 
+                                               FontFamily="Consolas" 
+                                               FontSize="12" 
+                                               FontWeight="Bold" 
+                                               Foreground="#3B82F6"/>
                                 </Border>
-                                <TextBlock Grid.Column="1" Text="TXT Dosyası Yükle" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" 
+                                           Text="TXT Dosyası Yükle" 
+                                           FontSize="13" 
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Grid>
                         </Border>
-                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+
+                        <Border CornerRadius="12" 
+                                Padding="14,12" 
+                                Margin="0,0,0,8"
+                                BorderThickness="1">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#334155"/>
+                                            <Setter Property="BorderBrush" Value="#475569"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
-                                    <TextBlock Text="Ctrl + S" FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#3B82F6"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Background="#EFF6FF" 
+                                        BorderBrush="#BFDBFE" 
+                                        BorderThickness="1" 
+                                        CornerRadius="6" 
+                                        Padding="8,4" 
+                                        Margin="0,0,12,0">
+                                    <TextBlock Text="Ctrl + S" 
+                                               FontFamily="Consolas" 
+                                               FontSize="12" 
+                                               FontWeight="Bold" 
+                                               Foreground="#3B82F6"/>
                                 </Border>
-                                <TextBlock Grid.Column="1" Text="Sınavı Kaydet" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" 
+                                           Text="Sınavı Kaydet" 
+                                           FontSize="13" 
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Grid>
                         </Border>
-                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+
+                        <Border CornerRadius="12" 
+                                Padding="14,12" 
+                                Margin="0,0,0,8"
+                                BorderThickness="1">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#334155"/>
+                                            <Setter Property="BorderBrush" Value="#475569"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                <Border Background="#FFF7ED" BorderBrush="#FED7AA" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
-                                    <TextBlock Text="Ctrl + E" FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#EA580C"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Background="#FFF7ED" 
+                                        BorderBrush="#FED7AA" 
+                                        BorderThickness="1" 
+                                        CornerRadius="6" 
+                                        Padding="8,4" 
+                                        Margin="0,0,12,0">
+                                    <TextBlock Text="Ctrl + E" 
+                                               FontFamily="Consolas" 
+                                               FontSize="12" 
+                                               FontWeight="Bold" 
+                                               Foreground="#EA580C"/>
                                 </Border>
-                                <TextBlock Grid.Column="1" Text="Excel Raporu Al" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" 
+                                           Text="Excel Raporu Al" 
+                                           FontSize="13" 
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Grid>
                         </Border>
-                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+
+                        <Border CornerRadius="12" 
+                                Padding="14,12" 
+                                Margin="0,0,0,8"
+                                BorderThickness="1">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#334155"/>
+                                            <Setter Property="BorderBrush" Value="#475569"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                <Border Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
-                                    <TextBlock Text="Ctrl+⇧+C" FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#16A34A"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Background="#F0FDF4" 
+                                        BorderBrush="#BBF7D0" 
+                                        BorderThickness="1" 
+                                        CornerRadius="6" 
+                                        Padding="8,4" 
+                                        Margin="0,0,12,0">
+                                    <TextBlock Text="Ctrl+⇧+C" 
+                                               FontFamily="Consolas" 
+                                               FontSize="12" 
+                                               FontWeight="Bold" 
+                                               Foreground="#16A34A"/>
                                 </Border>
-                                <TextBlock Grid.Column="1" Text="CSV Dışa Aktar" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" 
+                                           Text="CSV Dışa Aktar" 
+                                           FontSize="13" 
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Grid>
                         </Border>
-                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,0">
+
+                        <Border CornerRadius="12" 
+                                Padding="14,12"
+                                BorderThickness="1">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#334155"/>
+                                            <Setter Property="BorderBrush" Value="#475569"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                <Border Background="#FDF4FF" BorderBrush="#E9D5FF" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
-                                    <TextBlock Text="Ctrl + P" FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#7C3AED"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Background="#FDF4FF" 
+                                        BorderBrush="#E9D5FF" 
+                                        BorderThickness="1" 
+                                        CornerRadius="6" 
+                                        Padding="8,4" 
+                                        Margin="0,0,12,0">
+                                    <TextBlock Text="Ctrl + P" 
+                                               FontFamily="Consolas" 
+                                               FontSize="12" 
+                                               FontWeight="Bold" 
+                                               Foreground="#7C3AED"/>
                                 </Border>
-                                <TextBlock Grid.Column="1" Text="Toplu PDF Karne" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" 
+                                           Text="Toplu PDF Karne" 
+                                           FontSize="13" 
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Grid>
                         </Border>
                     </StackPanel>
 
-                    <!-- Sağ Sütun - İşlemler -->
-                    <StackPanel Grid.Row="1" Grid.Column="2" Grid.RowSpan="3">
-                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                    <!-- Right Column - Operations -->
+                    <StackPanel Grid.Column="2">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Border Width="36" 
+                                    Height="36" 
+                                    CornerRadius="8"
+                                    Background="#F3E8FF"
+                                    Margin="0,0,10,0">
+                                <TextBlock Text="⚡" 
+                                           FontSize="18" 
+                                           HorizontalAlignment="Center" 
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="İşlemler" 
+                                       FontSize="14" 
+                                       FontWeight="Bold"
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#8B5CF6"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#A78BFA"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <Border CornerRadius="12" 
+                                Padding="14,12" 
+                                Margin="0,0,0,8"
+                                BorderThickness="1">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#334155"/>
+                                            <Setter Property="BorderBrush" Value="#475569"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                <Border Background="#F5F3FF" BorderBrush="#DDD6FE" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
-                                    <TextBlock Text="   F5   " FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#7C3AED"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Background="#F5F3FF" 
+                                        BorderBrush="#DDD6FE" 
+                                        BorderThickness="1" 
+                                        CornerRadius="6" 
+                                        Padding="8,4" 
+                                        Margin="0,0,12,0">
+                                    <TextBlock Text="F5" 
+                                               FontFamily="Consolas" 
+                                               FontSize="12" 
+                                               FontWeight="Bold" 
+                                               Foreground="#7C3AED"/>
                                 </Border>
-                                <TextBlock Grid.Column="1" Text="Puanları Hesapla" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" 
+                                           Text="Puanları Hesapla" 
+                                           FontSize="13" 
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Grid>
                         </Border>
-                        <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+
+                        <Border CornerRadius="12" 
+                                Padding="14,12" 
+                                Margin="0,0,0,8"
+                                BorderThickness="1">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#334155"/>
+                                            <Setter Property="BorderBrush" Value="#475569"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                <Border Background="#F0F9FF" BorderBrush="#BAE6FD" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,12,0">
-                                    <TextBlock Text="   F1   " FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#0284C7"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Background="#F0F9FF" 
+                                        BorderBrush="#BAE6FD" 
+                                        BorderThickness="1" 
+                                        CornerRadius="6" 
+                                        Padding="8,4" 
+                                        Margin="0,0,12,0">
+                                    <TextBlock Text="F1" 
+                                               FontFamily="Consolas" 
+                                               FontSize="12" 
+                                               FontWeight="Bold" 
+                                               Foreground="#0284C7"/>
                                 </Border>
-                                <TextBlock Grid.Column="1" Text="Bu Pencereyi Aç" FontSize="13" Foreground="{DynamicResource TextMain}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" 
+                                           Text="Bu Pencereyi Aç" 
+                                           FontSize="13" 
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </Border>
+
+                        <Border CornerRadius="12" 
+                                Padding="14,12" 
+                                Margin="0,0,0,8"
+                                BorderThickness="1">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#334155"/>
+                                            <Setter Property="BorderBrush" Value="#475569"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Background="#FEF3C7" 
+                                        BorderBrush="#FDE68A" 
+                                        BorderThickness="1" 
+                                        CornerRadius="6" 
+                                        Padding="8,4" 
+                                        Margin="0,0,12,0">
+                                    <TextBlock Text="Ctrl + Z" 
+                                               FontFamily="Consolas" 
+                                               FontSize="12" 
+                                               FontWeight="Bold" 
+                                               Foreground="#D97706"/>
+                                </Border>
+                                <TextBlock Grid.Column="1" 
+                                           Text="Geri Al (Undo)" 
+                                           FontSize="13" 
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </Border>
+
+                        <Border CornerRadius="12" 
+                                Padding="14,12"
+                                BorderThickness="1">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#334155"/>
+                                            <Setter Property="BorderBrush" Value="#475569"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Background="#FCE7F3" 
+                                        BorderBrush="#FBCFE8" 
+                                        BorderThickness="1" 
+                                        CornerRadius="6" 
+                                        Padding="8,4" 
+                                        Margin="0,0,12,0">
+                                    <TextBlock Text="Ctrl + Y" 
+                                               FontFamily="Consolas" 
+                                               FontSize="12" 
+                                               FontWeight="Bold" 
+                                               Foreground="#DB2777"/>
+                                </Border>
+                                <TextBlock Grid.Column="1" 
+                                           Text="Yenile (Redo)" 
+                                           FontSize="13" 
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Grid>
                         </Border>
                     </StackPanel>
                 </Grid>
 
-                <!-- Footer -->
-                <Border Grid.Row="2" Background="{DynamicResource AltRowBg}" CornerRadius="0,0,20,20" Padding="30,15">
+                <!-- Premium Footer -->
+                <Border Grid.Row="2" 
+                        CornerRadius="0,0,24,24" 
+                        Padding="24,18"
+                        BorderThickness="0,1,0,0">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#F8FAFC"/>
+                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                    <Setter Property="Background" Value="#0F172A"/>
+                                    <Setter Property="BorderBrush" Value="#334155"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
                     <Grid>
-                        <TextBlock Text="💡  Tüm kısayollar Dosya menüsünde de gösterilmektedir." FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
-                        <Button Content="Kapat" Command="{Binding CloseShortcutsCommand}"
-                                HorizontalAlignment="Right" Background="#3B82F6" Foreground="White"
-                                Padding="25,8" FontSize="13"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="💡" FontSize="16" Margin="0,0,8,0"/>
+                            <TextBlock Text="Tüm kısayollar Dosya menüsünde de gösterilmektedir" 
+                                       FontSize="12"
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#64748B"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#94A3B8"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                        
+                        <Button Content="Kapat" 
+                                Command="{Binding CloseShortcutsCommand}"
+                                HorizontalAlignment="Right" 
+                                Background="#3B82F6" 
+                                Foreground="White"
+                                Padding="28,10" 
+                                FontSize="13" 
+                                FontWeight="SemiBold"
+                                BorderThickness="0"
+                                Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" 
+                                            CornerRadius="10"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                          VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
                     </Grid>
                 </Border>
             </Grid>

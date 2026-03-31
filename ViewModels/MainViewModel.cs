@@ -33,6 +33,7 @@ namespace OptikFormApp.ViewModels
         private readonly ProgressService _progressService;
         private readonly ItemAnalysisService _itemAnalysisService;
         private readonly SuccessPredictionService _successPredictionService;
+        private readonly VersionService _versionService;
 
         private readonly object _studentsLock = new();
         private readonly object _coursesLock = new();
@@ -119,6 +120,7 @@ namespace OptikFormApp.ViewModels
             _progressService = ProgressService.Instance;
             _itemAnalysisService = new ItemAnalysisService();
             _successPredictionService = new SuccessPredictionService();
+            _versionService = new VersionService();
 
             // Undo/Redo event handlers
             _undoRedoManager.CanUndoChanged += (s, e) => { OnPropertyChanged(nameof(CanUndo)); OnPropertyChanged(nameof(UndoDescription)); };
@@ -969,6 +971,7 @@ namespace OptikFormApp.ViewModels
         
         public int ThemeIndex { get => _themeIndex; set { _themeIndex = value; OnPropertyChanged(); ApplyTheme(value == 1); OnPropertyChanged(nameof(IsDarkTheme)); SaveSettings(); } }
         public bool IsDarkTheme => _themeIndex == 1;
+        public string CurrentVersion => _versionService.CurrentVersion;
         public int LayoutIndex { get => _layoutIndex; set { _layoutIndex = value; OnPropertyChanged(); GridRowHeight = value == 0 ? 32 : 50; GridCellPadding = value == 0 ? new System.Windows.Thickness(10, 0, 10, 0) : new System.Windows.Thickness(15, 0, 15, 0); SaveSettings(); } }
         public double FontSize { get => _fontSize; set { _fontSize = value; OnPropertyChanged(); ApplyFontSize(value); SaveSettings(); } }
 

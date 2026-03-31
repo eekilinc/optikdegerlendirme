@@ -4,15 +4,32 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" d:DesignHeight="700" d:DesignWidth="1000">
-    <Grid Background="#80000000">
-        <Border Background="White" 
-                CornerRadius="16" 
-                Width="900" 
-                Height="600"
+    
+    <Grid Visibility="{Binding IsSuccessPredictionOpen, Converter={StaticResource BoolToVis}}"
+          Background="#CC000000">
+        
+        <!-- Premium Modal -->
+        <Border Width="920" 
+                Height="640"
                 HorizontalAlignment="Center"
-                VerticalAlignment="Center">
+                VerticalAlignment="Center"
+                CornerRadius="24"
+                Padding="0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#F8FAFC"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Border.Effect>
+                <DropShadowEffect Color="Black" Opacity="0.3" BlurRadius="60" ShadowDepth="20"/>
+            </Border.Effect>
             
-            <Grid Margin="24">
+            <Grid Margin="28">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -21,102 +38,349 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Header -->
-                <TextBlock Grid.Row="0" 
-                           Text="Başarı Tahmini" 
-                           FontSize="24" 
-                           FontWeight="Bold" 
-                           Foreground="Black"
-                           Margin="0,0,0,16"/>
-
-                <!-- Class Summary -->
-                <Border Grid.Row="1" 
-                        Background="#F0F0F0" 
-                        CornerRadius="12" 
-                        Padding="16"
-                        Margin="0,0,0,16">
+                <!-- Premium Teal Header -->
+                <Border Grid.Row="0" 
+                        Height="80"
+                        CornerRadius="24,24,0,0" 
+                        Padding="0,0,0,16"
+                        Margin="-28,-28,-28,0"
+                        BorderThickness="0,0,0,1">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#14B8A6" Offset="0"/>
+                            <GradientStop Color="#0D9488" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.BorderBrush>
+                        <SolidColorBrush Color="#E2E8F0" Opacity="0.3"/>
+                    </Border.BorderBrush>
+                    
                     <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                            <TextBlock Text="Toplam Öğrenci" 
-                                       Foreground="Gray" 
-                                       FontSize="12"/>
-                            <TextBlock Text="{Binding ClassPredictionSummary.TotalStudents}" 
-                                       Foreground="Black" 
-                                       FontSize="20" 
-                                       FontWeight="Bold"/>
-                        </StackPanel>
-                        
-                        <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                            <TextBlock Text="Tahmini Geçme Oranı" 
-                                       Foreground="Gray" 
-                                       FontSize="12"/>
-                            <TextBlock Text="{Binding ClassPredictionSummary.PassRate, StringFormat={}{0:P0}}" 
-                                       Foreground="Green" 
-                                       FontSize="20" 
-                                       FontWeight="Bold"/>
-                        </StackPanel>
-                        
-                        <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                            <TextBlock Text="Yüksek Riskli" 
-                                       Foreground="Gray" 
-                                       FontSize="12"/>
-                            <TextBlock Text="{Binding ClassPredictionSummary.HighRiskCount}" 
-                                       Foreground="Red" 
-                                       FontSize="20" 
-                                       FontWeight="Bold"/>
-                        </StackPanel>
-                        
-                        <StackPanel Grid.Column="3" HorizontalAlignment="Center">
-                            <TextBlock Text="Ortalama Tahmini Puan" 
-                                       Foreground="Gray" 
-                                       FontSize="12"/>
-                            <TextBlock Text="{Binding ClassPredictionSummary.AveragePredictedScore, StringFormat={}{0:F1}}" 
-                                       Foreground="Blue" 
-                                       FontSize="20" 
-                                       FontWeight="Bold"/>
-                        </StackPanel>
+                        <TextBlock Text="🎯 Başarı Tahmini" 
+                                   FontSize="26" 
+                                   FontWeight="Bold" 
+                                   Foreground="White"
+                                   VerticalAlignment="Center"
+                                   Margin="28,0,0,0"/>
+                        <Button Command="{Binding CloseSuccessPredictionCommand}"
+                                HorizontalAlignment="Right" 
+                                VerticalAlignment="Center"
+                                Background="#20FFFFFF" 
+                                BorderThickness="0" 
+                                Foreground="White"
+                                Width="36" 
+                                Height="36"
+                                FontSize="18" 
+                                Padding="0"
+                                Margin="0,0,28,0"
+                                Cursor="Hand">
+                            <Button.Content>✕</Button.Content>
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" 
+                                            CornerRadius="18"
+                                            BorderThickness="0">
+                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                          VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
                     </Grid>
                 </Border>
+                
+                <Border Grid.Row="0" Margin="0,60,0,0" Background="Transparent"/>
 
-                <!-- Passing Score Setting -->
-                <Grid Grid.Row="2" Margin="0,0,0,16">
+                <!-- Class Summary Cards -->
+                <Grid Grid.Row="1" Margin="0,0,0,20">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="200"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     
-                    <TextBlock Grid.Column="0" 
-                               Text="Geçme Puanı: " 
-                               VerticalAlignment="Center"
-                               Foreground="Black"
-                               Margin="0,0,12,0"/>
-                    <Slider Grid.Column="1" 
-                            Minimum="0" 
-                            Maximum="100" 
-                            Value="{Binding PassingScore}" 
-                            TickFrequency="5"
-                            IsSnapToTickEnabled="True"/>
-                    <TextBlock Grid.Column="2" 
-                               Text="{Binding PassingScore, StringFormat={}{0:F0}}" 
-                               VerticalAlignment="Center"
-                               Foreground="Blue"
-                               FontWeight="Bold"
-                               Margin="12,0,0,0"/>
+                    <!-- Total Students -->
+                    <Border Grid.Column="0" 
+                            CornerRadius="14" 
+                            Padding="16,14"
+                            BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#F0FDFA"/>
+                                <Setter Property="BorderBrush" Value="#99F6E4"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="Background" Value="#134E4A"/>
+                                        <Setter Property="BorderBrush" Value="#115E59"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="Toplam Öğrenci" 
+                                       FontSize="11" 
+                                       Margin="0,0,0,6">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#0F766E"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#5EEAD4"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="{Binding ClassPredictionSummary.TotalStudents}" 
+                                       FontSize="24" 
+                                       FontWeight="Bold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#115E59"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#F8FAFC"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Pass Rate -->
+                    <Border Grid.Column="2" 
+                            CornerRadius="14" 
+                            Padding="16,14"
+                            BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#F0FDF4"/>
+                                <Setter Property="BorderBrush" Value="#BBF7D0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="Background" Value="#14532D"/>
+                                        <Setter Property="BorderBrush" Value="#166534"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="Tahmini Geçme Oranı" 
+                                       FontSize="11" 
+                                       Margin="0,0,0,6">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#15803D"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#86EFAC"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="{Binding ClassPredictionSummary.PassRate, StringFormat={}{0:P0}}" 
+                                       FontSize="24" 
+                                       FontWeight="Bold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#16A34A"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#86EFAC"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- High Risk -->
+                    <Border Grid.Column="4" 
+                            CornerRadius="14" 
+                            Padding="16,14"
+                            BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#FEF2F2"/>
+                                <Setter Property="BorderBrush" Value="#FECACA"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="Background" Value="#7F1D1D"/>
+                                        <Setter Property="BorderBrush" Value="#991B1B"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="Yüksek Riskli" 
+                                       FontSize="11" 
+                                       Margin="0,0,0,6">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#B91C1C"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#FCA5A5"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="{Binding ClassPredictionSummary.HighRiskCount}" 
+                                       FontSize="24" 
+                                       FontWeight="Bold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#EF4444"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#FCA5A5"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Average Predicted Score -->
+                    <Border Grid.Column="6" 
+                            CornerRadius="14" 
+                            Padding="16,14"
+                            BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#EFF6FF"/>
+                                <Setter Property="BorderBrush" Value="#BFDBFE"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="Background" Value="#1E3A8A"/>
+                                        <Setter Property="BorderBrush" Value="#1E40AF"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="Ortalama Tahmini Puan" 
+                                       FontSize="11" 
+                                       Margin="0,0,0,6">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#1D4ED8"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#93C5FD"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="{Binding ClassPredictionSummary.AveragePredictedScore, StringFormat={}{0:F1}}" 
+                                       FontSize="24" 
+                                       FontWeight="Bold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#3B82F6"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#93C5FD"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
                 </Grid>
+
+                <!-- Passing Score Setting -->
+                <Border Grid.Row="2" 
+                        CornerRadius="12" 
+                        Padding="16,12"
+                        Margin="0,0,0,16"
+                        BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#F1F5F9"/>
+                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                    <Setter Property="Background" Value="#334155"/>
+                                    <Setter Property="BorderBrush" Value="#475569"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="220"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBlock Grid.Column="0" 
+                                   Text="Geçme Puanı:" 
+                                   VerticalAlignment="Center"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,16,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#475569"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Foreground" Value="#94A3B8"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <Slider Grid.Column="1" 
+                                Minimum="0" 
+                                Maximum="100" 
+                                Value="{Binding PassingScore}" 
+                                TickFrequency="5"
+                                IsSnapToTickEnabled="True"
+                                VerticalAlignment="Center"/>
+                        <Border Grid.Column="2" 
+                                CornerRadius="8" 
+                                Padding="12,6"
+                                Margin="12,0,0,0"
+                                Background="#14B8A6">
+                            <TextBlock Text="{Binding PassingScore, StringFormat={}{0:F0}}" 
+                                       VerticalAlignment="Center"
+                                       Foreground="White"
+                                       FontWeight="Bold"
+                                       FontSize="14"/>
+                        </Border>
+                    </Grid>
+                </Border>
 
                 <!-- Predictions DataGrid -->
                 <Border Grid.Row="3" 
-                        Background="#F0F0F0" 
-                        CornerRadius="12" 
-                        Padding="12">
+                        CornerRadius="16" 
+                        Padding="16"
+                        BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#F1F5F9"/>
+                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                    <Setter Property="Background" Value="#334155"/>
+                                    <Setter Property="BorderBrush" Value="#475569"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
                     <DataGrid ItemsSource="{Binding StudentPredictions}"
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
@@ -128,16 +392,21 @@
                         <DataGrid.ColumnHeaderStyle>
                             <Style TargetType="DataGridColumnHeader">
                                 <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="Foreground" Value="Gray"/>
+                                <Setter Property="Foreground" Value="#64748B"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                                 <Setter Property="Padding" Value="8,4"/>
                                 <Setter Property="BorderThickness" Value="0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
                             </Style>
                         </DataGrid.ColumnHeaderStyle>
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow">
                                 <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="Foreground" Value="Black"/>
+                                <Setter Property="Foreground" Value="#1E293B"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Risk}" Value="High">
                                         <Setter Property="Background" Value="#30EF4444"/>
@@ -147,6 +416,9 @@
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding Risk}" Value="Low">
                                         <Setter Property="Background" Value="#3010B981"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                        <Setter Property="Foreground" Value="#F8FAFC"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -177,17 +449,71 @@
                     </DataGrid>
                 </Border>
 
-                <!-- Footer -->
-                <StackPanel Grid.Row="4" 
-                            Orientation="Horizontal" 
-                            HorizontalAlignment="Right"
-                            Margin="0,16,0,0">
-                    <Button Content="🔄 Yeniden Tahmin Et" 
-                            Command="{Binding RunSuccessPredictionCommand}"
-                            Margin="0,0,12,0"/>
-                    <Button Content="Kapat" 
-                            Command="{Binding CloseSuccessPredictionCommand}"/>
-                </StackPanel>
+                <!-- Premium Footer -->
+                <Border Grid.Row="4" 
+                        CornerRadius="0,0,24,24" 
+                        Padding="24,20"
+                        Margin="-28,16,-28,-28"
+                        BorderThickness="0,1,0,0">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#F8FAFC"/>
+                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                    <Setter Property="Background" Value="#0F172A"/>
+                                    <Setter Property="BorderBrush" Value="#334155"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="🔄 Yeniden Tahmin Et" 
+                                Command="{Binding RunSuccessPredictionCommand}"
+                                Padding="18,10"
+                                Background="Transparent"
+                                BorderBrush="#14B8A6"
+                                BorderThickness="2"
+                                Foreground="#14B8A6"
+                                FontSize="13"
+                                FontWeight="SemiBold"
+                                Margin="0,0,12,0"
+                                Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" 
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="10"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                          VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <Button Content="Kapat" 
+                                Command="{Binding CloseSuccessPredictionCommand}"
+                                Padding="28,10"
+                                Background="#14B8A6"
+                                Foreground="White"
+                                FontSize="13"
+                                FontWeight="SemiBold"
+                                BorderThickness="0"
+                                Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" 
+                                            CornerRadius="10"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                          VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+                </Border>
             </Grid>
         </Border>
     </Grid>
