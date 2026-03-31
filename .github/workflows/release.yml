@@ -47,7 +47,7 @@ jobs:
         echo "Updated version to $version"
     
     - name: Restore Dependencies
-      run: dotnet restore
+      run: dotnet restore --runtime win-x64
     
     - name: Build
       run: dotnet build -c Release --no-restore
