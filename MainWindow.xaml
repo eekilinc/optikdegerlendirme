@@ -6,7 +6,11 @@
         xmlns:modals="clr-namespace:OptikFormApp.Views.Modals"
         Title="AĞLASUN MYO Optik Değerlendirme" Height="750" Width="1150" MinWidth="850" MinHeight="600"
         Icon="/Assets/app_logo.png"
-        WindowStartupLocation="CenterScreen" Background="{DynamicResource AppBg}" FontFamily="Segoe UI">
+        WindowStartupLocation="CenterScreen" Background="{DynamicResource AppBg}" FontFamily="Segoe UI"
+        AllowDrop="True"
+        Drop="MainWindow_Drop"
+        DragEnter="MainWindow_DragEnter"
+        DragLeave="MainWindow_DragLeave">
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
@@ -231,6 +235,13 @@
                 </Border>
             </Grid>
         </Grid>
+
+        <!-- TOAST NOTIFICATION HOST (Always on top) -->
+        <views:ToastNotificationHost DataContext="{Binding Notifications}" 
+                                     Panel.ZIndex="2000" 
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Top"
+                                     Margin="0,80,20,0"/>
 
         <!-- BOOKLET SETTINGS MODAL OVERLAY -->
         <modals:BookletSettingsModal Panel.ZIndex="200" />

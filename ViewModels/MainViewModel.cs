@@ -23,6 +23,8 @@ namespace OptikFormApp.ViewModels
         private readonly PdfReportService _pdfService;
         private readonly AppSettingsService _settingsService;
         private readonly CsvExportService _csvService;
+        private readonly NotificationService _notificationService;
+        private readonly UndoRedoManager _undoRedoManager;
         
         private readonly object _studentsLock = new();
         private readonly object _coursesLock = new();
@@ -72,6 +74,13 @@ namespace OptikFormApp.ViewModels
             _dbService = new DatabaseService();
             _settingsService = new AppSettingsService();
             _csvService = new CsvExportService();
+            _notificationService = new NotificationService();
+            _undoRedoManager = new UndoRedoManager(50);
+
+            // Undo/Redo event handlers
+            _undoRedoManager.CanUndoChanged += (s, e) => { OnPropertyChanged(nameof(CanUndo)); OnPropertyChanged(nameof(UndoDescription)); };
+            _undoRedoManager.CanRedoChanged += (s, e) => { OnPropertyChanged(nameof(CanRedo)); OnPropertyChanged(nameof(RedoDescription)); };
+            _undoRedoManager.CommandExecuted += (s, desc) => AddToLog($"İşlem: {desc}", LogLevel.Info);
 
             // Kalıcı ayarları yükle
             var saved = _settingsService.Load();
@@ -265,24 +274,30 @@ namespace OptikFormApp.ViewModels
 
             ExportPdfCommand = new AsyncRelayCommand(async _ => {
                 if (Students.Count == 0) {
-                    ShowAlert("Dışa Aktarma Hatası", "Önce veri yüklemeniz ve puanları hesaplamanız gerekmektedir.");
+                    ShowToastError("Önce veri yüklemeniz ve puanları hesaplamanız gerekmektedir.");
                     return;
                 }
                 var dialog = new Microsoft.Win32.OpenFolderDialog { Title = "Öğrenci Karnelerinin Kaydedileceği Klasörü Seçin" };
                 if (dialog.ShowDialog() == true) {
                     IsBusy = true;
-                    BusyMessage = "Toplu PDF karneleri oluşturuluyor...";
+                    BusyMessage = "PDF karneleri hazırlanıyor... (0%)";
+                    
+                    var progress = new Progress<PdfReportService.PdfProgressReport>(report => {
+                        BusyMessage = $"PDF karneleri hazırlanıyor... ({report.Percentage:F0}%) - {report.CurrentStudentName}";
+                    });
+                    
                     try {
-                        AddToLog("Toplu PDF karneleri oluşturuluyor...");
                         var studentsCopy = new List<StudentResult>(Students);
                         var outcomesCopy = LearningOutcomes.ToList();
                         string folder = dialog.FolderName;
-                        await Task.Run(() => _pdfService.GenerateStudentReports(studentsCopy, studentsCopy, outcomesCopy, folder, SchoolName));
-                        ShowAlert("Başarılı", "Tüm öğrenci karneleri seçilen klasöre PDF olarak kaydedildi.");
+                        
+                        await _pdfService.GenerateStudentReportsAsync(studentsCopy, studentsCopy, outcomesCopy, folder, SchoolName, progress);
+                        
+                        ShowToastSuccess($"{Students.Count} adet öğrenci karnesi PDF olarak kaydedildi.");
                         AddToLog($"{Students.Count} adet öğrenci karnesi PDF olarak dışa aktarıldı.", LogLevel.Success);
                     } catch (Exception ex) {
-                        AddToLog($"PDF oluşturma hatası: {ex.Message}", LogLevel.Error);
-                        ShowAlert("Hata", $"PDF raporu oluşturulurken hata oluştu: {ex.Message}");
+                        ShowToastError($"PDF oluşturma hatası: {ex.Message}");
+                        AddToLog($"PDF hatası: {ex.Message}", LogLevel.Error);
                     } finally {
                         IsBusy = false;
                     }
@@ -421,6 +436,32 @@ namespace OptikFormApp.ViewModels
             });
 
             ApplyTheme(false);
+
+            // Toast Notification Commands
+            DismissNotificationCommand = new RelayCommand(param => {
+                if (param is string notificationId) {
+                    _notificationService.Dismiss(notificationId);
+                }
+            });
+
+            // Undo/Redo Commands
+            UndoCommand = new RelayCommand(_ => {
+                if (_undoRedoManager.CanUndo)
+                {
+                    _undoRedoManager.Undo();
+                    ShowToastInfo("İşlem geri alındı");
+                    EvaluateAsync().ConfigureAwait(false);
+                }
+            }, _ => CanUndo);
+
+            RedoCommand = new RelayCommand(_ => {
+                if (_undoRedoManager.CanRedo)
+                {
+                    _undoRedoManager.Redo();
+                    ShowToastInfo("İşlem yenilendi");
+                    EvaluateAsync().ConfigureAwait(false);
+                }
+            }, _ => CanRedo);
         }
 
         public string SearchText 
@@ -450,8 +491,11 @@ namespace OptikFormApp.ViewModels
             if (string.IsNullOrWhiteSpace(SearchText)) return true;
             if (obj is StudentResult student)
             {
+                // Tam eşleşme veya fuzzy search
                 return student.FullName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                       student.StudentId.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
+                       student.StudentId.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                       FuzzySearchService.ContainsFuzzy(student.FullName, SearchText, 0.6) ||
+                       FuzzySearchService.ContainsFuzzy(student.StudentId, SearchText, 0.7);
             }
             return true;
         }
@@ -536,8 +580,18 @@ namespace OptikFormApp.ViewModels
         public double AverageDifficulty { get; set; } = 0;
         public string DifficultyDistribution { get; set; } = "";
 
+        // Toast Notifications
+        public System.Collections.ObjectModel.ObservableCollection<ToastNotificationModel> Notifications => _notificationService.ActiveNotifications;
+        public ICommand DismissNotificationCommand { get; set; }
+
         public bool HasUnsavedData { get => _hasUnsavedData; set { _hasUnsavedData = value; OnPropertyChanged(); OnPropertyChanged(nameof(SaveStatusText)); } }
         public string SaveStatusText => _hasUnsavedData ? "⚠️ Kaydedilmedi" : (Students.Count > 0 ? "✅ Kaydedildi" : "");
+
+        // Undo/Redo Properties
+        public bool CanUndo => _undoRedoManager.CanUndo;
+        public bool CanRedo => _undoRedoManager.CanRedo;
+        public string UndoDescription => _undoRedoManager.CanUndo ? $"Geri Al: {_undoRedoManager.GetUndoDescription()}" : "Geri alınacak işlem yok";
+        public string RedoDescription => _undoRedoManager.CanRedo ? $"Yenile: {_undoRedoManager.GetRedoDescription()}" : "Yenilenecek işlem yok";
 
         // Commands
         public ICommand LoadTxtCommand { get; set; }
@@ -579,6 +633,8 @@ namespace OptikFormApp.ViewModels
         public ICommand OpenRenameExamCommand { get; set; }
         public ICommand CloseRenameModalCommand { get; set; }
         public ICommand SaveRenameCommand { get; set; }
+        public ICommand UndoCommand { get; set; }
+        public ICommand RedoCommand { get; set; }
 
         public void AddToLog(string message, LogLevel level = LogLevel.Info)
         {
@@ -823,58 +879,68 @@ namespace OptikFormApp.ViewModels
             var openFileDialog = new OpenFileDialog { Filter = "Text files (*.txt)|*.txt", Title = "Optik Okuyucu Dosyasını Seçin" };
             if (openFileDialog.ShowDialog() == true)
             {
-                SelectedExam = null; // Unselect from sidebar
-                Students.Clear(); AnswerKeys.Clear();
-                Statistics.Clear(); ValidationIssues.Clear(); AccuracyData.Clear(); ScoreDistData.Clear();
+                await LoadDroppedFileAsync(openFileDialog.FileName);
+            }
+        }
+
+        public async Task LoadDroppedFileAsync(string filePath)
+        {
+            SelectedExam = null;
+            Students.Clear(); AnswerKeys.Clear();
+            Statistics.Clear(); ValidationIssues.Clear(); AccuracyData.Clear(); ScoreDistData.Clear();
+            
+            StatusMessage = "Dosya okunuyor, lütfen bekleyin...";
+            ShowToastInfo($"{System.IO.Path.GetFileName(filePath)} dosyası yükleniyor...");
+            
+            try
+            {
+                var (students, answerKeys, errors) = await _parserService.ParseFileAsync(filePath);
+                bool isCritical = errors.Any(e => e.StartsWith("KRİTİK HATA"));
                 
-                StatusMessage = "Dosya okunuyor, lütfen bekleyin...";
-                try
+                if (errors.Count > 0)
                 {
-                    AddToLog($"{System.IO.Path.GetFileName(openFileDialog.FileName)} dosyası okunuyor...");
-                    var (students, answerKeys, errors) = await _parserService.ParseFileAsync(openFileDialog.FileName);
-                    bool isCritical = errors.Any(e => e.StartsWith("KRİTİK HATA"));
-                    if (errors.Count > 0)
+                    foreach (var err in errors) AddToLog(err, LogLevel.Error);
+                    if (isCritical)
                     {
-                        foreach (var err in errors) AddToLog(err, LogLevel.Error);
-                        if (isCritical)
-                        {
-                            ShowAlert("Geçersiz Dosya Formatı", errors.First(e => e.StartsWith("KRİTİK HATA")) + "\n\nLütfen seçtiğiniz dosyanın doğru optik okuyucu çıktısı (.txt) olduğundan emin olun.");
-                            StatusMessage = "Dosya formatı geçersiz.";
-                            return;
-                        }
-                        string errorSummary = string.Join("\n", errors.Take(5));
-                        if (errors.Count > 5) errorSummary += $"\n...ve {errors.Count - 5} hata daha.";
-                        ShowAlert("Dosya Ayrıştırma Sorunları", $"Dosyada bazı hatalı satırlar tespit edildi:\n{errorSummary}\n\nGeçerli olan {students.Count} kayıt yüklendi.");
+                        ShowToastError("Dosya formatı geçersiz. Lütfen optik okuyucu çıktısı (.txt) olduğundan emin olun.");
+                        StatusMessage = "Dosya formatı geçersiz.";
+                        return;
                     }
-                    if (answerKeys.Count > 0)
-                    {
-                        AnswerKeys.Clear();
-                        foreach(var ak in answerKeys) AnswerKeys.Add(ak);
-                        AddToLog($"{answerKeys.Count} adet cevap anahtarı yüklendi.", LogLevel.Success);
-                    }
-                    Students.Clear();
-                    int rowNum = 1;
-                    foreach (var student in students) { student.RowNumber = rowNum++; Students.Add(student); }
-                    if (students.Count > 0)
-                    {
-                        HasUnsavedData = true;
-                        StatusMessage = $"{students.Count} öğrenci başarıyla yüklendi.";
-                        AddToLog($"{students.Count} öğrenci kaydı başarıyla yüklendi.", LogLevel.Success);
-                        bool hasValidKey = false;
-                        foreach(var key in AnswerKeys) { if(!string.IsNullOrWhiteSpace(key.Answers)) hasValidKey = true; }
-                        if (hasValidKey) await EvaluateAsync();
-                    }
-                    else
-                    {
-                        StatusMessage = "Dosyada yüklenebilir öğrenci kaydı bulunamadı.";
-                        AddToLog("Yüklenebilir kayıt bulunamadı. Lütfen dosya formatını kontrol edin.", LogLevel.Warning);
-                    }
+                    string errorSummary = string.Join("\n", errors.Take(5));
+                    if (errors.Count > 5) errorSummary += $"\n...ve {errors.Count - 5} hata daha.";
+                    ShowToastWarning($"{errors.Count} satırda hata var, {students.Count} kayıt yüklendi.");
                 }
-                catch (Exception ex)
+                
+                if (answerKeys.Count > 0)
                 {
-                    StatusMessage = $"Hata: {ex.Message}";
-                    AddToLog($"Yükleme hatası: {ex.Message}", LogLevel.Error);
+                    AnswerKeys.Clear();
+                    foreach(var ak in answerKeys) AnswerKeys.Add(ak);
+                    ShowToastSuccess($"{answerKeys.Count} adet cevap anahtarı yüklendi.");
                 }
+                
+                Students.Clear();
+                int rowNum = 1;
+                foreach (var student in students) { student.RowNumber = rowNum++; Students.Add(student); }
+                
+                if (students.Count > 0)
+                {
+                    HasUnsavedData = true;
+                    StatusMessage = $"{students.Count} öğrenci başarıyla yüklendi.";
+                    ShowToastSuccess($"{students.Count} öğrenci kaydı başarıyla yüklendi.");
+                    bool hasValidKey = false;
+                    foreach(var key in AnswerKeys) { if(!string.IsNullOrWhiteSpace(key.Answers)) hasValidKey = true; }
+                    if (hasValidKey) await EvaluateAsync();
+                }
+                else
+                {
+                    StatusMessage = "Dosyada yüklenebilir öğrenci kaydı bulunamadı.";
+                    ShowToastWarning("Yüklenebilir kayıt bulunamadı. Lütfen dosya formatını kontrol edin.");
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Hata: {ex.Message}";
+                ShowToastError($"Yükleme hatası: {ex.Message}");
             }
         }
 
@@ -1109,6 +1175,32 @@ namespace OptikFormApp.ViewModels
             AlertTitle = title;
             AlertMessage = message;
             IsAlertOpen = true;
+        }
+
+        // Toast Notification Helper Methods
+        public void ShowToast(string message, string title = "", ToastType type = ToastType.Info)
+        {
+            _notificationService.Show(message, title, type);
+        }
+
+        public void ShowToastSuccess(string message, string title = "Başarılı")
+        {
+            _notificationService.ShowSuccess(message, title);
+        }
+
+        public void ShowToastError(string message, string title = "Hata")
+        {
+            _notificationService.ShowError(message, title);
+        }
+
+        public void ShowToastWarning(string message, string title = "Uyarı")
+        {
+            _notificationService.ShowWarning(message, title);
+        }
+
+        public void ShowToastInfo(string message, string title = "Bilgi")
+        {
+            _notificationService.ShowInfo(message, title);
         }
 
         public void Dispose()

@@ -22,8 +22,16 @@ namespace OptikFormApp.Services
         public DatabaseService()
         {
             _dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "optik.db");
-            _connection = new SqliteConnection($"Data Source={_dbPath}");
+            _connection = new SqliteConnection($"Data Source={_dbPath};Cache=Shared;Foreign Keys=True;");
             _connection.Open();
+            
+            // PRAGMA ayarlarını komutla yap
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = @"
+                PRAGMA journal_mode = WAL;
+                PRAGMA synchronous = NORMAL;
+            ";
+            cmd.ExecuteNonQuery();
         }
 
         // ── Yardımcı ──────────────────────────────────────────────────────────
