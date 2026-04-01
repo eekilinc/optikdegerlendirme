@@ -60,8 +60,3 @@ function InitializeSetup(): Boolean;
 begin
   Result := True;
 end;
-
-function GetCustomSetupExitCode(ExitCode: Integer): Integer;
-begin
-  Result := ExitCode;
-end;
