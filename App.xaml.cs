@@ -18,13 +18,13 @@ public partial class App : Application
         try
         {
             // Debug log oluştur
-            string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OptikFormApp", "debug.log");
-            Directory.CreateDirectory(Path.GetDirectoryName(logPath));
+            string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "OptikDegerlendirme_Debug.log");
             
             using (StreamWriter writer = new StreamWriter(logPath, true))
             {
                 writer.WriteLine($"[{DateTime.Now}] Uygulama başlatılıyor...");
                 writer.WriteLine($"[{DateTime.Now}] Performans optimizasyonları başlıyor...");
+                writer.WriteLine($"[{DateTime.Now}] AppData Path: {Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}");
             }
             
             // Performans optimizasyonları
@@ -52,18 +52,18 @@ public partial class App : Application
             // Debug log'a hata yaz
             try
             {
-                string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OptikFormApp", "debug.log");
-                Directory.CreateDirectory(Path.GetDirectoryName(logPath));
+                string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "OptikDegerlendirme_Debug.log");
                 
                 using (StreamWriter writer = new StreamWriter(logPath, true))
                 {
                     writer.WriteLine($"[{DateTime.Now}] HATA: {ex.Message}");
                     writer.WriteLine($"[{DateTime.Now}] STACK TRACE: {ex.StackTrace}");
+                    writer.WriteLine($"[{DateTime.Now}] INNER EXCEPTION: {ex.InnerException?.Message}");
                 }
             }
             catch { }
             
-            MessageBox.Show($"Uygulama başlatılırken hata: {ex.Message}\n\nDetaylar için debug.log dosyasını kontrol edin:\n%AppData%\\OptikFormApp\\debug.log", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Uygulama başlatılırken hata: {ex.Message}\n\nDetaylar için masaüstündeki OptikDegerlendirme_Debug.log dosyasını kontrol edin!", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
