@@ -18,7 +18,7 @@ public partial class App : Application
         try
         {
             // Debug log oluştur
-            string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OptikDegerlendirme", "debug.log");
+            string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OptikFormApp", "debug.log");
             Directory.CreateDirectory(Path.GetDirectoryName(logPath));
             
             using (StreamWriter writer = new StreamWriter(logPath, true))
@@ -52,7 +52,7 @@ public partial class App : Application
             // Debug log'a hata yaz
             try
             {
-                string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OptikDegerlendirme", "debug.log");
+                string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OptikFormApp", "debug.log");
                 Directory.CreateDirectory(Path.GetDirectoryName(logPath));
                 
                 using (StreamWriter writer = new StreamWriter(logPath, true))
@@ -63,7 +63,7 @@ public partial class App : Application
             }
             catch { }
             
-            MessageBox.Show($"Uygulama başlatılırken hata: {ex.Message}\n\nDetaylar için debug.log dosyasını kontrol edin:\n%AppData%\\OptikDegerlendirme\\debug.log", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Uygulama başlatılırken hata: {ex.Message}\n\nDetaylar için debug.log dosyasını kontrol edin:\n%AppData%\\OptikFormApp\\debug.log", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
