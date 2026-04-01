@@ -6,10 +6,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>Assets\app_icon.ico</ApplicationIcon>
     
     <!-- Disable auto-generated assembly attributes to prevent duplicates -->
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     
     <!-- Version Properties -->
     <Version>1.0.0</Version>
@@ -26,7 +26,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Resource Include="Assets\app_icon.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -36,6 +35,10 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="QuestPDF" Version="2022.12.1" />
     <PackageReference Include="ScottPlot.WPF" Version="5.0.21" />
+    <PackageReference Include="Serilog" Version="4.3.1" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

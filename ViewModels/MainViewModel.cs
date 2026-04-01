@@ -1289,7 +1289,7 @@ namespace OptikFormApp.ViewModels
                 WrongDeductionFactor = _wrongDeductionFactor,
                 ThemeIndex = _themeIndex,
                 LayoutIndex = _layoutIndex,
-                FontSize = _fontSize
+                FontSize = (int)_fontSize
             });
         }
 
