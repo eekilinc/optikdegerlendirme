@@ -64,8 +64,9 @@ jobs:
         $issContent = Get-Content "installer\setup.iss" -Raw
         $issContent = $issContent -replace '#define MyAppVersion ".*"', "#define MyAppVersion `"$version`""
         Set-Content "installer\setup.iss" $issContent
-        # Copy assets to installer directory
+        # Copy assets and license to installer directory
         Copy-Item -Path "Assets\*" -Destination "installer\" -Recurse -Force
+        Copy-Item -Path "LICENSE" -Destination "installer\" -Force
         # Build installer
         & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "installer\setup.iss"
     
