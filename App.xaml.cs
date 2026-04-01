@@ -17,53 +17,25 @@ public partial class App : Application
     {
         try
         {
-            // Debug log oluştur
-            string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "OptikDegerlendirme_Debug.log");
-            
-            using (StreamWriter writer = new StreamWriter(logPath, true))
-            {
-                writer.WriteLine($"[{DateTime.Now}] Uygulama başlatılıyor...");
-                writer.WriteLine($"[{DateTime.Now}] Performans optimizasyonları başlıyor...");
-                writer.WriteLine($"[{DateTime.Now}] AppData Path: {Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}");
-            }
+            // En basit debug - MessageBox
+            MessageBox.Show("Uygulama başlatılıyor... Step 1", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
             
             // Performans optimizasyonları
             PerformanceOptimizer.OptimizeMemory();
             PerformanceOptimizer.OptimizeUI();
             
-            using (StreamWriter writer = new StreamWriter(logPath, true))
-            {
-                writer.WriteLine($"[{DateTime.Now}] Performans optimizasyonları tamamlandı...");
-                writer.WriteLine($"[{DateTime.Now}] MainWindow oluşturuluyor...");
-            }
+            MessageBox.Show("Performans optimizasyonları tamamlandı... Step 2", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
             
             base.OnStartup(e);
             
             // MainWindow oluşturulduktan sonra virtualization ayarla
             PerformanceOptimizer.EnableAdvancedVirtualization();
             
-            using (StreamWriter writer = new StreamWriter(logPath, true))
-            {
-                writer.WriteLine($"[{DateTime.Now}] Uygulama başarıyla başlatıldı!");
-            }
+            MessageBox.Show("Uygulama başarıyla başlatıldı! Step 3", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            // Debug log'a hata yaz
-            try
-            {
-                string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "OptikDegerlendirme_Debug.log");
-                
-                using (StreamWriter writer = new StreamWriter(logPath, true))
-                {
-                    writer.WriteLine($"[{DateTime.Now}] HATA: {ex.Message}");
-                    writer.WriteLine($"[{DateTime.Now}] STACK TRACE: {ex.StackTrace}");
-                    writer.WriteLine($"[{DateTime.Now}] INNER EXCEPTION: {ex.InnerException?.Message}");
-                }
-            }
-            catch { }
-            
-            MessageBox.Show($"Uygulama başlatılırken hata: {ex.Message}\n\nDetaylar için masaüstündeki OptikDegerlendirme_Debug.log dosyasını kontrol edin!", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"HATA: {ex.Message}\n\nINNER: {ex.InnerException?.Message}\n\nSTACK: {ex.StackTrace}", "KRİTİK HATA", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
