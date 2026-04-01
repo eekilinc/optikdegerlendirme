@@ -9,12 +9,15 @@
     <Grid Visibility="{Binding IsAboutOpen, Converter={StaticResource BoolToVis}}" 
           Background="#CC000000">
         
+        <Viewbox MaxWidth="700" MaxHeight="650" Stretch="Uniform" StretchDirection="Both">
+        
         <!-- Premium Modal -->
         <Border Width="650" 
                 VerticalAlignment="Center" 
                 HorizontalAlignment="Center"
                 CornerRadius="24"
-                Padding="0">
+                Padding="0"
+                Margin="20">
             <Border.Style>
                 <Style TargetType="Border">
                     <Setter Property="Background" Value="#F8FAFC"/>
@@ -272,7 +275,7 @@
                 </StackPanel>
                 
                 <!-- Close Button -->
-                <Button Grid.Row="2" 
+                <Button Content="Kapat" Grid.Row="2" 
                         Command="{Binding CloseAboutCommand}" 
                         Background="#3B82F6" 
                         Foreground="White" 
@@ -293,9 +296,9 @@
                             </Border>
                         </ControlTemplate>
                     </Button.Template>
-                    <Button.Content>Kapat</Button.Content>
                 </Button>
             </Grid>
         </Border>
+        </Viewbox>
     </Grid>
 </UserControl>
