@@ -8,6 +8,9 @@
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Assets\app_icon.ico</ApplicationIcon>
     
+    <!-- Disable auto-generated assembly attributes to prevent duplicates -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    
     <!-- Version Properties -->
     <Version>1.0.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
