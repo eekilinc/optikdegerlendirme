@@ -21,7 +21,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Button Grid.Column="0" Content="Vazgeç" Command="{Binding CloseAddCourseCommand}" Style="{StaticResource OutlineButton}" Margin="0,0,5,0"/>
-                    <Button Grid.Column="1" Content="Ekle" Command="{Binding SaveCourseCommand}" Background="#10B981" Margin="5,0,0,0"/>
+                    <Button Grid.Column="1" Content="Ekle" Command="{Binding AddCourseCommand}" Background="#10B981" Margin="5,0,0,0"/>
                 </Grid>
             </StackPanel>
         </Border>
