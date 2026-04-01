@@ -16,17 +16,17 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
-LicenseFile=..\LICENSE
+LicenseFile=LICENSE
 OutputDir=.
 OutputBaseFilename=OptikDegerlendirme-v{#MyAppVersion}-Setup
-SetupIconFile=..\Assets\app_icon_new.png
+; SetupIconFile=..\Assets\app_icon_new.png
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequiredOverridesAllowed=dialog
-WizardImageFile=..\Assets\about_banner.png
-WizardSmallImageFile=..\Assets\app_icon_new.png
+; WizardImageFile=..\Assets\about_banner.png
+; WizardSmallImageFile=..\Assets\app_icon_new.png
 
 [Languages]
 Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
