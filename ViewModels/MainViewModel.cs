@@ -104,23 +104,41 @@ namespace OptikFormApp.ViewModels
 
         public MainViewModel()
         {
-            _parserService = new OpticalParserService();
-            _excelService = new ExcelExportService();
-            _validationService = new ValidationService();
-            _pdfService = new PdfReportService();
-            _dbService = new DatabaseService();
-            _settingsService = new AppSettingsService();
-            _csvService = new CsvExportService();
-            _notificationService = new NotificationService();
-            _undoRedoManager = new UndoRedoManager(50);
-            _statsReportService = new StatisticsReportService();
-            _templateService = new TemplateService();
-            _jsonDataService = new JsonDataService();
-            _shortcutService = new KeyboardShortcutService();
-            _progressService = ProgressService.Instance;
-            _itemAnalysisService = new ItemAnalysisService();
-            _successPredictionService = new SuccessPredictionService();
-            _versionService = new VersionService();
+            try
+            {
+                MessageBox.Show("MainViewModel constructor başladı", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
+                
+                _parserService = new OpticalParserService();
+                MessageBox.Show("OpticalParserService tamam", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
+                
+                _excelService = new ExcelExportService();
+                MessageBox.Show("ExcelExportService tamam", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
+                
+                _validationService = new ValidationService();
+                MessageBox.Show("ValidationService tamam", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
+                
+                _pdfService = new PdfReportService();
+                MessageBox.Show("PdfReportService tamam", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
+                
+                _dbService = new DatabaseService();
+                MessageBox.Show("DatabaseService tamam", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
+                
+                _settingsService = new AppSettingsService();
+                MessageBox.Show("AppSettingsService tamam", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
+                
+                _csvService = new CsvExportService();
+                _notificationService = new NotificationService();
+                _undoRedoManager = new UndoRedoManager(50);
+                _statsReportService = new StatisticsReportService();
+                _templateService = new TemplateService();
+                _jsonDataService = new JsonDataService();
+                _shortcutService = new KeyboardShortcutService();
+                _progressService = ProgressService.Instance;
+                _itemAnalysisService = new ItemAnalysisService();
+                _successPredictionService = new SuccessPredictionService();
+                _versionService = new VersionService();
+
+                MessageBox.Show("Tüm service'ler tamam", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
 
             // Undo/Redo event handlers
             _undoRedoManager.CanUndoChanged += (s, e) => { OnPropertyChanged(nameof(CanUndo)); OnPropertyChanged(nameof(UndoDescription)); };
@@ -139,6 +157,25 @@ namespace OptikFormApp.ViewModels
             _fontSize = saved.FontSize > 0 ? saved.FontSize : 14;
             _gridRowHeight = _layoutIndex == 0 ? 32 : 50;
             _gridCellPadding = _layoutIndex == 0
+                ? new System.Windows.Thickness(10, 0, 10, 0)
+                : new System.Windows.Thickness(15, 0, 15, 0);
+            
+            Students = new ObservableCollection<StudentResult>();
+            AnswerKeys = new ObservableCollection<AnswerKeyModel>();
+            Statistics = new ObservableCollection<QuestionStatisticItem>();
+            ValidationIssues = new ObservableCollection<ValidationIssue>();
+            Courses = new ObservableCollection<Course>();
+            CourseExams = new ObservableCollection<ExamEntry>();
+            
+            StudentsView = CollectionViewSource.GetDefaultView(Students);
+            StudentsView.Filter = FilterStudents;
+            
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"MainViewModel HATA: {ex.Message}\n\nINNER: {ex.InnerException?.Message}\n\nSTACK: {ex.StackTrace}", "KRİTİK HATA", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
                 ? new System.Windows.Thickness(10, 0, 10, 0)
                 : new System.Windows.Thickness(15, 0, 15, 0);
             
