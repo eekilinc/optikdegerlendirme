@@ -13,6 +13,30 @@ namespace OptikFormApp;
 [SupportedOSPlatform("windows")]
 public partial class App : Application
 {
+    static App()
+    {
+        try
+        {
+            MessageBox.Show("STATIC CONSTRUCTOR - Step 0", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"STATIC HATA: {ex.Message}", "KRİTİK HATA", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    public App()
+    {
+        try
+        {
+            MessageBox.Show("CONSTRUCTOR - Step 0.5", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
+            InitializeComponent();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"CONSTRUCTOR HATA: {ex.Message}", "KRİTİK HATA", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
     protected override void OnStartup(StartupEventArgs e)
     {
         try
