@@ -13,10 +13,29 @@
             <StackPanel>
                 <TextBlock Text="{Binding RenameModalTitle}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextMain}" Margin="0,0,0,20"/>
                 
-                <TextBox Text="{Binding RenameInput1, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15"/>
+                <!-- Input 1 Label - Ders için "Ders Kodu", Sınav için "Sınav Adı" -->
+                <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="Ad:"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowRenameInput2}" Value="True">
+                                    <Setter Property="Text" Value="Ders Kodu:"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBox Text="{Binding RenameInput1, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15" Padding="10,8" FontSize="14"/>
                 
-                <TextBox Text="{Binding RenameInput2, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,25" 
-                         Visibility="{Binding ShowRenameInput2, Converter={StaticResource BoolToVis}}"/>
+                <!-- Input 2 - Sadece ders düzenlemede gösterilir -->
+                <StackPanel Visibility="{Binding ShowRenameInput2, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="Ders Adı:" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5"/>
+                    <TextBox Text="{Binding RenameInput2, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,25" Padding="10,8" FontSize="14"/>
+                </StackPanel>
+                
+                <!-- Boşluk sınav düzenlemede -->
+                <Border Height="10" Visibility="{Binding ShowRenameInput2, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}"/>
                 
                 <Grid>
                     <Grid.ColumnDefinitions>
