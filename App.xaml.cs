@@ -15,26 +15,12 @@ public partial class App : Application
 {
     static App()
     {
-        try
-        {
-            MessageBox.Show("STATIC CONSTRUCTOR - Step 0", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"STATIC HATA: {ex.Message}", "KRİTİK HATA", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
+        // Static constructor - gerekirse buraya kod eklenebilir
     }
 
     public App()
     {
-        try
-        {
-            MessageBox.Show("CONSTRUCTOR - Step 0.5", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"CONSTRUCTOR HATA: {ex.Message}", "KRİTİK HATA", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
+        // Constructor - gerekirse buraya kod eklenebilir
     }
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -43,25 +29,18 @@ public partial class App : Application
             // InitializeComponent çağır
             InitializeComponent();
             
-            // En basit debug - MessageBox
-            MessageBox.Show("Uygulama başlatılıyor... Step 1", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
-            
             // Performans optimizasyonları
             PerformanceOptimizer.OptimizeMemory();
             PerformanceOptimizer.OptimizeUI();
-            
-            MessageBox.Show("Performans optimizasyonları tamamlandı... Step 2", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
             
             base.OnStartup(e);
             
             // MainWindow oluşturulduktan sonra virtualization ayarla
             PerformanceOptimizer.EnableAdvancedVirtualization();
-            
-            MessageBox.Show("Uygulama başarıyla başlatıldı! Step 3", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"HATA: {ex.Message}\n\nINNER: {ex.InnerException?.Message}\n\nSTACK: {ex.StackTrace}", "KRİTİK HATA", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Uygulama başlatılırken hata: {ex.Message}\n\nINNER: {ex.InnerException?.Message}\n\nSTACK: {ex.StackTrace}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
