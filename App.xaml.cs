@@ -30,7 +30,6 @@ public partial class App : Application
         try
         {
             MessageBox.Show("CONSTRUCTOR - Step 0.5", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
-            InitializeComponent();
         }
         catch (Exception ex)
         {
@@ -41,6 +40,9 @@ public partial class App : Application
     {
         try
         {
+            // InitializeComponent çağır
+            InitializeComponent();
+            
             // En basit debug - MessageBox
             MessageBox.Show("Uygulama başlatılıyor... Step 1", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
             
