@@ -54,7 +54,7 @@ jobs:
     
     - name: Publish for Installer
       run: |
-        dotnet publish OptikFormApp.csproj -c Release -o ./installer/publish --self-contained true --runtime win-x64
+        dotnet publish OptikFormApp.csproj -c Release -o ./installer/publish --self-contained true --runtime win-x64 /p:PublishSingleFile=false /p:PublishTrimmed=false
     
     - name: Create Installer with Inno Setup
       shell: pwsh

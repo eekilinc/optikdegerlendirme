@@ -3,6 +3,7 @@ using System.Data;
 using System.Windows;
 using OptikFormApp.Services;
 using System.Runtime.Versioning;
+using System.IO;
 
 namespace OptikFormApp;
 
@@ -16,18 +17,53 @@ public partial class App : Application
     {
         try
         {
+            // Debug log oluştur
+            string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OptikDegerlendirme", "debug.log");
+            Directory.CreateDirectory(Path.GetDirectoryName(logPath));
+            
+            using (StreamWriter writer = new StreamWriter(logPath, true))
+            {
+                writer.WriteLine($"[{DateTime.Now}] Uygulama başlatılıyor...");
+                writer.WriteLine($"[{DateTime.Now}] Performans optimizasyonları başlıyor...");
+            }
+            
             // Performans optimizasyonları
             PerformanceOptimizer.OptimizeMemory();
             PerformanceOptimizer.OptimizeUI();
+            
+            using (StreamWriter writer = new StreamWriter(logPath, true))
+            {
+                writer.WriteLine($"[{DateTime.Now}] Performans optimizasyonları tamamlandı...");
+                writer.WriteLine($"[{DateTime.Now}] MainWindow oluşturuluyor...");
+            }
             
             base.OnStartup(e);
             
             // MainWindow oluşturulduktan sonra virtualization ayarla
             PerformanceOptimizer.EnableAdvancedVirtualization();
+            
+            using (StreamWriter writer = new StreamWriter(logPath, true))
+            {
+                writer.WriteLine($"[{DateTime.Now}] Uygulama başarıyla başlatıldı!");
+            }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Uygulama başlatılırken hata: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            // Debug log'a hata yaz
+            try
+            {
+                string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OptikDegerlendirme", "debug.log");
+                Directory.CreateDirectory(Path.GetDirectoryName(logPath));
+                
+                using (StreamWriter writer = new StreamWriter(logPath, true))
+                {
+                    writer.WriteLine($"[{DateTime.Now}] HATA: {ex.Message}");
+                    writer.WriteLine($"[{DateTime.Now}] STACK TRACE: {ex.StackTrace}");
+                }
+            }
+            catch { }
+            
+            MessageBox.Show($"Uygulama başlatılırken hata: {ex.Message}\n\nDetaylar için debug.log dosyasını kontrol edin:\n%AppData%\\OptikDegerlendirme\\debug.log", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
