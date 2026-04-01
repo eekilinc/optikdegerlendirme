@@ -24,7 +24,7 @@ UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
-PrivilegesRequiredOverridesAllowed=dialog
+PrivilegesRequired=admin
 ; WizardImageFile=..\Assets\about_banner.png
 ; WizardSmallImageFile=..\Assets\app_icon_new.png
 
@@ -33,7 +33,6 @@ Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-Name: "associate"; Description: ".opt dosyalarını ilişkilendir"; GroupDescription: "Dosya İlişkilendirmeleri"; Flags: unchecked
 
 [Files]
 Source: "publish\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
@@ -46,11 +45,6 @@ Name: "{autoprograms}\{#MyAppName}\Uninstall"; Filename: "{uninstallexe}"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
-
-[Registry]
-Root: HKCR; Subkey: ".opt"; ValueType: string; ValueName: ""; ValueData: "OptikDegerlendirme"; Flags: uninsdeletevalue; Tasks: associate
-Root: HKCR; Subkey: "OptikDegerlendirme"; ValueType: string; ValueName: ""; ValueData: "Optik Değerlendirme Dosyası"; Flags: uninsdeletekey; Tasks: associate
-Root: HKCR; Subkey: "OptikDegerlendirme\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Tasks: associate
 
 [Code]
 function InitializeSetup(): Boolean;
