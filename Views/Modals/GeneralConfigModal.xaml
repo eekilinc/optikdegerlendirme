@@ -276,7 +276,7 @@
                                 </Grid.ColumnDefinitions>
                                 <Border Grid.Column="0" 
                                         CornerRadius="12" 
-                                        Padding="14,12"
+                                        Padding="14,16"
                                         BorderThickness="1">
                                     <Border.Style>
                                         <Style TargetType="Border">
@@ -320,17 +320,21 @@
                                             </TextBlock.Style>
                                         </TextBlock>
                                         <TextBox Text="{Binding NetCoefficient, UpdateSourceTrigger=PropertyChanged}"
-                                                 Padding="8,8" 
+                                                 Padding="8,14" 
+                                                 MinHeight="48"
                                                  HorizontalContentAlignment="Center"
+                                                 VerticalContentAlignment="Center"
                                                  FontWeight="Bold" 
                                                  FontSize="16" 
                                                  Foreground="#10B981"
-                                                 Background="Transparent"/>
+                                                 Background="White"
+                                                 BorderBrush="#10B981"
+                                                 BorderThickness="2"/>
                                     </StackPanel>
                                 </Border>
                                 <Border Grid.Column="2" 
                                         CornerRadius="12" 
-                                        Padding="14,12"
+                                        Padding="14,16"
                                         BorderThickness="1">
                                     <Border.Style>
                                         <Style TargetType="Border">
@@ -374,8 +378,10 @@
                                             </TextBlock.Style>
                                         </TextBlock>
                                         <TextBox Text="{Binding BaseScore, UpdateSourceTrigger=PropertyChanged}"
-                                                 Padding="8,8" 
+                                                 Padding="8,12" 
+                                                 MinHeight="42"
                                                  HorizontalContentAlignment="Center"
+                                                 VerticalContentAlignment="Center"
                                                  FontWeight="Bold" 
                                                  FontSize="16" 
                                                  Foreground="#3B82F6"
