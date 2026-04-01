@@ -19,9 +19,11 @@ public partial class App : Application
             // Performans optimizasyonları
             PerformanceOptimizer.OptimizeMemory();
             PerformanceOptimizer.OptimizeUI();
-            PerformanceOptimizer.EnableAdvancedVirtualization();
             
             base.OnStartup(e);
+            
+            // MainWindow oluşturulduktan sonra virtualization ayarla
+            PerformanceOptimizer.EnableAdvancedVirtualization();
         }
         catch (Exception ex)
         {
