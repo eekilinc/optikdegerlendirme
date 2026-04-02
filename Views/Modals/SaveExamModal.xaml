@@ -25,7 +25,7 @@
                 </Grid.RowDefinitions>
                 
                 <!-- Header -->
-                <Border Grid.Row="0" Background="{DynamicResource PrimaryBrush}" CornerRadius="16,16,0,0" Padding="25,20">
+                <Border Grid.Row="0" Background="#3B82F6" CornerRadius="16,16,0,0" Padding="25,20">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Border Background="White" CornerRadius="10" Width="40" Height="40" Padding="8" Margin="0,0,15,0">
                             <TextBlock Text="💾" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
