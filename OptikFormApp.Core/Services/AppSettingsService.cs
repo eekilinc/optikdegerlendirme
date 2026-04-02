@@ -12,7 +12,16 @@ public class AppSettingsService : IAppSettingsService
 
     public AppSettingsService()
     {
-        _settingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
+        // Program Files dizinine yazma izni olmayabileceği için AppData'ya kaydet
+        var appDataPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "OptikDegerlendirme");
+        
+        // Klasör yoksa oluştur
+        if (!Directory.Exists(appDataPath))
+            Directory.CreateDirectory(appDataPath);
+        
+        _settingsPath = Path.Combine(appDataPath, "appsettings.json");
     }
 
     public AppSettingsService(string settingsPath)

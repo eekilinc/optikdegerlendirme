@@ -20,8 +20,47 @@ public partial class App : Application
 
     public App()
     {
-        // Constructor - gerekirse buraya kod eklenebilir
+        // Hata logu için dosya yolu
+        var logFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_debug.log");
+        
+        try
+        {
+            File.AppendAllText(logFile, $"[{DateTime.Now}] App constructor STARTED\n");
+            
+            // Global exception handlers
+            AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+            {
+                var ex = e.ExceptionObject as Exception;
+                var msg = $"[{DateTime.Now}] CRITICAL ERROR: {ex?.Message}\nSTACK: {ex?.StackTrace}\n\n";
+                File.AppendAllText(logFile, msg);
+                MessageBox.Show($"CRITICAL ERROR: {ex?.Message}\n\nSTACK: {ex?.StackTrace}", "Fatal Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            };
+            
+            DispatcherUnhandledException += (sender, e) =>
+            {
+                var msg = $"[{DateTime.Now}] DISPATCHER ERROR: {e.Exception.Message}\nSTACK: {e.Exception.StackTrace}\n\n";
+                File.AppendAllText(logFile, msg);
+                MessageBox.Show($"DISPATCHER ERROR: {e.Exception.Message}\n\nSTACK: {e.Exception.StackTrace}", "UI Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                e.Handled = true;
+            };
+            
+            TaskScheduler.UnobservedTaskException += (sender, e) =>
+            {
+                var msg = $"[{DateTime.Now}] TASK ERROR: {e.Exception.Message}\n\n";
+                File.AppendAllText(logFile, msg);
+                MessageBox.Show($"TASK ERROR: {e.Exception.Message}", "Task Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                e.SetObserved();
+            };
+            
+            File.AppendAllText(logFile, $"[{DateTime.Now}] App constructor COMPLETED\n");
+        }
+        catch (Exception ex)
+        {
+            File.AppendAllText(logFile, $"[{DateTime.Now}] ERROR in constructor: {ex.Message}\n{ex.StackTrace}\n\n");
+            throw;
+        }
     }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         try
@@ -33,6 +72,10 @@ public partial class App : Application
             PerformanceOptimizer.OptimizeMemory();
             PerformanceOptimizer.OptimizeUI();
             
+            // Manuel olarak MainWindow oluştur ve göster
+            var mainWindow = new MainWindow();
+            mainWindow.Show();
+            
             base.OnStartup(e);
             
             // MainWindow oluşturulduktan sonra virtualization ayarla
@@ -40,7 +83,23 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Uygulama başlatılırken hata: {ex.Message}\n\nINNER: {ex.InnerException?.Message}\n\nSTACK: {ex.StackTrace}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            var errorMsg = $"Uygulama başlatılırken HATA:\n\n{ex.Message}\n\n";
+            if (ex.InnerException != null)
+                errorMsg += $"INNER: {ex.InnerException.Message}\n\n";
+            errorMsg += $"STACK:\n{ex.StackTrace}";
+            
+            MessageBox.Show(errorMsg, "KRİTİK HATA", MessageBoxButton.OK, MessageBoxImage.Error);
+            
+            // Hata logunu dosyaya kaydet
+            try
+            {
+                var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_error.log");
+                File.WriteAllText(logPath, $"[{DateTime.Now}] {errorMsg}\n\n{ex}");
+            }
+            catch { }
+            
+            // Uygulamayı kapat
+            Shutdown(1);
         }
     }
 

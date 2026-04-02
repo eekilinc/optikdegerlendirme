@@ -21,7 +21,16 @@ namespace OptikFormApp.Services
 
         public DatabaseService()
         {
-            _dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "optik.db");
+            // Program Files dizinine yazma izni olmayabileceği için AppData'ya kaydet
+            var appDataPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "OptikDegerlendirme");
+            
+            // Klasör yoksa oluştur
+            if (!Directory.Exists(appDataPath))
+                Directory.CreateDirectory(appDataPath);
+            
+            _dbPath = Path.Combine(appDataPath, "optik.db");
             _connection = new SqliteConnection($"Data Source={_dbPath};Cache=Shared;Foreign Keys=True;");
             _connection.Open();
             

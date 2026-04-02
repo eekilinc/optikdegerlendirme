@@ -1,6 +1,6 @@
 ; Optik Değerlendirme Installer Script
 #define MyAppName "Optik Değerlendirme"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.2.3"
 #define MyAppPublisher "AĞLASUN MYO"
 #define MyAppURL "https://github.com/eekilinc/optikdegerlendirme"
 #define MyAppExeName "OptikFormApp.exe"
@@ -35,8 +35,8 @@ Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "publish\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\publish\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
