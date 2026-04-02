@@ -8,7 +8,6 @@
     <UseWPF>true</UseWPF>
     
     <!-- Disable auto-generated assembly attributes to prevent duplicates -->
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     
     <!-- Version Properties -->
