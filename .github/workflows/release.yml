@@ -38,13 +38,20 @@ jobs:
       shell: pwsh
       run: |
         $version = "${{ steps.get_version.outputs.version }}"
+        # Parse version parts
+        $versionParts = $version -split '\.'
+        $major = $versionParts[0]
+        $minor = if ($versionParts.Length -gt 1) { $versionParts[1] } else { "0" }
+        $patch = if ($versionParts.Length -gt 2) { $versionParts[2] } else { "0" }
+        $assemblyVersion = "$major.$minor.$patch.0"
+        
         $csproj = Get-Content "OptikFormApp.csproj"
         $csproj = $csproj -replace '<Version>.*?</Version>', "<Version>$version</Version>"
-        $csproj = $csproj -replace '<AssemblyVersion>.*?</AssemblyVersion>', "<AssemblyVersion>$version</AssemblyVersion>"
-        $csproj = $csproj -replace '<FileVersion>.*?</FileVersion>', "<FileVersion>$version</FileVersion>"
+        $csproj = $csproj -replace '<AssemblyVersion>.*?</AssemblyVersion>', "<AssemblyVersion>$assemblyVersion</AssemblyVersion>"
+        $csproj = $csproj -replace '<FileVersion>.*?</FileVersion>', "<FileVersion>$assemblyVersion</FileVersion>"
         $csproj = $csproj -replace '<InformationalVersion>.*?</InformationalVersion>', "<InformationalVersion>$version</InformationalVersion>"
         Set-Content "OptikFormApp.csproj" $csproj
-        echo "Updated version to $version"
+        echo "Updated version to $version (Assembly: $assemblyVersion)"
     
     - name: Restore Dependencies
       run: dotnet restore OptikFormApp.csproj --runtime win-x64
