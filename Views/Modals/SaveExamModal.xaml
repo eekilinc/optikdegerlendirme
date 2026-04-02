@@ -32,7 +32,7 @@
                         </Border>
                         <StackPanel>
                             <TextBlock Text="Sınavı Kaydet" FontSize="20" FontWeight="Bold" Foreground="White"/>
-                            <TextBlock Text="Değerlendirme verilerini kaydedin" FontSize="13" Foreground="#B8D4FF" Margin="0,2,0,0"/>
+                            <TextBlock Text="Değerlendirme verilerini kaydedin" FontSize="13" Foreground="White" Opacity="0.9" Margin="0,2,0,0"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
