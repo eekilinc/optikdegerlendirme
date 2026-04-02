@@ -19,7 +19,7 @@ DisableProgramGroupPage=yes
 LicenseFile=LICENSE
 OutputDir=.
 OutputBaseFilename=OptikDegerlendirme-v{#MyAppVersion}-Setup
-SetupIconFile=..\Assets\app_icon_new.ico
+; SetupIconFile commented out - icon file needs to be committed
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma
 SolidCompression=yes
