@@ -296,6 +296,9 @@
         <!-- ADD COURSE MODAL OVERLAY -->
         <modals:AddCourseModal Panel.ZIndex="600" />
 
+        <!-- SAVE EXAM MODAL OVERLAY -->
+        <modals:SaveExamModal Panel.ZIndex="602" />
+
         <!-- RENAME MODAL OVERLAY -->
         <modals:RenameModal Panel.ZIndex="605" />
 

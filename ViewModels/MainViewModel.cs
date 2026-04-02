@@ -88,6 +88,7 @@ namespace OptikFormApp.ViewModels
         private bool _isAdvancedFilterOpen;
         private bool _isItemAnalysisOpen;
         private bool _isSuccessPredictionOpen;
+        private bool _isSaveExamModalOpen;
         
         private bool _isGeneralConfigOpen;
         private bool _hasUnsavedData;
@@ -412,8 +413,23 @@ namespace OptikFormApp.ViewModels
                 }
             });
             SaveExamCommand = new AsyncRelayCommand(async _ => {
+                // Yeni modal'ı aç
+                IsSaveExamModalOpen = true;
+            });
+
+            OpenSaveExamModalCommand = new RelayCommand(_ => {
+                IsSaveExamModalOpen = true;
+            });
+
+            CloseSaveExamModalCommand = new RelayCommand(_ => {
+                IsSaveExamModalOpen = false;
+            });
+
+            ConfirmSaveExamCommand = new AsyncRelayCommand(async _ => {
                 string title = string.IsNullOrWhiteSpace(NewExamName) ? $"{DateTime.Now:dd.MM.yyyy} Sınavı" : NewExamName;
                 await SaveCurrentExamAsync(title, SelectedExam);
+                IsSaveExamModalOpen = false;
+                NewExamName = ""; // Reset
             });
 
             OpenRenameCourseCommand = new RelayCommand(obj => {
@@ -1047,7 +1063,19 @@ namespace OptikFormApp.ViewModels
         public ICommand CloseShortcutsCommand { get; set; }
         public ICommand ExportGradeListCommand { get; set; }
         public ICommand OpenUISettingsCommand { get; set; }
-        public ICommand CloseUISettingsCommand { get; set; }
+        public bool IsSaveExamModalOpen
+        {
+            get => _isSaveExamModalOpen;
+            set
+            {
+                _isSaveExamModalOpen = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ICommand OpenSaveExamModalCommand { get; set; }
+        public ICommand CloseSaveExamModalCommand { get; set; }
+        public ICommand ConfirmSaveExamCommand { get; set; }
         public ICommand OpenGeneralConfigCommand { get; set; }
         public ICommand CloseGeneralConfigCommand { get; set; }
         public ICommand ExitCommand { get; set; }
