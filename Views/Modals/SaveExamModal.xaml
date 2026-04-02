@@ -117,11 +117,13 @@
                                 Content="💾 Sınavı Kaydet" 
                                 Command="{Binding ConfirmSaveExamCommand}" 
                                 IsEnabled="{Binding Students.Count}" 
-                                Background="{DynamicResource PrimaryBrush}" 
+                                Background="#3B82F6" 
                                 Foreground="White" 
                                 Padding="25,10" 
                                 FontSize="13" 
-                                FontWeight="SemiBold">
+                                FontWeight="SemiBold"
+                                BorderThickness="0"
+                                Cursor="Hand">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
                                     <Setter Property="Opacity" Value="1"/>
