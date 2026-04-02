@@ -54,7 +54,7 @@ jobs:
     
     - name: Publish for Installer
       run: |
-        dotnet publish OptikFormApp.csproj -c Release -o ./installer/publish --self-contained true --runtime win-x64 /p:PublishSingleFile=false /p:PublishTrimmed=false
+        dotnet publish OptikFormApp.csproj -c Release -o ./publish --self-contained true --runtime win-x64 /p:PublishSingleFile=false /p:PublishTrimmed=false
     
     - name: Create Installer with Inno Setup
       shell: pwsh
@@ -72,8 +72,8 @@ jobs:
     
     - name: Create ZIP Archive
       run: |
-        cd installer/publish
-        7z a -tzip ../../OptikDegerlendirme-v${{ steps.get_version.outputs.version }}-portable.zip *
+        cd publish
+        7z a -tzip ../OptikDegerlendirme-v${{ steps.get_version.outputs.version }}-portable.zip *
     
     - name: Create Release
       uses: softprops/action-gh-release@v1
