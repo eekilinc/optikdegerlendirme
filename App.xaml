@@ -20,6 +20,7 @@
         <vm:MultiValuePercentageConverter x:Key="MultiValuePercentageConverter"/>
         <vm:NullToVisibilityConverter x:Key="NullToVis"/>
         <vm:NullToVisibilityConverter x:Key="NotNullToVis" Invert="True"/>
+        <vm:InverseBoolConverter x:Key="InverseBoolConverter"/>
         <vm:TrendToVisibilityConverter x:Key="GreaterThanZeroToVis" Mode="Positive"/>
         <vm:TrendToVisibilityConverter x:Key="LessThanZeroToVis" Mode="Negative"/>
         <vm:NumericToVisibilityConverter x:Key="NumericToVis"/>

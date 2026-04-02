@@ -116,6 +116,78 @@
                                    Foreground="White"/>
                     </Border>
                     
+                    <!-- Update Check Section -->
+                    <Border CornerRadius="12" 
+                            Padding="16,12" 
+                            Margin="0,0,0,20"
+                            BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#F0F9FF"/>
+                                <Setter Property="BorderBrush" Value="#3B82F6"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasUpdateAvailable}" Value="True">
+                                        <Setter Property="Background" Value="#FEF3C7"/>
+                                        <Setter Property="BorderBrush" Value="#F59E0B"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                        <Setter Property="BorderBrush" Value="#3B82F6"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel>
+                            <!-- Status Text -->
+                            <TextBlock Text="{Binding UpdateStatus}" 
+                                       FontSize="12"
+                                       TextAlignment="Center"
+                                       Margin="0,0,0,10">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#3B82F6"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasUpdateAvailable}" Value="True">
+                                                <Setter Property="Foreground" Value="#F59E0B"/>
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#60A5FA"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            
+                            <!-- Check Button -->
+                            <Button Command="{Binding CheckForUpdatesCommand}"
+                                    IsEnabled="{Binding IsCheckingForUpdate, Converter={StaticResource InverseBoolConverter}}"
+                                    Padding="16,8"
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Cursor="Hand">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Background" Value="#3B82F6"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Content" Value="🔍 Güncelleme Kontrol Et"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCheckingForUpdate}" Value="True">
+                                                <Setter Property="Content" Value="⏳ Kontrol ediliyor..."/>
+                                                <Setter Property="Opacity" Value="0.7"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding HasUpdateAvailable}" Value="True">
+                                                <Setter Property="Background" Value="#F59E0B"/>
+                                                <Setter Property="Content" Value="📥 Yeni Sürümü İndir"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                    
                     <!-- Clean Description -->
                     <TextBlock Text="AĞLASUN MYO için geliştirilmiş modern ve hızlı optik sınav değerlendirme platformu. Enterprise seviyesinde performans ve kullanıcı dostu arayüz." 
                                FontSize="14" 
