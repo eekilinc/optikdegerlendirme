@@ -7,8 +7,30 @@ using OptikFormApp.Models;
 
 namespace OptikFormApp.Services
 {
+    /// <summary>
+    /// Optik form dosyalarını parse eden servis.
+    /// </summary>
+    /// <remarks>
+    /// Bu servis optik form okuyucularından gelen TXT dosyalarını
+    /// işleyerek öğrenci sonuçları ve cevap anahtarlarını çıkarır.
+    /// </remarks>
     public class OpticalParserService
     {
+        /// <summary>
+        /// Optik form dosyasını parse eder.
+        /// </summary>
+        /// <param name="filePath">TXT dosyasının yolu.</param>
+        /// <returns>
+        /// Tuple içinde:
+        /// - Students: Öğrenci sonuçları listesi
+        /// - AnswerKeys: Cevap anahtarları listesi  
+        /// - Errors: Parse hataları listesi
+        /// </returns>
+        /// <exception cref="IOException">Dosya okuma hatası.</exception>
+        /// <example>
+        /// var parser = new OpticalParserService();
+        /// var result = await parser.ParseFileAsync("data.txt");
+        /// </example>
         public async Task<(List<StudentResult> Students, List<AnswerKeyModel> AnswerKeys, List<string> Errors)> ParseFileAsync(string filePath)
         {
             var students = new List<StudentResult>();
