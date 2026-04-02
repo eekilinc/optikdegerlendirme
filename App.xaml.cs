@@ -20,8 +20,16 @@ public partial class App : Application
 
     public App()
     {
-        // Hata logu için dosya yolu
-        var logFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_debug.log");
+        // Hata logu için AppData kullan (Program Files dizinine yazma izni yok)
+        var appDataPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "OptikDegerlendirme");
+        
+        // Klasör yoksa oluştur
+        if (!Directory.Exists(appDataPath))
+            Directory.CreateDirectory(appDataPath);
+        
+        var logFile = Path.Combine(appDataPath, "app_debug.log");
         
         try
         {
@@ -56,8 +64,8 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            File.AppendAllText(logFile, $"[{DateTime.Now}] ERROR in constructor: {ex.Message}\n{ex.StackTrace}\n\n");
-            throw;
+            // Log yazma hatası olursa sadece göster, uygulamayı durdurma
+            MessageBox.Show($"Log hatası: {ex.Message}\n\nUygulama devam ediyor...", "Uyarı", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
