@@ -13,7 +13,12 @@ namespace OptikFormApp.Services
 
         public TemplateService()
         {
-            _templatesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates");
+            // Program Files dizinine yazma izni olmayabileceği için AppData'ya kaydet
+            var appDataPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "OptikDegerlendirme");
+            
+            _templatesPath = Path.Combine(appDataPath, "Templates");
             if (!Directory.Exists(_templatesPath))
                 Directory.CreateDirectory(_templatesPath);
         }
