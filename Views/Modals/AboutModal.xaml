@@ -9,9 +9,6 @@
     <Grid Visibility="{Binding IsAboutOpen, Converter={StaticResource BoolToVis}}" 
           Background="#CC000000">
         
-        <!-- Responsive Container -->
-        <Viewbox MaxWidth="800" MaxHeight="750" Stretch="Uniform" StretchDirection="Both">
-        
         <!-- Modern Glass Modal -->
         <Border Width="700" 
                 VerticalAlignment="Center" 
@@ -83,7 +80,7 @@
                 <StackPanel Grid.Row="1" Margin="50,120,50,30">
                     <!-- App Name -->
                     <TextBlock Text="Optik Değerlendirme" 
-                               FontSize="28" 
+                               FontSize="32" 
                                FontWeight="Bold" 
                                HorizontalAlignment="Center"
                                Margin="0,0,0,8">
@@ -111,7 +108,7 @@
                             </LinearGradientBrush>
                         </Border.Background>
                         <TextBlock Text="{Binding CurrentVersion}" 
-                                   FontSize="12" 
+                                   FontSize="14" 
                                    FontWeight="SemiBold" 
                                    Foreground="White"/>
                     </Border>
@@ -140,7 +137,7 @@
                         <StackPanel>
                             <!-- Status Text -->
                             <TextBlock Text="{Binding UpdateStatus}" 
-                                       FontSize="12"
+                                       FontSize="14"
                                        TextAlignment="Center"
                                        Margin="0,0,0,10">
                                 <TextBlock.Style>
@@ -172,6 +169,7 @@
                                         <Setter Property="Foreground" Value="White"/>
                                         <Setter Property="BorderThickness" Value="0"/>
                                         <Setter Property="Content" Value="🔍 Güncelleme Kontrol Et"/>
+                                        <Setter Property="FontSize" Value="14"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsCheckingForUpdate}" Value="True">
                                                 <Setter Property="Content" Value="⏳ Kontrol ediliyor..."/>
@@ -180,6 +178,7 @@
                                             <DataTrigger Binding="{Binding HasUpdateAvailable}" Value="True">
                                                 <Setter Property="Background" Value="#F59E0B"/>
                                                 <Setter Property="Content" Value="📥 Yeni Sürümü İndir"/>
+                                                <Setter Property="FontSize" Value="18"/>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -190,10 +189,10 @@
                     
                     <!-- Clean Description -->
                     <TextBlock Text="AĞLASUN MYO için geliştirilmiş modern ve hızlı optik sınav değerlendirme platformu. Enterprise seviyesinde performans ve kullanıcı dostu arayüz." 
-                               FontSize="14" 
+                               FontSize="16" 
                                TextAlignment="Center" 
                                TextWrapping="Wrap" 
-                               LineHeight="24"
+                               LineHeight="28"
                                Margin="0,0,0,25">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
@@ -220,7 +219,7 @@
                                     </Style.Triggers>
                                 </Style>
                             </Border.Style>
-                            <TextBlock Text="⚡ Ultra Hızlı" FontSize="12" FontWeight="SemiBold">
+                            <TextBlock Text="⚡ Ultra Hızlı" FontSize="14" FontWeight="SemiBold">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Foreground" Value="#3B82F6"/>
@@ -245,7 +244,7 @@
                                     </Style.Triggers>
                                 </Style>
                             </Border.Style>
-                            <TextBlock Text="🔒 Güvenli" FontSize="12" FontWeight="SemiBold">
+                            <TextBlock Text="🔒 Güvenli" FontSize="14" FontWeight="SemiBold">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Foreground" Value="#10B981"/>
@@ -270,7 +269,7 @@
                                     </Style.Triggers>
                                 </Style>
                             </Border.Style>
-                            <TextBlock Text="📊 Analitik" FontSize="12" FontWeight="SemiBold">
+                            <TextBlock Text="📊 Analitik" FontSize="14" FontWeight="SemiBold">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Foreground" Value="#F59E0B"/>
@@ -302,7 +301,7 @@
                         </Border.Style>
                         <StackPanel>
                             <TextBlock Text="👨‍💻 Geliştirici" 
-                                       FontSize="11" 
+                                       FontSize="13" 
                                        FontWeight="Bold" 
                                        HorizontalAlignment="Center" 
                                        Margin="0,0,0,8">
@@ -318,7 +317,7 @@
                                 </TextBlock.Style>
                             </TextBlock>
                             <TextBlock Text="Ekrem KILINÇ" 
-                                       FontSize="18" 
+                                       FontSize="20" 
                                        FontWeight="Bold" 
                                        HorizontalAlignment="Center"
                                        Margin="0,0,0,4">
@@ -334,7 +333,7 @@
                                 </TextBlock.Style>
                             </TextBlock>
                             <TextBlock Text="Full Stack Developer | .NET Expert" 
-                                       FontSize="12" 
+                                       FontSize="14" 
                                        HorizontalAlignment="Center" 
                                        TextAlignment="Center"
                                        Margin="0,0,0,8">
@@ -387,8 +386,8 @@
                         Foreground="White"
                         HorizontalAlignment="Center" 
                         Margin="0,0,0,30"
-                        Padding="80,14"
-                        FontSize="14" 
+                        Padding="80,16"
+                        FontSize="16" 
                         FontWeight="SemiBold"
                         BorderThickness="0"
                         Cursor="Hand">
@@ -417,6 +416,5 @@
                 </Button>
             </Grid>
         </Border>
-        </Viewbox>
     </Grid>
 </UserControl>

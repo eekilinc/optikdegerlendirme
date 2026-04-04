@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Diagnostics;
 
@@ -18,6 +19,7 @@ namespace OptikFormApp.Services
         {
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "OptikDegerlendirme-App");
+            _httpClient.Timeout = TimeSpan.FromSeconds(10);
         }
 
         /// <summary>
@@ -27,14 +29,27 @@ namespace OptikFormApp.Services
         {
             try
             {
+                // TLS 1.2 ve üzeri kullan
+                System.Net.ServicePointManager.SecurityProtocol = 
+                    System.Net.SecurityProtocolType.Tls12 | 
+                    System.Net.SecurityProtocolType.Tls13;
+                
                 var response = await _httpClient.GetAsync(_githubApiUrl);
                 
                 if (!response.IsSuccessStatusCode)
                 {
+                    string errorMessage = response.StatusCode switch
+                    {
+                        System.Net.HttpStatusCode.NotFound => "GitHub'da proje bulunamadı. Repo henüz oluşturulmamış olabilir.",
+                        System.Net.HttpStatusCode.Forbidden => "GitHub API erişim izni reddedildi. API limiti aşılmış olabilir.",
+                        System.Net.HttpStatusCode.Unauthorized => "GitHub API yetkilendirme hatası.",
+                        _ => $"GitHub API hatası (HTTP {(int)response.StatusCode}). İnternet bağlantınızı kontrol edin."
+                    };
+                    
                     return new VersionCheckResult
                     {
                         HasUpdate = false,
-                        ErrorMessage = "GitHub API'ye erişilemedi"
+                        ErrorMessage = errorMessage
                     };
                 }
 
@@ -60,9 +75,26 @@ namespace OptikFormApp.Services
                     HasUpdate = hasUpdate,
                     CurrentVersion = currentVersion,
                     LatestVersion = latestVersion,
+                    DownloadUrl = release.Assets?.FirstOrDefault()?.BrowserDownloadUrl ?? "",
                     ReleaseUrl = release.HtmlUrl,
                     ReleaseNotes = release.Body,
                     PublishedAt = release.PublishedAt
+                };
+            }
+            catch (HttpRequestException ex)
+            {
+                return new VersionCheckResult
+                {
+                    HasUpdate = false,
+                    ErrorMessage = "İnternet bağlantısı hatası. Lütfen internet bağlantınızı kontrol edip tekrar deneyin."
+                };
+            }
+            catch (TaskCanceledException)
+            {
+                return new VersionCheckResult
+                {
+                    HasUpdate = false,
+                    ErrorMessage = "Bağlantı zaman aşımına uğradı. Lütfen daha sonra tekrar deneyin."
                 };
             }
             catch (Exception ex)
@@ -134,6 +166,21 @@ namespace OptikFormApp.Services
 
         [JsonPropertyName("published_at")]
         public DateTime PublishedAt { get; set; }
+
+        [JsonPropertyName("assets")]
+        public List<GitHubAsset> Assets { get; set; } = new();
+    }
+
+    /// <summary>
+    /// GitHub release asset bilgisi
+    /// </summary>
+    public class GitHubAsset
+    {
+        [JsonPropertyName("browser_download_url")]
+        public string BrowserDownloadUrl { get; set; } = string.Empty;
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -147,6 +194,7 @@ namespace OptikFormApp.Services
         public string ReleaseUrl { get; set; } = string.Empty;
         public string ReleaseNotes { get; set; } = string.Empty;
         public DateTime PublishedAt { get; set; }
+        public string DownloadUrl { get; set; } = string.Empty;
         public string ErrorMessage { get; set; } = string.Empty;
 
         public string StatusText => HasUpdate 

@@ -32,6 +32,7 @@ namespace OptikFormApp.ViewModels
         private readonly KeyboardShortcutService _shortcutService;
         private readonly ProgressService _progressService;
         private readonly VersionCheckService _versionCheckService;
+        private readonly ItemAnalysisService _itemAnalysisService;
         private readonly SuccessPredictionService _successPredictionService;
         private readonly VersionService _versionService;
 
@@ -87,6 +88,7 @@ namespace OptikFormApp.ViewModels
         private bool _isCheckingForUpdate;
         private bool _hasUpdateAvailable;
         private string _latestVersion = "";
+        private string _selectedSortColumn = "Score";
         private bool _isSortDescending = true;
         private bool _isAdvancedFilterOpen;
         private bool _isItemAnalysisOpen;
@@ -125,6 +127,7 @@ namespace OptikFormApp.ViewModels
             _itemAnalysisService = new ItemAnalysisService();
             _successPredictionService = new SuccessPredictionService();
             _versionService = new VersionService();
+            _versionCheckService = new VersionCheckService();
 
             // Undo/Redo event handlers
             _undoRedoManager.CanUndoChanged += (s, e) => { OnPropertyChanged(nameof(CanUndo)); OnPropertyChanged(nameof(UndoDescription)); };
@@ -1105,6 +1108,9 @@ namespace OptikFormApp.ViewModels
         public ICommand SelectFolderCommand { get; set; }
         public ICommand CloseAlertCommand { get; set; }
         public ICommand OpenAboutCommand { get; set; }
+        public ICommand OpenGitHubCommand { get; set; }
+        public ICommand CheckForUpdatesCommand { get; set; }
+        public ICommand OpenReleasesPageCommand { get; set; }
         public ICommand CloseAboutCommand { get; set; }
         public ICommand ShowShortcutsCommand { get; set; }
         public ICommand CloseShortcutsCommand { get; set; }
@@ -1139,8 +1145,6 @@ namespace OptikFormApp.ViewModels
         public ICommand SaveRenameCommand { get; set; }
         public ICommand UndoCommand { get; set; }
         public ICommand RedoCommand { get; set; }
-        public ICommand CheckForUpdatesCommand { get; set; }
-        public ICommand OpenReleasesPageCommand { get; set; }
 
         // Template Manager Properties and Commands
         public bool IsTemplateManagerOpen { get; set; }
