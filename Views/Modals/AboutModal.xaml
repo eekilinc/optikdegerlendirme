@@ -73,22 +73,60 @@
                     </Grid>
                 </Border>
                 
-                <!-- Tab Content -->
+                <!-- Modern Tab Content -->
                 <TabControl Grid.Row="1" 
                             Margin="0"
                             BorderThickness="0"
-                            Background="Transparent">
+                            Background="Transparent"
+                            Padding="0">
                     <TabControl.Resources>
+                        <!-- Modern TabItem Style -->
                         <Style TargetType="TabItem">
-                            <Setter Property="Height" Value="36"/>
-                            <Setter Property="FontSize" Value="12"/>
-                            <Setter Property="FontWeight" Value="SemiBold"/>
-                            <Setter Property="Padding" Value="16,8"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                    <Setter Property="Foreground" Value="#94A3B8"/>
-                                </DataTrigger>
-                            </Style.Triggers>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="TabItem">
+                                        <Border Name="TabBorder" 
+                                                CornerRadius="0" 
+                                                Padding="20,10" 
+                                                Margin="0,8,0,0"
+                                                BorderThickness="0,0,0,2"
+                                                BorderBrush="Transparent">
+                                            <TextBlock Name="TabText"
+                                                       Text="{TemplateBinding Header}"
+                                                       HorizontalAlignment="Center" 
+                                                       VerticalAlignment="Center"
+                                                       FontSize="13"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#64748B"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <!-- Selected State - Blue background + white text + underline -->
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="TabBorder" Property="Background" Value="#EFF6FF"/>
+                                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="#3B82F6"/>
+                                                <Setter TargetName="TabText" Property="Foreground" Value="#3B82F6"/>
+                                            </Trigger>
+                                            <!-- Not Selected -->
+                                            <Trigger Property="IsSelected" Value="False">
+                                                <Setter TargetName="TabBorder" Property="Background" Value="Transparent"/>
+                                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="Transparent"/>
+                                                <Setter TargetName="TabText" Property="Foreground" Value="#64748B"/>
+                                            </Trigger>
+                                            <!-- Hover -->
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="TabBorder" Property="Background" Value="#F8FAFC"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                        
+                        <!-- TabPanel Style -->
+                        <Style TargetType="TabPanel">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                            <Setter Property="Margin" Value="0,4,0,0"/>
                         </Style>
                     </TabControl.Resources>
                     
