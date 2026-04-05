@@ -38,23 +38,30 @@ jobs:
       shell: pwsh
       run: |
         $version = "${{ steps.get_version.outputs.version }}"
+        # Parse version parts
+        $versionParts = $version -split '\.'
+        $major = $versionParts[0]
+        $minor = if ($versionParts.Length -gt 1) { $versionParts[1] } else { "0" }
+        $patch = if ($versionParts.Length -gt 2) { $versionParts[2] } else { "0" }
+        $assemblyVersion = "$major.$minor.$patch.0"
+        
         $csproj = Get-Content "OptikFormApp.csproj"
         $csproj = $csproj -replace '<Version>.*?</Version>', "<Version>$version</Version>"
-        $csproj = $csproj -replace '<AssemblyVersion>.*?</AssemblyVersion>', "<AssemblyVersion>$version</AssemblyVersion>"
-        $csproj = $csproj -replace '<FileVersion>.*?</FileVersion>', "<FileVersion>$version</FileVersion>"
+        $csproj = $csproj -replace '<AssemblyVersion>.*?</AssemblyVersion>', "<AssemblyVersion>$assemblyVersion</AssemblyVersion>"
+        $csproj = $csproj -replace '<FileVersion>.*?</FileVersion>', "<FileVersion>$assemblyVersion</FileVersion>"
         $csproj = $csproj -replace '<InformationalVersion>.*?</InformationalVersion>', "<InformationalVersion>$version</InformationalVersion>"
         Set-Content "OptikFormApp.csproj" $csproj
-        echo "Updated version to $version"
+        echo "Updated version to $version (Assembly: $assemblyVersion)"
     
     - name: Restore Dependencies
-      run: dotnet restore --runtime win-x64
+      run: dotnet restore OptikFormApp.csproj --runtime win-x64
     
     - name: Build
-      run: dotnet build -c Release --no-restore --runtime win-x64
+      run: dotnet build OptikFormApp.csproj -c Release --no-restore --runtime win-x64
     
     - name: Publish for Installer
       run: |
-        dotnet publish -c Release -o ./installer/publish --self-contained true --runtime win-x64
+        dotnet publish OptikFormApp.csproj -c Release -o ./publish --self-contained true --runtime win-x64 /p:PublishSingleFile=false /p:PublishTrimmed=false
     
     - name: Create Installer with Inno Setup
       shell: pwsh
@@ -64,13 +71,16 @@ jobs:
         $issContent = Get-Content "installer\setup.iss" -Raw
         $issContent = $issContent -replace '#define MyAppVersion ".*"', "#define MyAppVersion `"$version`""
         Set-Content "installer\setup.iss" $issContent
+        # Copy assets and license to installer directory
+        Copy-Item -Path "Assets\*" -Destination "installer\" -Recurse -Force
+        Copy-Item -Path "LICENSE" -Destination "installer\" -Force
         # Build installer
         & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "installer\setup.iss"
     
     - name: Create ZIP Archive
       run: |
-        cd installer/publish
-        7z a -tzip ../../OptikDegerlendirme-v${{ steps.get_version.outputs.version }}-portable.zip *
+        cd publish
+        7z a -tzip ../OptikDegerlendirme-v${{ steps.get_version.outputs.version }}-portable.zip *
     
     - name: Create Release
       uses: softprops/action-gh-release@v1
@@ -88,7 +98,7 @@ jobs:
           ### İndirme Seçenekleri
           
           **1. Kurulum Dosyası (Önerilen)**
-          - OptikDegerlendirme-v${{ steps.get_version.outputs.msiVersion }}.msi
+          - OptikDegerlendirme-v${{ steps.get_version.outputs.version }}-Setup.exe
           - Windows'a kurulum yapar
           - Başlat menüsüne ekler
           - Otomatik kaldırma desteği

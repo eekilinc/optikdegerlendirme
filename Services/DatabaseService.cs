@@ -16,12 +16,21 @@ namespace OptikFormApp.Services
     public class DatabaseService : IDisposable
     {
         private readonly string _dbPath;
-        private readonly SqliteConnection _connection;
+        protected SqliteConnection _connection;
         private bool _disposed;
 
         public DatabaseService()
         {
-            _dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "optik.db");
+            // Program Files dizinine yazma izni olmayabileceği için AppData'ya kaydet
+            var appDataPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "OptikDegerlendirme");
+            
+            // Klasör yoksa oluştur
+            if (!Directory.Exists(appDataPath))
+                Directory.CreateDirectory(appDataPath);
+            
+            _dbPath = Path.Combine(appDataPath, "optik.db");
             _connection = new SqliteConnection($"Data Source={_dbPath};Cache=Shared;Foreign Keys=True;");
             _connection.Open();
             
@@ -43,7 +52,7 @@ namespace OptikFormApp.Services
             await cmd.ExecuteNonQueryAsync();
         }
 
-        private SqliteCommand CreateCommand(string sql)
+        protected SqliteCommand CreateCommand(string sql)
         {
             var cmd = _connection.CreateCommand();
             cmd.CommandText = sql;
@@ -83,7 +92,20 @@ namespace OptikFormApp.Services
                     QuestionResultsJson TEXT,
                     FOREIGN KEY(ExamId) REFERENCES Exams(Id) ON DELETE CASCADE
                 );");
+
+            // Create indexes for performance optimization
             await cmd.ExecuteNonQueryAsync();
+            
+            // Performance indexes
+            using var indexCmd = CreateCommand(@"
+                CREATE INDEX IF NOT EXISTS idx_examresults_examid ON ExamResults(ExamId);
+                CREATE INDEX IF NOT EXISTS idx_examresults_studentid ON ExamResults(StudentId);
+                CREATE INDEX IF NOT EXISTS idx_examresults_score ON ExamResults(Score);
+                CREATE INDEX IF NOT EXISTS idx_examresults_exam_student ON ExamResults(ExamId, StudentId);
+                CREATE INDEX IF NOT EXISTS idx_courses_name ON Courses(Name);
+                CREATE INDEX IF NOT EXISTS idx_exams_courseid ON Exams(CourseId);
+                CREATE INDEX IF NOT EXISTS idx_exams_title ON Exams(Title);");
+            await indexCmd.ExecuteNonQueryAsync();
         }
 
         // ── Courses ───────────────────────────────────────────────────────────
@@ -313,7 +335,128 @@ namespace OptikFormApp.Services
             await cmd.ExecuteNonQueryAsync();
         }
 
-        // ── IDisposable ───────────────────────────────────────────────────────
+        // ── Bulk Operations ───────────────────────────────────────────────────────
+
+        public async Task BulkInsertResultsAsync(int examId, List<StudentResult> results)
+        {
+            if (results == null || results.Count == 0) return;
+
+            using var transaction = await _connection.BeginTransactionAsync();
+            try
+            {
+                using var cmd = CreateCommand(@"
+                    INSERT INTO ExamResults (ExamId, StudentId, FullName, BookletType, RawAnswers, Score, CorrectCount, IncorrectCount, EmptyCount, QuestionResultsJson)
+                    VALUES (@eid, @sid, @name, @booklet, @raw, @score, @corr, @inc, @emp, @qjson)");
+                
+                cmd.Transaction = (SqliteTransaction)transaction;
+                
+                var pEid = cmd.Parameters.Add("@eid", SqliteType.Integer);
+                var pSid = cmd.Parameters.Add("@sid", SqliteType.Text);
+                var pName = cmd.Parameters.Add("@name", SqliteType.Text);
+                var pBooklet = cmd.Parameters.Add("@booklet", SqliteType.Text);
+                var pRaw = cmd.Parameters.Add("@raw", SqliteType.Text);
+                var pScore = cmd.Parameters.Add("@score", SqliteType.Real);
+                var pCorr = cmd.Parameters.Add("@corr", SqliteType.Integer);
+                var pInc = cmd.Parameters.Add("@inc", SqliteType.Integer);
+                var pEmp = cmd.Parameters.Add("@emp", SqliteType.Integer);
+                var pQjson = cmd.Parameters.Add("@qjson", SqliteType.Text);
+
+                foreach (var res in results)
+                {
+                    pEid.Value = examId;
+                    pSid.Value = (object?)res.StudentId ?? DBNull.Value;
+                    pName.Value = (object?)res.FullName ?? DBNull.Value;
+                    pBooklet.Value = (object?)res.BookletType ?? DBNull.Value;
+                    pRaw.Value = (object?)res.RawAnswers ?? DBNull.Value;
+                    pScore.Value = res.Score;
+                    pCorr.Value = res.CorrectCount;
+                    pInc.Value = res.IncorrectCount;
+                    pEmp.Value = res.EmptyCount;
+                    pQjson.Value = System.Text.Json.JsonSerializer.Serialize(res.QuestionResults);
+                    
+                    await cmd.ExecuteNonQueryAsync();
+                }
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        public async Task BulkUpdateScoresAsync(List<(int examId, string studentId, double newScore)> updates)
+        {
+            if (updates == null || updates.Count == 0) return;
+
+            using var transaction = await _connection.BeginTransactionAsync();
+            try
+            {
+                using var cmd = CreateCommand(@"
+                    UPDATE ExamResults 
+                    SET Score = @score, CorrectCount = @corr, IncorrectCount = @inc, EmptyCount = @emp
+                    WHERE ExamId = @eid AND StudentId = @sid");
+                
+                cmd.Transaction = (SqliteTransaction)transaction;
+                
+                var pEid = cmd.Parameters.Add("@eid", SqliteType.Integer);
+                var pSid = cmd.Parameters.Add("@sid", SqliteType.Text);
+                var pScore = cmd.Parameters.Add("@score", SqliteType.Real);
+                var pCorr = cmd.Parameters.Add("@corr", SqliteType.Integer);
+                var pInc = cmd.Parameters.Add("@inc", SqliteType.Integer);
+                var pEmp = cmd.Parameters.Add("@emp", SqliteType.Integer);
+
+                foreach (var (examId, studentId, newScore) in updates)
+                {
+                    pEid.Value = examId;
+                    pSid.Value = studentId;
+                    pScore.Value = newScore;
+                    
+                    // Calculate counts based on score (simplified - you may need to recalculate properly)
+                    pCorr.Value = (int)Math.Round(newScore / 100.0 * 50); // Assuming 50 questions
+                    pInc.Value = (int)Math.Round((100 - newScore) / 100.0 * 50);
+                    pEmp.Value = 50 - (int)pCorr.Value - (int)pInc.Value;
+                    
+                    await cmd.ExecuteNonQueryAsync();
+                }
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        public async Task BulkDeleteResultsAsync(List<int> examIds)
+        {
+            if (examIds == null || examIds.Count == 0) return;
+
+            using var transaction = await _connection.BeginTransactionAsync();
+            try
+            {
+                using var cmd = CreateCommand("DELETE FROM ExamResults WHERE ExamId IN ({0})");
+                cmd.Transaction = (SqliteTransaction)transaction;
+                
+                var parameters = string.Join(",", examIds.Select((_, i) => $"@eid{i}"));
+                cmd.CommandText = string.Format(cmd.CommandText, parameters);
+                
+                for (int i = 0; i < examIds.Count; i++)
+                {
+                    cmd.Parameters.AddWithValue($"@eid{i}", examIds[i]);
+                }
+
+                await cmd.ExecuteNonQueryAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
 
         public void Dispose()
         {

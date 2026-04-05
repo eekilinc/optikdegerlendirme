@@ -152,8 +152,22 @@ namespace OptikFormApp.Services
 
         private double CalculateCorrelation(List<StudentResult> students, int q1, int q2)
         {
-            var x = students.Select(s => s.QuestionResults[q1] ? 1.0 : 0.0).ToList();
-            var y = students.Select(s => s.QuestionResults[q2] ? 1.0 : 0.0).ToList();
+            // Index bounds kontrolü
+            if (students == null || students.Count == 0)
+                return 0;
+                
+            var firstStudent = students.First();
+            if (firstStudent.QuestionResults == null || 
+                q1 < 0 || q1 >= firstStudent.QuestionResults.Count ||
+                q2 < 0 || q2 >= firstStudent.QuestionResults.Count)
+                return 0;
+
+            var x = students.Select(s => 
+                s.QuestionResults != null && q1 < s.QuestionResults.Count && s.QuestionResults[q1] ? 1.0 : 0.0
+            ).ToList();
+            var y = students.Select(s => 
+                s.QuestionResults != null && q2 < s.QuestionResults.Count && s.QuestionResults[q2] ? 1.0 : 0.0
+            ).ToList();
 
             var n = x.Count;
             var sumX = x.Sum();

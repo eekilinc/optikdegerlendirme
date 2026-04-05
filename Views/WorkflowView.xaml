@@ -46,24 +46,12 @@
                     </StackPanel>
                 </Button>
 
-                <TextBox Text="{Binding NewExamName, UpdateSourceTrigger=PropertyChanged}" Width="140" Margin="0,0,10,10" VerticalAlignment="Stretch" Padding="8,0" Background="Transparent" Foreground="{DynamicResource TextMain}" BorderBrush="{DynamicResource Border}" ToolTip="Kaydedilecek Sınav Adı (Opsiyonel)">
-                    <TextBox.Style>
-                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource Self}}" Value="">
-                                    <Setter Property="Tag" Value="Sınav adı (opsiyonel)"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBox.Style>
-                </TextBox>
-
-                <Button Command="{Binding SaveExamCommand}" Style="{StaticResource PipelineButton}" IsEnabled="{Binding Students.Count}" Background="#10B981" BorderBrush="#059669" Foreground="White" Margin="0,0,10,10" Padding="15,8">
+                <Button Command="{Binding OpenSaveExamModalCommand}" Style="{StaticResource PipelineButton}" IsEnabled="{Binding Students.Count}" Background="#10B981" BorderBrush="#059669" Foreground="White" Margin="0,0,10,10" Padding="15,8">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="💾" Margin="0,0,8,0"/>
                         <TextBlock Text="2. Kaydet" FontWeight="SemiBold"/>
                     </StackPanel>
-                    <Button.ToolTip>Sınav verilerini seçili dersin altına kalıcı olarak kaydeder.</Button.ToolTip>
+                    <Button.ToolTip>Sınav verilerini seçili derse kaydet (Ctrl+S)</Button.ToolTip>
                 </Button>
                 
                 <!-- Save Status Indicator -->

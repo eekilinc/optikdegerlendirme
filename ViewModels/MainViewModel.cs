@@ -31,6 +31,7 @@ namespace OptikFormApp.ViewModels
         private readonly JsonDataService _jsonDataService;
         private readonly KeyboardShortcutService _shortcutService;
         private readonly ProgressService _progressService;
+        private readonly VersionCheckService _versionCheckService;
         private readonly ItemAnalysisService _itemAnalysisService;
         private readonly SuccessPredictionService _successPredictionService;
         private readonly VersionService _versionService;
@@ -83,11 +84,16 @@ namespace OptikFormApp.ViewModels
         private string? _selectedBookletFilter;
         private int? _minCorrectFilter;
         private int? _maxWrongFilter;
+        private string _updateStatus = "Güncelleme kontrolü yapılmadı";
+        private bool _isCheckingForUpdate;
+        private bool _hasUpdateAvailable;
+        private string _latestVersion = "";
         private string _selectedSortColumn = "Score";
         private bool _isSortDescending = true;
         private bool _isAdvancedFilterOpen;
         private bool _isItemAnalysisOpen;
         private bool _isSuccessPredictionOpen;
+        private bool _isSaveExamModalOpen;
         
         private bool _isGeneralConfigOpen;
         private bool _hasUnsavedData;
@@ -121,6 +127,7 @@ namespace OptikFormApp.ViewModels
             _itemAnalysisService = new ItemAnalysisService();
             _successPredictionService = new SuccessPredictionService();
             _versionService = new VersionService();
+            _versionCheckService = new VersionCheckService();
 
             // Undo/Redo event handlers
             _undoRedoManager.CanUndoChanged += (s, e) => { OnPropertyChanged(nameof(CanUndo)); OnPropertyChanged(nameof(UndoDescription)); };
@@ -245,6 +252,45 @@ namespace OptikFormApp.ViewModels
                     FileName = "https://github.com/eekilinc",
                     UseShellExecute = true
                 });
+            });
+
+            // Version Check Command
+            CheckForUpdatesCommand = new AsyncRelayCommand(async _ => {
+                IsCheckingForUpdate = true;
+                UpdateStatus = "Kontrol ediliyor...";
+                try
+                {
+                    var result = await _versionCheckService.CheckForUpdateAsync(CurrentVersion);
+                    if (!string.IsNullOrEmpty(result.ErrorMessage))
+                    {
+                        UpdateStatus = $"Hata: {result.ErrorMessage}";
+                        HasUpdateAvailable = false;
+                    }
+                    else
+                    {
+                        HasUpdateAvailable = result.HasUpdate;
+                        LatestVersion = result.LatestVersion;
+                        UpdateStatus = result.StatusText;
+                        
+                        if (result.HasUpdate)
+                        {
+                            AddToLog($"Yeni sürüm mevcut: {result.LatestVersion}", LogLevel.Warning);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    UpdateStatus = "Kontrol hatası";
+                    AddToLog($"Güncelleme kontrolü hatası: {ex.Message}", LogLevel.Error);
+                }
+                finally
+                {
+                    IsCheckingForUpdate = false;
+                }
+            });
+
+            OpenReleasesPageCommand = new RelayCommand(_ => {
+                _versionCheckService.OpenReleasesPage();
             });
             OpenUISettingsCommand = new RelayCommand(_ => IsUISettingsOpen = true);
             CloseUISettingsCommand = new RelayCommand(_ => IsUISettingsOpen = false);
@@ -412,8 +458,23 @@ namespace OptikFormApp.ViewModels
                 }
             });
             SaveExamCommand = new AsyncRelayCommand(async _ => {
+                // Yeni modal'ı aç
+                IsSaveExamModalOpen = true;
+            });
+
+            OpenSaveExamModalCommand = new RelayCommand(_ => {
+                IsSaveExamModalOpen = true;
+            });
+
+            CloseSaveExamModalCommand = new RelayCommand(_ => {
+                IsSaveExamModalOpen = false;
+            });
+
+            ConfirmSaveExamCommand = new AsyncRelayCommand(async _ => {
                 string title = string.IsNullOrWhiteSpace(NewExamName) ? $"{DateTime.Now:dd.MM.yyyy} Sınavı" : NewExamName;
                 await SaveCurrentExamAsync(title, SelectedExam);
+                IsSaveExamModalOpen = false;
+                NewExamName = ""; // Reset
             });
 
             OpenRenameCourseCommand = new RelayCommand(obj => {
@@ -823,6 +884,11 @@ namespace OptikFormApp.ViewModels
             MinCorrectFilter.HasValue ||
             MaxWrongFilter.HasValue;
         
+        public string UpdateStatus { get => _updateStatus; set { _updateStatus = value; OnPropertyChanged(); } }
+        public bool IsCheckingForUpdate { get => _isCheckingForUpdate; set { _isCheckingForUpdate = value; OnPropertyChanged(); } }
+        public bool HasUpdateAvailable { get => _hasUpdateAvailable; set { _hasUpdateAvailable = value; OnPropertyChanged(); } }
+        public string LatestVersion { get => _latestVersion; set { _latestVersion = value; OnPropertyChanged(); } }
+
         public string ActiveFiltersSummary
         {
             get
@@ -1042,12 +1108,28 @@ namespace OptikFormApp.ViewModels
         public ICommand SelectFolderCommand { get; set; }
         public ICommand CloseAlertCommand { get; set; }
         public ICommand OpenAboutCommand { get; set; }
+        public ICommand OpenGitHubCommand { get; set; }
+        public ICommand CheckForUpdatesCommand { get; set; }
+        public ICommand OpenReleasesPageCommand { get; set; }
         public ICommand CloseAboutCommand { get; set; }
         public ICommand ShowShortcutsCommand { get; set; }
         public ICommand CloseShortcutsCommand { get; set; }
         public ICommand ExportGradeListCommand { get; set; }
         public ICommand OpenUISettingsCommand { get; set; }
         public ICommand CloseUISettingsCommand { get; set; }
+        public bool IsSaveExamModalOpen
+        {
+            get => _isSaveExamModalOpen;
+            set
+            {
+                _isSaveExamModalOpen = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ICommand OpenSaveExamModalCommand { get; set; }
+        public ICommand CloseSaveExamModalCommand { get; set; }
+        public ICommand ConfirmSaveExamCommand { get; set; }
         public ICommand OpenGeneralConfigCommand { get; set; }
         public ICommand CloseGeneralConfigCommand { get; set; }
         public ICommand ExitCommand { get; set; }
@@ -1063,7 +1145,6 @@ namespace OptikFormApp.ViewModels
         public ICommand SaveRenameCommand { get; set; }
         public ICommand UndoCommand { get; set; }
         public ICommand RedoCommand { get; set; }
-        public ICommand OpenGitHubCommand { get; set; }
 
         // Template Manager Properties and Commands
         public bool IsTemplateManagerOpen { get; set; }
@@ -1289,7 +1370,7 @@ namespace OptikFormApp.ViewModels
                 WrongDeductionFactor = _wrongDeductionFactor,
                 ThemeIndex = _themeIndex,
                 LayoutIndex = _layoutIndex,
-                FontSize = _fontSize
+                FontSize = (int)_fontSize
             });
         }
 

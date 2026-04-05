@@ -13,7 +13,12 @@ namespace OptikFormApp.Services
 
         public TemplateService()
         {
-            _templatesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates");
+            // Program Files dizinine yazma izni olmayabileceği için AppData'ya kaydet
+            var appDataPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "OptikDegerlendirme");
+            
+            _templatesPath = Path.Combine(appDataPath, "Templates");
             if (!Directory.Exists(_templatesPath))
                 Directory.CreateDirectory(_templatesPath);
         }
@@ -36,48 +41,56 @@ namespace OptikFormApp.Services
             public string SchoolName { get; set; } = "Okul Adı";
         }
 
-        public void SaveTemplate(ExamTemplate template)
+        public async Task SaveTemplateAsync(ExamTemplate template)
         {
             template.UpdatedAt = DateTime.Now;
             var filePath = Path.Combine(_templatesPath, $"{template.Id}.json");
             var json = JsonSerializer.Serialize(template, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(filePath, json);
+            await File.WriteAllTextAsync(filePath, json);
         }
 
-        public ExamTemplate? LoadTemplate(string id)
+        public async Task<ExamTemplate?> LoadTemplateAsync(string id)
         {
             var filePath = Path.Combine(_templatesPath, $"{id}.json");
             if (!File.Exists(filePath)) return null;
             
-            var json = File.ReadAllText(filePath);
+            var json = await File.ReadAllTextAsync(filePath);
             return JsonSerializer.Deserialize<ExamTemplate>(json);
         }
 
-        public void DeleteTemplate(string id)
+        public async Task DeleteTemplateAsync(string id)
         {
             var filePath = Path.Combine(_templatesPath, $"{id}.json");
             if (File.Exists(filePath))
-                File.Delete(filePath);
+            {
+                await Task.Run(() => File.Delete(filePath));
+            }
         }
 
-        public List<ExamTemplate> GetAllTemplates()
+        public async Task<List<ExamTemplate>> GetAllTemplatesAsync()
         {
-            var templates = new List<ExamTemplate>();
-            var files = Directory.GetFiles(_templatesPath, "*.json");
-            
-            foreach (var file in files)
+            if (!Directory.Exists(_templatesPath))
+                return new List<ExamTemplate>();
+
+            return await Task.Run(() =>
             {
-                try
+                var templates = new List<ExamTemplate>();
+                foreach (var file in Directory.GetFiles(_templatesPath, "*.json"))
                 {
-                    var json = File.ReadAllText(file);
-                    var template = JsonSerializer.Deserialize<ExamTemplate>(json);
-                    if (template != null)
-                        templates.Add(template);
+                    try
+                    {
+                        var json = File.ReadAllText(file);
+                        var template = JsonSerializer.Deserialize<ExamTemplate>(json);
+                        if (template != null)
+                            templates.Add(template);
+                    }
+                    catch
+                    {
+                        // Ignore invalid template files
+                    }
                 }
-                catch { /* Skip invalid files */ }
-            }
-            
-            return templates.OrderByDescending(t => t.UpdatedAt).ToList();
+                return templates.OrderByDescending(t => t.UpdatedAt).ToList();
+            });
         }
 
         public ExamTemplate CreateFromCurrent(
@@ -106,6 +119,53 @@ namespace OptikFormApp.Services
                 WrongDeductionFactor = wrongDeductionFactor,
                 SchoolName = schoolName
             };
+        }
+
+        public void SaveTemplate(ExamTemplate template)
+        {
+            template.UpdatedAt = DateTime.Now;
+            var filePath = Path.Combine(_templatesPath, $"{template.Id}.json");
+            var json = JsonSerializer.Serialize(template, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(filePath, json);
+        }
+
+        public ExamTemplate? LoadTemplate(string id)
+        {
+            var filePath = Path.Combine(_templatesPath, $"{id}.json");
+            if (!File.Exists(filePath)) return null;
+            
+            var json = File.ReadAllText(filePath);
+            return JsonSerializer.Deserialize<ExamTemplate>(json);
+        }
+
+        public void DeleteTemplate(string id)
+        {
+            var filePath = Path.Combine(_templatesPath, $"{id}.json");
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+        }
+
+        public List<ExamTemplate> GetAllTemplates()
+        {
+            if (!Directory.Exists(_templatesPath))
+                return new List<ExamTemplate>();
+
+            var templates = new List<ExamTemplate>();
+            foreach (var file in Directory.GetFiles(_templatesPath, "*.json"))
+            {
+                try
+                {
+                    var json = File.ReadAllText(file);
+                    var template = JsonSerializer.Deserialize<ExamTemplate>(json);
+                    if (template != null)
+                        templates.Add(template);
+                }
+                catch
+                {
+                    // Ignore invalid template files
+                }
+            }
+            return templates.OrderByDescending(t => t.UpdatedAt).ToList();
         }
 
         public void ExportTemplate(string id, string exportPath)

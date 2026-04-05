@@ -3,40 +3,107 @@ using System.IO;
 using System.Text.Json;
 using OptikFormApp.Models;
 
-namespace OptikFormApp.Services
+namespace OptikFormApp.Services;
+
+public class AppSettingsService
 {
-    public class AppSettingsService
+    private static readonly string SettingsDir = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "OptikFormApp");
+
+    private static readonly string SettingsPath = Path.Combine(SettingsDir, "settings.json");
+
+    private static AppSettings? _cachedSettings;
+
+    public async Task<AppSettings> LoadAsync()
     {
-        private static readonly string SettingsDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "OptikFormApp");
+        if (_cachedSettings != null)
+            return _cachedSettings;
 
-        private static readonly string SettingsPath = Path.Combine(SettingsDir, "settings.json");
-
-        public AppSettings Load()
+        try
         {
-            try
-            {
-                if (File.Exists(SettingsPath))
-                {
-                    string json = File.ReadAllText(SettingsPath);
-                    return JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
-                }
-            }
-            catch { /* İlk çalışmada veya bozuk dosyada varsayılanları kullan */ }
+            Directory.CreateDirectory(SettingsDir);
 
-            return new AppSettings();
+            if (File.Exists(SettingsPath))
+            {
+                var json = await File.ReadAllTextAsync(SettingsPath);
+                _cachedSettings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+            }
+            else
+            {
+                _cachedSettings = new AppSettings();
+                await SaveAsync(_cachedSettings);
+            }
+        }
+        catch (Exception)
+        {
+            _cachedSettings = new AppSettings();
         }
 
-        public void Save(AppSettings settings)
+        return _cachedSettings;
+    }
+
+    public async Task SaveAsync(AppSettings settings)
+    {
+        try
         {
-            try
-            {
-                Directory.CreateDirectory(SettingsDir);
-                string json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(SettingsPath, json);
-            }
-            catch { /* Sessizce yoksay */ }
+            Directory.CreateDirectory(SettingsDir);
+            var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+            await File.WriteAllTextAsync(SettingsPath, json);
+            _cachedSettings = settings;
         }
+        catch (Exception)
+        {
+            // Log error here
+        }
+    }
+
+    public void Save(AppSettings settings)
+    {
+        try
+        {
+            Directory.CreateDirectory(SettingsDir);
+            var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(SettingsPath, json);
+            _cachedSettings = settings;
+        }
+        catch (Exception)
+        {
+            // Log error here
+        }
+    }
+
+    public AppSettings Load()
+    {
+        if (_cachedSettings != null)
+            return _cachedSettings;
+
+        try
+        {
+            Directory.CreateDirectory(SettingsDir);
+
+            if (File.Exists(SettingsPath))
+            {
+                var json = File.ReadAllText(SettingsPath);
+                _cachedSettings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+            }
+            else
+            {
+                _cachedSettings = new AppSettings();
+                Save(_cachedSettings);
+            }
+        }
+        catch (Exception)
+        {
+            _cachedSettings = new AppSettings();
+        }
+
+        return _cachedSettings;
+    }
+
+    public void ResetToDefaults()
+    {
+        _cachedSettings = new AppSettings();
+        Save(_cachedSettings);
     }
 }

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="OptikFormApp.Core/OptikFormApp.Core.csproj" />
+  <Project Path="OptikFormApp.csproj" />
+</Solution>
