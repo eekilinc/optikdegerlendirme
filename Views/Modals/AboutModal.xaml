@@ -4,44 +4,31 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="700" d:DesignWidth="500">
+             d:DesignHeight="500" d:DesignWidth="480">
     
     <Grid Visibility="{Binding IsAboutOpen, Converter={StaticResource BoolToVis}}" 
           Background="#CC000000">
         
-        <!-- Modern Glass Modal -->
-        <Border Width="700" 
+        <!-- Compact Professional Modal -->
+        <Border Width="450" 
+                MaxHeight="520"
                 VerticalAlignment="Center" 
                 HorizontalAlignment="Center"
-                CornerRadius="32"
+                CornerRadius="16"
                 Padding="0"
                 Margin="20">
             <Border.Style>
                 <Style TargetType="Border">
-                    <Setter Property="Background">
-                        <Setter.Value>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#F8FAFC" Offset="0"/>
-                                <GradientStop Color="#F1F5F9" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Setter.Value>
-                    </Setter>
+                    <Setter Property="Background" Value="#FFFFFF"/>
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#1E293B" Offset="0"/>
-                                        <GradientStop Color="#0F172A" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Setter.Value>
-                            </Setter>
+                            <Setter Property="Background" Value="#1E293B"/>
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
             </Border.Style>
             <Border.Effect>
-                <DropShadowEffect Color="Black" Opacity="0.4" BlurRadius="80" ShadowDepth="30"/>
+                <DropShadowEffect Color="Black" Opacity="0.3" BlurRadius="40" ShadowDepth="15"/>
             </Border.Effect>
             
             <Grid>
@@ -51,365 +38,390 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 
-                <!-- Modern Clean Header -->
+                <!-- Compact Header with Logo -->
                 <Border Grid.Row="0" 
-                        CornerRadius="24,24,0,0" 
-                        Height="220">
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                            <GradientStop Color="#3B82F6" Offset="0"/>
-                            <GradientStop Color="#1D4ED8" Offset="1"/>
-                        </LinearGradientBrush>
-                    </Border.Background>
-                    
-                    <!-- Large Logo Container -->
-                    <Border Width="200" 
-                            Height="200" 
-                            CornerRadius="30" 
-                            Background="White" 
-                            VerticalAlignment="Bottom" 
-                            Margin="0,0,0,-100">
-                        <Border.Effect>
-                            <DropShadowEffect Color="Black" Opacity="0.3" BlurRadius="30" ShadowDepth="12"/>
-                        </Border.Effect>
-                        <Image Source="/Assets/app_logo.png" Stretch="Uniform" Margin="15"/>
-                    </Border>
+                        Background="#3B82F6"
+                        CornerRadius="16,16,0,0" 
+                        Height="70"
+                        Padding="20,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <!-- Small Logo -->
+                        <Border Grid.Column="0" 
+                                Width="48" 
+                                Height="48" 
+                                CornerRadius="10" 
+                                Background="White">
+                            <Image Source="/Assets/app_logo.png" Stretch="Uniform" Margin="6"/>
+                        </Border>
+                        
+                        <!-- App Info -->
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
+                            <TextBlock Text="Optik Değerlendirme" 
+                                       FontSize="18" 
+                                       FontWeight="Bold" 
+                                       Foreground="White"/>
+                            <TextBlock Text="{Binding CurrentVersion}" 
+                                       FontSize="12" 
+                                       Opacity="0.9"
+                                       Foreground="White"/>
+                        </StackPanel>
+                    </Grid>
                 </Border>
                 
-                <!-- Responsive Content -->
-                <StackPanel Grid.Row="1" Margin="50,120,50,30">
-                    <!-- App Name -->
-                    <TextBlock Text="Optik Değerlendirme" 
-                               FontSize="32" 
-                               FontWeight="Bold" 
-                               HorizontalAlignment="Center"
-                               Margin="0,0,0,8">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="#1E293B"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                        <Setter Property="Foreground" Value="#F8FAFC"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                <!-- Tab Content -->
+                <TabControl Grid.Row="1" 
+                            Margin="0"
+                            BorderThickness="0"
+                            Background="Transparent">
+                    <TabControl.Resources>
+                        <Style TargetType="TabItem">
+                            <Setter Property="Height" Value="36"/>
+                            <Setter Property="FontSize" Value="12"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Padding" Value="16,8"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TabControl.Resources>
                     
-                    <!-- Version Badge -->
-                    <Border CornerRadius="20" 
-                            Padding="20,6" 
-                            HorizontalAlignment="Center" 
-                            Margin="0,0,0,20">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                <GradientStop Color="#3B82F6" Offset="0"/>
-                                <GradientStop Color="#1D4ED8" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <TextBlock Text="{Binding CurrentVersion}" 
-                                   FontSize="14" 
-                                   FontWeight="SemiBold" 
-                                   Foreground="White"/>
-                    </Border>
-                    
-                    <!-- Update Check Section -->
-                    <Border CornerRadius="12" 
-                            Padding="16,12" 
-                            Margin="0,0,0,20"
-                            BorderThickness="1">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background" Value="#F0F9FF"/>
-                                <Setter Property="BorderBrush" Value="#3B82F6"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding HasUpdateAvailable}" Value="True">
-                                        <Setter Property="Background" Value="#FEF3C7"/>
-                                        <Setter Property="BorderBrush" Value="#F59E0B"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                        <Setter Property="Background" Value="#1E3A5F"/>
-                                        <Setter Property="BorderBrush" Value="#3B82F6"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                        <StackPanel>
-                            <!-- Status Text -->
-                            <TextBlock Text="{Binding UpdateStatus}" 
-                                       FontSize="14"
-                                       TextAlignment="Center"
-                                       Margin="0,0,0,10">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="#3B82F6"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding HasUpdateAvailable}" Value="True">
-                                                <Setter Property="Foreground" Value="#F59E0B"/>
-                                                <Setter Property="FontWeight" Value="SemiBold"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                                <Setter Property="Foreground" Value="#60A5FA"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            
-                            <!-- Check Button -->
-                            <Button Command="{Binding CheckForUpdatesCommand}"
-                                    IsEnabled="{Binding IsCheckingForUpdate, Converter={StaticResource InverseBoolConverter}}"
-                                    Padding="16,8"
-                                    FontSize="12"
-                                    FontWeight="SemiBold"
-                                    Cursor="Hand">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Background" Value="#3B82F6"/>
-                                        <Setter Property="Foreground" Value="White"/>
-                                        <Setter Property="BorderThickness" Value="0"/>
-                                        <Setter Property="Content" Value="🔍 Güncelleme Kontrol Et"/>
-                                        <Setter Property="FontSize" Value="14"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsCheckingForUpdate}" Value="True">
-                                                <Setter Property="Content" Value="⏳ Kontrol ediliyor..."/>
-                                                <Setter Property="Opacity" Value="0.7"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding HasUpdateAvailable}" Value="True">
-                                                <Setter Property="Background" Value="#F59E0B"/>
-                                                <Setter Property="Content" Value="📥 Yeni Sürümü İndir"/>
-                                                <Setter Property="FontSize" Value="18"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                        </StackPanel>
-                    </Border>
-                    
-                    <!-- Clean Description -->
-                    <TextBlock Text="AĞLASUN MYO için geliştirilmiş modern ve hızlı optik sınav değerlendirme platformu. Enterprise seviyesinde performans ve kullanıcı dostu arayüz." 
-                               FontSize="16" 
-                               TextAlignment="Center" 
-                               TextWrapping="Wrap" 
-                               LineHeight="28"
-                               Margin="0,0,0,25">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="#475569"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                        <Setter Property="Foreground" Value="#94A3B8"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                    
-                    <!-- Simple Features -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,25">
-                        <Border CornerRadius="12" Padding="16,8" Margin="0,0,8,0">
-                            <Border.Style>
-                                <Style TargetType="Border">
-                                    <Setter Property="Background" Value="#F1F5F9"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                            <Setter Property="Background" Value="#334155"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <TextBlock Text="⚡ Ultra Hızlı" FontSize="14" FontWeight="SemiBold">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="#3B82F6"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                                <Setter Property="Foreground" Value="#60A5FA"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Border>
-                        
-                        <Border CornerRadius="12" Padding="16,8" Margin="0,0,8,0">
-                            <Border.Style>
-                                <Style TargetType="Border">
-                                    <Setter Property="Background" Value="#F1F5F9"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                            <Setter Property="Background" Value="#334155"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <TextBlock Text="🔒 Güvenli" FontSize="14" FontWeight="SemiBold">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="#10B981"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                                <Setter Property="Foreground" Value="#34D399"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Border>
-                        
-                        <Border CornerRadius="12" Padding="16,8">
-                            <Border.Style>
-                                <Style TargetType="Border">
-                                    <Setter Property="Background" Value="#F1F5F9"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                            <Setter Property="Background" Value="#334155"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <TextBlock Text="📊 Analitik" FontSize="14" FontWeight="SemiBold">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="#F59E0B"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                                <Setter Property="Foreground" Value="#FCD34D"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Border>
-                    </StackPanel>
-                    
-                    <!-- Developer Card -->
-                    <Border CornerRadius="16" Padding="24,20" Margin="0,0,0,20">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background" Value="#F8FAFC"/>
-                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
-                                <Setter Property="BorderThickness" Value="1"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                        <Setter Property="Background" Value="#1E293B"/>
-                                        <Setter Property="BorderBrush" Value="#475569"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                        <StackPanel>
-                            <TextBlock Text="👨‍💻 Geliştirici" 
-                                       FontSize="13" 
-                                       FontWeight="Bold" 
-                                       HorizontalAlignment="Center" 
-                                       Margin="0,0,0,8">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="#64748B"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                                <Setter Property="Foreground" Value="#94A3B8"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <TextBlock Text="Ekrem KILINÇ" 
-                                       FontSize="20" 
-                                       FontWeight="Bold" 
-                                       HorizontalAlignment="Center"
-                                       Margin="0,0,0,4">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="#3B82F6"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                                <Setter Property="Foreground" Value="#60A5FA"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <TextBlock Text="Full Stack Developer | .NET Expert" 
-                                       FontSize="14" 
-                                       HorizontalAlignment="Center" 
-                                       TextAlignment="Center"
-                                       Margin="0,0,0,8">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="#64748B"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                                <Setter Property="Foreground" Value="#94A3B8"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            
-                            <!-- Simple Social Links -->
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Button Background="#24292E" BorderThickness="0" Cursor="Hand" 
-                                        Padding="10,6" Margin="0,0,8,0">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
-                                                <Path Data="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" 
-                                                  Fill="White" Stretch="Uniform" Width="14" Height="14"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
+                    <!-- About Tab -->
+                    <TabItem Header="ℹ️ Hakkında">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+                            <StackPanel>
+                                <TextBlock Text="Modern optik sınav değerlendirme platformu. AĞLASUN MYO için geliştirilmiş, enterprise seviyesinde performans sunar." 
+                                           FontSize="13" 
+                                           TextWrapping="Wrap" 
+                                           LineHeight="20"
+                                           Margin="0,0,0,16">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#475569"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#CBD5E1"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                                 
-                                <Button Background="#0077B5" BorderThickness="0" Cursor="Hand" 
-                                        Padding="10,6">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
-                                                <Path Data="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" 
-                                                  Fill="White" Stretch="Uniform" Width="14" Height="14"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
+                                <!-- Compact Features -->
+                                <UniformGrid Columns="2" Margin="0,0,0,16">
+                                    <Border CornerRadius="8" Padding="10,8" Margin="0,0,4,4">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#EFF6FF"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="⚡ Ultra Hızlı" FontSize="12">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#3B82F6"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                            <Setter Property="Foreground" Value="#60A5FA"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                    
+                                    <Border CornerRadius="8" Padding="10,8" Margin="4,0,0,4">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#F0FDF4"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                        <Setter Property="Background" Value="#14532D"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="🔒 Güvenli" FontSize="12">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#10B981"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                            <Setter Property="Foreground" Value="#34D399"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                    
+                                    <Border CornerRadius="8" Padding="10,8" Margin="0,4,4,0">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#FFFBEB"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                        <Setter Property="Background" Value="#713F12"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="📊 Analitik" FontSize="12">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#F59E0B"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                            <Setter Property="Foreground" Value="#FCD34D"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                    
+                                    <Border CornerRadius="8" Padding="10,8" Margin="4,4,0,0">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#F5F3FF"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                        <Setter Property="Background" Value="#581C87"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="💾 SQLite" FontSize="12">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#8B5CF6"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                            <Setter Property="Foreground" Value="#A78BFA"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                </UniformGrid>
                             </StackPanel>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                    
+                    <!-- Update Tab -->
+                    <TabItem Header="🔄 Güncelleme">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+                            <StackPanel>
+                                <Border CornerRadius="10" 
+                                        Padding="14" 
+                                        Margin="0,0,0,14"
+                                        BorderThickness="1">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#F8FAFC"/>
+                                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasUpdateAvailable}" Value="True">
+                                                    <Setter Property="Background" Value="#FFFBEB"/>
+                                                    <Setter Property="BorderBrush" Value="#FCD34D"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Background" Value="#334155"/>
+                                                    <Setter Property="BorderBrush" Value="#475569"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding UpdateStatus}" 
+                                                   FontSize="13"
+                                                   TextAlignment="Center"
+                                                   Margin="0,0,0,10">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#64748B"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasUpdateAvailable}" Value="True">
+                                                            <Setter Property="Foreground" Value="#D97706"/>
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                            <Setter Property="Foreground" Value="#94A3B8"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        
+                                        <Button Command="{Binding CheckForUpdatesCommand}"
+                                                IsEnabled="{Binding IsCheckingForUpdate, Converter={StaticResource InverseBoolConverter}}"
+                                                Padding="12,8"
+                                                FontSize="12"
+                                                FontWeight="SemiBold"
+                                                Cursor="Hand">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Background" Value="#3B82F6"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                    <Setter Property="Content" Value="🔍 Kontrol Et"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsCheckingForUpdate}" Value="True">
+                                                            <Setter Property="Content" Value="⏳ Kontrol ediliyor..."/>
+                                                            <Setter Property="Opacity" Value="0.7"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding HasUpdateAvailable}" Value="True">
+                                                            <Setter Property="Background" Value="#F59E0B"/>
+                                                            <Setter Property="Content" Value="📥 İndir"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+                                
+                                <TextBlock Text="GitHub Releases üzerinden otomatik güncelleme kontrolü. Yeni sürümler için bildirim alın." 
+                                           FontSize="11" 
+                                           TextWrapping="Wrap"
+                                           Opacity="0.7">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#64748B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                    
+                    <!-- Developer Tab -->
+                    <TabItem Header="👤 Geliştirici">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+                            <StackPanel HorizontalAlignment="Center">
+                                <Border Width="64" 
+                                        Height="64" 
+                                        CornerRadius="32" 
+                                        Background="#3B82F6"
+                                        Margin="0,0,0,12">
+                                    <TextBlock Text="EK" 
+                                               FontSize="24" 
+                                               FontWeight="Bold" 
+                                               Foreground="White"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                                
+                                <TextBlock Text="Ekrem KILINÇ" 
+                                           FontSize="16" 
+                                           FontWeight="Bold" 
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,4">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                
+                                <TextBlock Text="Full Stack Developer | .NET Expert" 
+                                           FontSize="12" 
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,4"
+                                           Opacity="0.7">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#64748B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                
+                                <TextBlock Text="AĞLASUN MYO" 
+                                           FontSize="11" 
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,16"
+                                           Opacity="0.6">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#64748B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                </TabControl>
                 
-                <!-- Clean Close Button -->
+                <!-- Close Button -->
                 <Button Grid.Row="2" 
                         Command="{Binding CloseAboutCommand}" 
-                        Background="#3B82F6"
-                        Foreground="White"
+                        Background="Transparent"
                         HorizontalAlignment="Center" 
-                        Margin="0,0,0,30"
-                        Padding="80,16"
-                        FontSize="16" 
+                        Margin="0,8,0,16"
+                        Padding="40,10"
+                        FontSize="13" 
                         FontWeight="SemiBold"
-                        BorderThickness="0"
+                        BorderThickness="1"
                         Cursor="Hand">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                            <Setter Property="Foreground" Value="#64748B"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                    <Setter Property="BorderBrush" Value="#475569"/>
+                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                </DataTrigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border Background="{TemplateBinding Background}" 
-                                    CornerRadius="12"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="8"
                                     Padding="{TemplateBinding Padding}">
                                 <ContentPresenter HorizontalAlignment="Center" 
                                                   VerticalAlignment="Center"/>
                             </Border>
                         </ControlTemplate>
                     </Button.Template>
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#2563EB"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
                     <Button.Content>
                         <TextBlock Text="Kapat"/>
                     </Button.Content>
