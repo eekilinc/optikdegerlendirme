@@ -1,4 +1,5 @@
 using System;
+using System.Windows;
 using System.Windows.Data;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -58,6 +59,11 @@ namespace OptikFormApp.ViewModels
         private bool _isAboutOpen;
         private bool _isUISettingsOpen;
         private bool _isRenameModalOpen;
+        private bool _isConfirmModalOpen;
+        private string _confirmModalTitle = "";
+        private string _confirmModalMessage = "";
+        private string _confirmButtonText = "Sil";
+        private System.Action? _onConfirmAction;
         private bool _isShortcutSettingsOpen;
         private string _renameModalTitle = "";
         private string _renameInput1 = "";
@@ -94,6 +100,19 @@ namespace OptikFormApp.ViewModels
         private bool _isItemAnalysisOpen;
         private bool _isSuccessPredictionOpen;
         private bool _isSaveExamModalOpen;
+        private bool _isDetailedAnswerKeyEditorOpen;
+        private bool _isBulkAnswerEntryOpen;
+        private AnswerKeyModel? _selectedAnswerKeyForEdit;
+        private string _bulkAnswerEntryText = "";
+        private string _bulkAnswerPreview = "";
+        
+        // Inline course management fields
+        private bool _isAddCourseInlineOpen = false;
+        private string _newCourseCodeInline = "";
+        private string _newCourseNameInline = "";
+        
+        // Separate field for SaveExamModal dropdown (to avoid affecting sidebar)
+        private Course? _selectedCourseForSave;
         
         private bool _isGeneralConfigOpen;
         private bool _hasUnsavedData;
@@ -443,17 +462,53 @@ namespace OptikFormApp.ViewModels
             });
             DeleteCourseCommand = new AsyncRelayCommand(async obj => {
                 if (obj is Course c) {
-                    await _dbService.DeleteCourseAsync(c.Id);
-                    await LoadCoursesAsync();
-                    AddToLog($"'{c.Name}' dersi silindi.", LogLevel.Warning);
+                    // Sınav var mı kontrol et
+                    var exams = await _dbService.GetExamsForCourseAsync(c.Id);
+                    if (exams.Any()) {
+                        // Modern onay modalını göster
+                        ConfirmModalTitle = "Ders Silme Onayı";
+                        ConfirmModalMessage = $"'{c.Name}' dersine ait {exams.Count()} sınav bulunuyor.\n\nDersi silerseniz tüm sınavlar da silinecek.\n\nSilmek istediğinize emin misiniz?";
+                        ConfirmButtonText = "Sil";
+                        _onConfirmAction = async () => {
+                            await ExecuteDeleteCourseAsync(c, exams);
+                        };
+                        IsConfirmModalOpen = true;
+                        return;
+                    }
+                    
+                    // Sınav yoksa direkt sil
+                    await ExecuteDeleteCourseAsync(c, exams);
                 }
             });
             DeleteExamCommand = new AsyncRelayCommand(async obj => {
                 if (obj is ExamEntry e) {
                     await _dbService.DeleteExamAsync(e.Id);
-                    if (SelectedCourse != null) await LoadExamsForCourseAsync(SelectedCourse.Id);
-                    SelectedExam = null;
-                    Students.Clear(); Statistics.Clear(); ValidationIssues.Clear(); AccuracyData.Clear(); ScoreDistData.Clear();
+                    
+                    // Silinen sınavı CourseExams koleksiyonundan da kaldır
+                    var examToRemove = CourseExams.FirstOrDefault(ex => ex.Id == e.Id);
+                    if (examToRemove != null)
+                        CourseExams.Remove(examToRemove);
+                    
+                    // Eğer silinen sınav seçiliyse veya başka sınav seçili değilse, tüm verileri temizle
+                    if (SelectedExam?.Id == e.Id || SelectedExam == null)
+                    {
+                        SelectedExam = null;
+                        Students.Clear();
+                        AnswerKeys.Clear();
+                        QuestionSettings.Clear();
+                        LearningOutcomes.Clear();
+                        Statistics.Clear();
+                        ValidationIssues.Clear();
+                        AccuracyData.Clear();
+                        ScoreDistData.Clear();
+                        HasUnsavedData = false;
+                        StatusMessage = "Sınav silindi. Yeni veri yükleyin.";
+                        
+                        // Varsayılan cevap anahtarını geri ekle
+                        AnswerKeys.Add(new AnswerKeyModel { BookletName = "A", Answers = "" });
+                    }
+                    
+                    OnPropertyChanged(nameof(CourseExams));
                     AddToLog($"'{e.Title}' sınavı silindi.", LogLevel.Warning);
                 }
             });
@@ -464,6 +519,8 @@ namespace OptikFormApp.ViewModels
 
             OpenSaveExamModalCommand = new RelayCommand(_ => {
                 IsSaveExamModalOpen = true;
+                // Initialize with current selected course to avoid null
+                SelectedCourseForSave = SelectedCourse;
             });
 
             CloseSaveExamModalCommand = new RelayCommand(_ => {
@@ -472,9 +529,74 @@ namespace OptikFormApp.ViewModels
 
             ConfirmSaveExamCommand = new AsyncRelayCommand(async _ => {
                 string title = string.IsNullOrWhiteSpace(NewExamName) ? $"{DateTime.Now:dd.MM.yyyy} Sınavı" : NewExamName;
-                await SaveCurrentExamAsync(title, SelectedExam);
+                
+                // Use SelectedCourseForSave for saving, fallback to SelectedCourse if null
+                var courseToUse = SelectedCourseForSave ?? SelectedCourse;
+                if (courseToUse == null)
+                {
+                    ShowToastError("Lütfen bir ders seçin!");
+                    return;
+                }
+                
+                // Pass course directly - DON'T change SelectedCourse to avoid clearing Students
+                await SaveCurrentExamAsync(title, courseToUse, SelectedExam);
+                
                 IsSaveExamModalOpen = false;
                 NewExamName = ""; // Reset
+                SelectedCourseForSave = null; // Reset
+            });
+
+            // Inline Course Management Commands
+            ToggleAddCourseInlineCommand = new RelayCommand(_ => {
+                IsAddCourseInlineOpen = !IsAddCourseInlineOpen;
+                if (!IsAddCourseInlineOpen)
+                {
+                    NewCourseCodeInline = "";
+                    NewCourseNameInline = "";
+                }
+            });
+
+            AddCourseInlineCommand = new AsyncRelayCommand(async _ => {
+                if (string.IsNullOrWhiteSpace(NewCourseNameInline)) {
+                    ShowToastError("Ders adı girmelisiniz!");
+                    return;
+                }
+                var c = new Course { Code = NewCourseCodeInline, Name = NewCourseNameInline };
+                await _dbService.SaveCourseAsync(c);
+                await LoadCoursesAsync();
+                IsAddCourseInlineOpen = false;
+                NewCourseCodeInline = "";
+                NewCourseNameInline = "";
+                ShowToastSuccess($"'{c.Name}' dersi eklendi!");
+                AddToLog($"Yeni ders eklendi: {c.Name}", LogLevel.Success);
+            });
+
+            DeleteSelectedCourseInlineCommand = new AsyncRelayCommand(async _ => {
+                var courseToDelete = SelectedCourseForSave ?? SelectedCourse;
+                if (courseToDelete == null) {
+                    ShowToastError("Silinecek ders seçilmedi!");
+                    return;
+                }
+                
+                // Sınav var mı kontrol et
+                var exams = await _dbService.GetExamsForCourseAsync(courseToDelete.Id);
+                if (exams.Any()) {
+                    // Modern onay modalını göster
+                    ConfirmModalTitle = "Ders Silme Onayı";
+                    ConfirmModalMessage = $"'{courseToDelete.Name}' dersine ait {exams.Count()} sınav bulunuyor.\n\nDersi silerseniz tüm sınavlar da silinecek.\n\nSilmek istediğinize emin misiniz?";
+                    ConfirmButtonText = "Sil";
+                    _onConfirmAction = async () => {
+                        await ExecuteDeleteCourseAsync(courseToDelete, exams);
+                        // Only clear selections if deleted course matches current selections
+                        if (SelectedCourseForSave?.Id == courseToDelete.Id) SelectedCourseForSave = null;
+                    };
+                    IsConfirmModalOpen = true;
+                    return;
+                }
+                
+                // Sınav yoksa direkt sil
+                await ExecuteDeleteCourseAsync(courseToDelete, exams);
+                if (SelectedCourseForSave?.Id == courseToDelete.Id) SelectedCourseForSave = null;
             });
 
             OpenRenameCourseCommand = new RelayCommand(obj => {
@@ -521,6 +643,21 @@ namespace OptikFormApp.ViewModels
                     AddToLog($"Sınav yeniden adlandırıldı: {RenameInput1}", LogLevel.Success);
                 }
                 IsRenameModalOpen = false;
+            });
+
+            // Confirmation Modal Commands
+            CancelConfirmCommand = new RelayCommand(_ => {
+                IsConfirmModalOpen = false;
+                _onConfirmAction = null;
+            });
+            ConfirmActionCommand = new AsyncRelayCommand(async _ => {
+                IsConfirmModalOpen = false;
+                if (_onConfirmAction != null)
+                {
+                    var action = _onConfirmAction;
+                    _onConfirmAction = null;
+                    action();
+                }
             });
 
             ShowShortcutsCommand = new RelayCommand(_ => IsShortcutsOpen = true);
@@ -600,7 +737,6 @@ namespace OptikFormApp.ViewModels
                 }
             });
 
-            // Template Manager Commands
             OpenTemplateManagerCommand = new RelayCommand(_ => {
                 RefreshTemplates();
                 IsTemplateManagerOpen = true;
@@ -854,6 +990,186 @@ namespace OptikFormApp.ViewModels
             });
             CloseSuccessPredictionCommand = new RelayCommand(_ => IsSuccessPredictionOpen = false);
             RunSuccessPredictionCommand = new AsyncRelayCommand(async _ => await RunSuccessPredictionAsync());
+
+            // Detailed Answer Key Editor Commands
+            OpenDetailedAnswerKeyEditorCommand = new RelayCommand(_ => {
+                // Select first answer key if none selected
+                if (SelectedAnswerKeyForEdit == null && AnswerKeys.Count > 0)
+                    SelectedAnswerKeyForEdit = AnswerKeys[0];
+                
+                // Sync details from answers string
+                SelectedAnswerKeyForEdit?.SyncDetailsFromAnswers();
+                
+                IsDetailedAnswerKeyEditorOpen = true;
+                AddToLog("Detaylı cevap anahtarı düzenleyici açıldı.");
+            });
+            
+            // Open detailed editor from BookletSettingsModal
+            OpenDetailedAnswerKeyEditorFromBookletCommand = new RelayCommand(param => {
+                if (param is AnswerKeyModel key)
+                {
+                    SelectedAnswerKeyForEdit = key;
+                    SelectedAnswerKeyForEdit?.SyncDetailsFromAnswers();
+                    IsDetailedAnswerKeyEditorOpen = true;
+                    AddToLog($"Detaylı düzenleyici açıldı: Kitapçık {key.BookletName}");
+                }
+            });
+            
+            CloseDetailedAnswerKeyEditorCommand = new AsyncRelayCommand(async _ => { 
+                // Sync answers from details back to string
+                SelectedAnswerKeyForEdit?.SyncAnswersFromDetails();
+                IsDetailedAnswerKeyEditorOpen = false; 
+                if (Students.Count > 0) { 
+                    await EvaluateAsync(); 
+                    await AutoSaveSelectedExamAsync(); 
+                }
+            });
+            
+            // Add question to answer key
+            AddQuestionToAnswerKeyCommand = new RelayCommand(_ => {
+                if (SelectedAnswerKeyForEdit == null) return;
+                
+                int nextQuestionNumber = SelectedAnswerKeyForEdit.AnswerDetails.Count + 1;
+                SelectedAnswerKeyForEdit.AnswerDetails.Add(new AnswerDetailItem
+                {
+                    QuestionNumber = nextQuestionNumber,
+                    Answer = "A" // Default answer
+                });
+                
+                // Sync to string
+                SelectedAnswerKeyForEdit.SyncAnswersFromDetails();
+                
+                OnPropertyChanged(nameof(SelectedAnswerKeyForEdit));
+                AddToLog($"Yeni soru eklendi: Soru {nextQuestionNumber}");
+            });
+            
+            // Remove last question from answer key
+            RemoveLastQuestionFromAnswerKeyCommand = new RelayCommand(_ => {
+                if (SelectedAnswerKeyForEdit == null || SelectedAnswerKeyForEdit.AnswerDetails.Count == 0) return;
+                
+                var lastItem = SelectedAnswerKeyForEdit.AnswerDetails.Last();
+                SelectedAnswerKeyForEdit.AnswerDetails.Remove(lastItem);
+                
+                // Re-number questions
+                for (int i = 0; i < SelectedAnswerKeyForEdit.AnswerDetails.Count; i++)
+                {
+                    SelectedAnswerKeyForEdit.AnswerDetails[i].QuestionNumber = i + 1;
+                }
+                
+                // Sync to string
+                SelectedAnswerKeyForEdit.SyncAnswersFromDetails();
+                
+                OnPropertyChanged(nameof(SelectedAnswerKeyForEdit));
+                AddToLog($"Son soru silindi: Kalan {SelectedAnswerKeyForEdit.AnswerDetails.Count} soru");
+            });
+            
+            AnalyzeAnswerKeyCommand = new RelayCommand(_ => {
+                if (SelectedAnswerKeyForEdit == null || Students.Count == 0) return;
+                
+                // Calculate statistics for each question
+                foreach (var detail in SelectedAnswerKeyForEdit.AnswerDetails)
+                {
+                    int qIndex = detail.QuestionNumber - 1;
+                    int correct = 0, wrong = 0, empty = 0;
+                    
+                    foreach (var student in Students.Where(s => s.BookletType == SelectedAnswerKeyForEdit.BookletName))
+                    {
+                        if (qIndex < student.QuestionResults.Count)
+                        {
+                            if (student.QuestionResults[qIndex]) correct++;
+                            else if (qIndex < student.Answers.Count && 
+                                     (string.IsNullOrEmpty(student.Answers[qIndex]) || student.Answers[qIndex] == " "))
+                                empty++;
+                            else
+                                wrong++;
+                        }
+                    }
+                    
+                    detail.CorrectCount = correct;
+                    detail.WrongCount = wrong;
+                    detail.EmptyCount = empty;
+                    detail.DifficultyIndex = Students.Count > 0 ? (double)correct / Students.Count : 0;
+                }
+                
+                OnPropertyChanged(nameof(SelectedAnswerKeyForEdit));
+                OnPropertyChanged(nameof(SelectedAnswerKeyStats));
+                AddToLog($"Cevap anahtarı analizi tamamlandı: {SelectedAnswerKeyForEdit.BookletName} kitapçığı");
+                ShowToastSuccess("Cevap anahtarı analizi tamamlandı!");
+            });
+            
+            OpenBulkAnswerEntryCommand = new RelayCommand(_ => {
+                IsBulkAnswerEntryOpen = true;
+            });
+            
+            CloseBulkAnswerEntryCommand = new RelayCommand(_ => {
+                IsBulkAnswerEntryOpen = false;
+                BulkAnswerEntryText = "";
+                BulkAnswerPreview = "";
+            });
+            
+            ApplyBulkAnswerEntryCommand = new RelayCommand(_ => {
+                if (SelectedAnswerKeyForEdit == null || string.IsNullOrWhiteSpace(BulkAnswerEntryText)) return;
+                
+                var lines = BulkAnswerEntryText.Split('\n', '\r')
+                    .Where(l => !string.IsNullOrWhiteSpace(l))
+                    .Select(l => l.Trim())
+                    .ToList();
+                
+                var parsedAnswers = new Dictionary<int, string>();
+                
+                foreach (var line in lines)
+                {
+                    // Parse "1 A" or "5-C" format
+                    var parts = line.Split(' ', '-', '.', ')');
+                    if (parts.Length >= 2)
+                    {
+                        if (int.TryParse(parts[0], out int qNum))
+                        {
+                            var answer = parts[1].ToUpper().Trim();
+                            if (answer.Length > 0 && char.IsLetter(answer[0]))
+                            {
+                                parsedAnswers[qNum] = answer[0].ToString();
+                            }
+                        }
+                    }
+                }
+                
+                // Apply to answer details
+                foreach (var kvp in parsedAnswers)
+                {
+                    var detail = SelectedAnswerKeyForEdit.AnswerDetails.FirstOrDefault(d => d.QuestionNumber == kvp.Key);
+                    if (detail != null)
+                    {
+                        detail.Answer = kvp.Value;
+                    }
+                }
+                
+                // Sync to main answers string
+                SelectedAnswerKeyForEdit.SyncAnswersFromDetails();
+                
+                IsBulkAnswerEntryOpen = false;
+                BulkAnswerEntryText = "";
+                ShowToastSuccess($"{parsedAnswers.Count} cevap uygulandı!");
+                AddToLog($"Toplu cevap girişi: {parsedAnswers.Count} cevap uygulandı.");
+            });
+        }
+
+        private void UpdateBulkPreview()
+        {
+            var lines = BulkAnswerEntryText.Split('\n', '\r')
+                .Where(l => !string.IsNullOrWhiteSpace(l))
+                .Select(l => l.Trim())
+                .ToList();
+            
+            int count = 0;
+            foreach (var line in lines)
+            {
+                var parts = line.Split(' ', '-', '.', ')');
+                if (parts.Length >= 2 && int.TryParse(parts[0], out _))
+                    count++;
+            }
+            
+            BulkAnswerPreview = count > 0 ? $"{count} geçerli giriş algılandı" : "Henüz geçerli giriş yok";
         }
 
         public string SearchText 
@@ -1011,6 +1327,10 @@ namespace OptikFormApp.ViewModels
         private string _newExamName = "";
 
         public bool IsRenameModalOpen { get => _isRenameModalOpen; set { _isRenameModalOpen = value; OnPropertyChanged(); } }
+        public bool IsConfirmModalOpen { get => _isConfirmModalOpen; set { _isConfirmModalOpen = value; OnPropertyChanged(); } }
+        public string ConfirmModalTitle { get => _confirmModalTitle; set { _confirmModalTitle = value; OnPropertyChanged(); } }
+        public string ConfirmModalMessage { get => _confirmModalMessage; set { _confirmModalMessage = value; OnPropertyChanged(); } }
+        public string ConfirmButtonText { get => _confirmButtonText; set { _confirmButtonText = value; OnPropertyChanged(); } }
         public string RenameModalTitle { get => _renameModalTitle; set { _renameModalTitle = value; OnPropertyChanged(); } }
         public string RenameInput1 { get => _renameInput1; set { _renameInput1 = value; OnPropertyChanged(); } }
         public string RenameInput2 { get => _renameInput2; set { _renameInput2 = value; OnPropertyChanged(); } }
@@ -1143,6 +1463,8 @@ namespace OptikFormApp.ViewModels
         public ICommand OpenRenameExamCommand { get; set; }
         public ICommand CloseRenameModalCommand { get; set; }
         public ICommand SaveRenameCommand { get; set; }
+        public ICommand CancelConfirmCommand { get; set; }
+        public ICommand ConfirmActionCommand { get; set; }
         public ICommand UndoCommand { get; set; }
         public ICommand RedoCommand { get; set; }
 
@@ -1189,6 +1511,42 @@ namespace OptikFormApp.ViewModels
         public ICommand OpenSuccessPredictionCommand { get; set; }
         public ICommand CloseSuccessPredictionCommand { get; set; }
         public ICommand RunSuccessPredictionCommand { get; set; }
+
+        // Detailed Answer Key Editor Properties
+        public bool IsDetailedAnswerKeyEditorOpen { get => _isDetailedAnswerKeyEditorOpen; set { _isDetailedAnswerKeyEditorOpen = value; OnPropertyChanged(); } }
+        public bool IsBulkAnswerEntryOpen { get => _isBulkAnswerEntryOpen; set { _isBulkAnswerEntryOpen = value; OnPropertyChanged(); } }
+        public AnswerKeyModel? SelectedAnswerKeyForEdit { get => _selectedAnswerKeyForEdit; set { _selectedAnswerKeyForEdit = value; OnPropertyChanged(); } }
+        public string BulkAnswerEntryText { get => _bulkAnswerEntryText; set { _bulkAnswerEntryText = value; OnPropertyChanged(); UpdateBulkPreview(); } }
+        public string BulkAnswerPreview { get => _bulkAnswerPreview; set { _bulkAnswerPreview = value; OnPropertyChanged(); } }
+        
+        // Inline Course Management Properties
+        public bool IsAddCourseInlineOpen { get => _isAddCourseInlineOpen; set { _isAddCourseInlineOpen = value; OnPropertyChanged(); } }
+        public string NewCourseCodeInline { get => _newCourseCodeInline; set { _newCourseCodeInline = value; OnPropertyChanged(); } }
+        public string NewCourseNameInline { get => _newCourseNameInline; set { _newCourseNameInline = value; OnPropertyChanged(); } }
+        
+        // Separate property for SaveExamModal dropdown (isolated from sidebar)
+        public Course? SelectedCourseForSave { get => _selectedCourseForSave; set { _selectedCourseForSave = value; OnPropertyChanged(); } }
+        
+        // Selected answer key stats for display
+        public string SelectedAnswerKeyStats => SelectedAnswerKeyForEdit?.AnswerDetails?.Count > 0 
+            ? $"{SelectedAnswerKeyForEdit.AnswerDetails.Count} Soru"
+            : "Henüz cevap yok";
+
+        // Detailed Answer Key Editor Commands
+        public ICommand OpenDetailedAnswerKeyEditorCommand { get; set; }
+        public ICommand OpenDetailedAnswerKeyEditorFromBookletCommand { get; set; }
+        public ICommand CloseDetailedAnswerKeyEditorCommand { get; set; }
+        public ICommand AnalyzeAnswerKeyCommand { get; set; }
+        public ICommand AddQuestionToAnswerKeyCommand { get; set; }
+        public ICommand RemoveLastQuestionFromAnswerKeyCommand { get; set; }
+        public ICommand OpenBulkAnswerEntryCommand { get; set; }
+        public ICommand CloseBulkAnswerEntryCommand { get; set; }
+        public ICommand ApplyBulkAnswerEntryCommand { get; set; }
+
+        // Inline Course Management Commands
+        public ICommand ToggleAddCourseInlineCommand { get; set; }
+        public ICommand AddCourseInlineCommand { get; set; }
+        public ICommand DeleteSelectedCourseInlineCommand { get; set; }
 
         // Progress Service
         public ProgressService Progress => _progressService;
@@ -1283,9 +1641,11 @@ namespace OptikFormApp.ViewModels
             }
         }
 
-        public async Task SaveCurrentExamAsync(string title, ExamEntry? existingExam = null)
+        public async Task SaveCurrentExamAsync(string title, Course courseToSave, ExamEntry? existingExam = null)
         {
-            if (SelectedCourse == null)
+            AddToLog($"DEBUG: SaveCurrentExamAsync started - Students.Count: {Students.Count}, CourseToSave: {courseToSave?.Name}", LogLevel.Info);
+            
+            if (courseToSave == null)
             {
                 ShowAlert("Hata", "Lütfen önce bir ders seçin.");
                 return;
@@ -1316,7 +1676,7 @@ namespace OptikFormApp.ViewModels
                     // Insert new exam
                     var exam = new ExamEntry
                     {
-                        CourseId = SelectedCourse.Id,
+                        CourseId = courseToSave.Id,
                         Title = title,
                         Date = DateTime.Now,
                         ConfigJson = JsonSerializer.Serialize(config)
@@ -1324,11 +1684,12 @@ namespace OptikFormApp.ViewModels
                     await _dbService.SaveExamAsync(exam, new List<StudentResult>(Students));
                     AddToLog($"'{title}' sınavı veritabanına kaydedildi.", LogLevel.Success);
                 }
-                await LoadExamsForCourseAsync(SelectedCourse.Id);
+                await LoadExamsForCourseAsync(courseToSave.Id);
                 HasUnsavedData = false;
             }
             catch (Exception ex)
             {
+                AddToLog($"DEBUG: Kaydetme hatası: {ex.Message}\nStack: {ex.StackTrace}", LogLevel.Error);
                 AddToLog($"Kaydetme hatası: {ex.Message}", LogLevel.Error);
                 ShowAlert("Hata", $"Kayıt sırasında hata oluştu: {ex.Message}");
             }
@@ -1357,6 +1718,37 @@ namespace OptikFormApp.ViewModels
             {
                 AddToLog($"Otomatik kaydetme hatası: {ex.Message}", LogLevel.Error);
             }
+        }
+
+        private async Task ExecuteDeleteCourseAsync(Course c, System.Collections.Generic.List<ExamEntry> exams)
+        {
+            // Eğer silinen derse ait seçili sınav varsa, tüm verileri temizle
+            if (SelectedExam != null && exams.Any(e => e.Id == SelectedExam.Id))
+            {
+                SelectedExam = null;
+                Students.Clear();
+                AnswerKeys.Clear();
+                QuestionSettings.Clear();
+                LearningOutcomes.Clear();
+                Statistics.Clear();
+                ValidationIssues.Clear();
+                AccuracyData.Clear();
+                ScoreDistData.Clear();
+                HasUnsavedData = false;
+                StatusMessage = "Ders ve sınavlar silindi. Yeni veri yükleyin.";
+                AnswerKeys.Add(new AnswerKeyModel { BookletName = "A", Answers = "" });
+            }
+            
+            await _dbService.DeleteCourseAsync(c.Id);
+            await LoadCoursesAsync();
+            
+            // Seçili ders silindiyse temizle
+            if (SelectedCourse?.Id == c.Id) {
+                SelectedCourse = null;
+                CourseExams.Clear();
+            }
+            
+            AddToLog($"'{c.Name}' dersi ve {exams.Count()} sınavı silindi.", LogLevel.Warning);
         }
 
         private void SaveSettings()

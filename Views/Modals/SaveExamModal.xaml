@@ -69,24 +69,191 @@
                         </TextBox.Style>
                     </TextBox>
                     
-                    <!-- Course Selection -->
-                    <TextBlock Text="Ders" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextMain}" Margin="0,0,0,6"/>
-                    <ComboBox ItemsSource="{Binding Courses}" 
-                              SelectedItem="{Binding SelectedCourse}" 
-                              Margin="0,0,0,15" 
-                              Padding="12,10" 
-                              FontSize="14">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="📚" Margin="0,0,8,0"/>
-                                    <TextBlock Text="{Binding Code}" FontWeight="SemiBold" Margin="0,0,5,0"/>
-                                    <TextBlock Text="-" Foreground="{DynamicResource TextMuted}" Margin="0,0,5,0"/>
-                                    <TextBlock Text="{Binding Name}"/>
+                    <!-- Course Selection with Add/Remove -->
+                    <Grid Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Ders" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextMain}" Margin="0,0,0,6"/>
+                            <ComboBox ItemsSource="{Binding Courses}" 
+                                      SelectedItem="{Binding SelectedCourseForSave}" 
+                                      Padding="12,10" 
+                                      FontSize="14">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="📚" Margin="0,0,8,0"/>
+                                            <TextBlock Text="{Binding Code}" FontWeight="SemiBold" Margin="0,0,5,0"/>
+                                            <TextBlock Text="-" Foreground="{DynamicResource TextMuted}" Margin="0,0,5,0"/>
+                                            <TextBlock Text="{Binding Name}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                        
+                        <!-- Add Course Button -->
+                        <Button Grid.Column="1" 
+                                Content="➕ Yeni Ders" 
+                                Command="{Binding ToggleAddCourseInlineCommand}"
+                                VerticalAlignment="Bottom"
+                                Margin="8,0,0,0"
+                                Padding="12,10"
+                                Background="#10B981"
+                                Foreground="White"
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                BorderThickness="0"
+                                Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" 
+                                            CornerRadius="8"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                          VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        
+                        <!-- Delete Course Button -->
+                        <Button Grid.Column="2" 
+                                Content="🗑️ Sil" 
+                                Command="{Binding DeleteSelectedCourseInlineCommand}"
+                                VerticalAlignment="Bottom"
+                                Margin="8,0,0,0"
+                                Padding="12,10"
+                                Background="#EF4444"
+                                Foreground="White"
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                BorderThickness="0"
+                                Cursor="Hand"
+                                IsEnabled="{Binding SelectedCourseForSave, Converter={StaticResource NullToBool}}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" 
+                                            CornerRadius="8"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                          VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </Grid>
+                    
+                    <!-- Inline Add Course Form -->
+                    <Border Background="#F0FDF4" 
+                            BorderBrush="#10B981" 
+                            BorderThickness="1" 
+                            CornerRadius="10" 
+                            Padding="15" 
+                            Margin="0,0,0,15"
+                            Visibility="{Binding IsAddCourseInlineOpen, Converter={StaticResource BoolToVis}}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Grid.Row="0" 
+                                       Text="Yeni Ders Ekle" 
+                                       FontSize="13" 
+                                       FontWeight="Bold" 
+                                       Foreground="#065F46"
+                                       Margin="0,0,0,10"/>
+                            
+                            <Grid Grid.Row="1" Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                    <TextBlock Text="Kodu" FontSize="11" Foreground="#059669" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding NewCourseCodeInline, UpdateSourceTrigger=PropertyChanged}"
+                                             Padding="10,8"
+                                             FontSize="13"
+                                             MaxLength="10"
+                                             CharacterCasing="Upper"/>
                                 </StackPanel>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
+                                
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Adı" FontSize="11" Foreground="#059669" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding NewCourseNameInline, UpdateSourceTrigger=PropertyChanged}"
+                                             Padding="10,8"
+                                             FontSize="13"/>
+                                </StackPanel>
+                            </Grid>
+                            
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="İptal" 
+                                        Command="{Binding ToggleAddCourseInlineCommand}"
+                                        Padding="15,8"
+                                        Background="Transparent"
+                                        BorderBrush="#059669"
+                                        BorderThickness="1"
+                                        Foreground="#059669"
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Margin="0,0,8,0"
+                                        Cursor="Hand">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" 
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="6"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" 
+                                                                  VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                                
+                                <Button Content="Ekle" 
+                                        Command="{Binding AddCourseInlineCommand}"
+                                        Padding="20,8"
+                                        Background="#10B981"
+                                        Foreground="White"
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        BorderThickness="0"
+                                        Cursor="Hand">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" 
+                                                    CornerRadius="6"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" 
+                                                                  VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#F0FDF4"/>
+                                <Setter Property="BorderBrush" Value="#10B981"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="Background" Value="#064E3B"/>
+                                        <Setter Property="BorderBrush" Value="#10B981"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                    </Border>
                     
                     <!-- Student Count Info -->
                     <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="12,8" Margin="0,0,0,5">

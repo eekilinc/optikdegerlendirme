@@ -258,34 +258,62 @@
                                                 </TextBox>
                                             </StackPanel>
 
-                                            <!-- Delete Button -->
-                                            <Button Grid.Column="2" 
-                                                    Command="{Binding DataContext.RemoveAnswerKeyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                                    CommandParameter="{Binding}"
-                                                    VerticalAlignment="Bottom"
-                                                    Margin="12,0,0,0"
-                                                    Padding="16,10"
-                                                    Background="Transparent" 
-                                                    BorderBrush="#EF4444" 
-                                                    BorderThickness="1" 
-                                                    Foreground="#EF4444"
-                                                    FontSize="13"
-                                                    FontWeight="SemiBold"
-                                                    Cursor="Hand">
-                                                <Button.Content>🗑️ Sil</Button.Content>
-                                                <Button.Template>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <Border Background="{TemplateBinding Background}" 
-                                                                BorderBrush="{TemplateBinding BorderBrush}"
-                                                                BorderThickness="{TemplateBinding BorderThickness}"
-                                                                CornerRadius="10"
-                                                                Padding="{TemplateBinding Padding}">
-                                                            <ContentPresenter HorizontalAlignment="Center" 
-                                                                              VerticalAlignment="Center"/>
-                                                        </Border>
-                                                    </ControlTemplate>
-                                                </Button.Template>
-                                            </Button>
+                                            <!-- Buttons StackPanel -->
+                                            <StackPanel Grid.Column="2" 
+                                                        Orientation="Vertical"
+                                                        Margin="12,0,0,0"
+                                                        VerticalAlignment="Center">
+                                                <!-- Detailed Edit Button -->
+                                                <Button Command="{Binding DataContext.OpenDetailedAnswerKeyEditorFromBookletCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                        CommandParameter="{Binding}"
+                                                        Padding="12,8"
+                                                        Background="#3B82F6" 
+                                                        BorderThickness="0" 
+                                                        Foreground="White"
+                                                        FontSize="12"
+                                                        FontWeight="SemiBold"
+                                                        Margin="0,0,0,8"
+                                                        Cursor="Hand"
+                                                        ToolTip="Detaylı soru düzenleyici">
+                                                    <Button.Content>🔍 Detaylı</Button.Content>
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="{TemplateBinding Background}" 
+                                                                    CornerRadius="8"
+                                                                    Padding="{TemplateBinding Padding}">
+                                                                <ContentPresenter HorizontalAlignment="Center" 
+                                                                                  VerticalAlignment="Center"/>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
+                                                
+                                                <!-- Delete Button -->
+                                                <Button Command="{Binding DataContext.RemoveAnswerKeyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                        CommandParameter="{Binding}"
+                                                        Padding="12,8"
+                                                        Background="Transparent" 
+                                                        BorderBrush="#EF4444" 
+                                                        BorderThickness="1" 
+                                                        Foreground="#EF4444"
+                                                        FontSize="12"
+                                                        FontWeight="SemiBold"
+                                                        Cursor="Hand">
+                                                    <Button.Content>🗑️ Sil</Button.Content>
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="{TemplateBinding Background}" 
+                                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                                    CornerRadius="8"
+                                                                    Padding="{TemplateBinding Padding}">
+                                                                <ContentPresenter HorizontalAlignment="Center" 
+                                                                                  VerticalAlignment="Center"/>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
+                                            </StackPanel>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>

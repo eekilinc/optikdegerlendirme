@@ -272,6 +272,12 @@
         <!-- BOOKLET SETTINGS MODAL OVERLAY -->
         <modals:BookletSettingsModal Panel.ZIndex="200" />
 
+        <!-- DETAILED ANSWER KEY EDITOR MODAL OVERLAY -->
+        <modals:DetailedAnswerKeyEditorModal Panel.ZIndex="205" />
+
+        <!-- BULK ANSWER ENTRY MODAL OVERLAY -->
+        <modals:BulkAnswerEntryModal Panel.ZIndex="206" />
+
         <!-- SHORTCUTS MODAL OVERLAY -->
         <modals:ShortcutsModal Panel.ZIndex="250" />
 
@@ -301,6 +307,9 @@
 
         <!-- RENAME MODAL OVERLAY -->
         <modals:RenameModal Panel.ZIndex="605" />
+
+        <!-- CONFIRM MODAL OVERLAY -->
+        <modals:ConfirmModal Panel.ZIndex="606" />
 
         <!-- TEMPLATE MANAGER MODAL OVERLAY -->
         <modals:TemplateManagerModal Panel.ZIndex="610" />
