@@ -466,5 +466,75 @@ namespace OptikFormApp.Services
             _disposed = true;
             GC.SuppressFinalize(this);
         }
+
+        // ── Backup & Restore Operations ─────────────────────────────────────────
+
+        /// <summary>
+        /// Veritabanı bağlantısını kapatır (restore işlemi için)
+        /// </summary>
+        public async Task CloseConnectionAsync()
+        {
+            if (_connection != null && _connection.State == System.Data.ConnectionState.Open)
+            {
+                await _connection.CloseAsync();
+            }
+        }
+
+        /// <summary>
+        /// Veritabanı bağlantısını yeniden açar
+        /// </summary>
+        public async Task ReconnectAsync()
+        {
+            if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+            {
+                _connection = new SqliteConnection($"Data Source={_dbPath};Cache=Shared;Foreign Keys=True;");
+                await _connection.OpenAsync();
+                
+                using var cmd = _connection.CreateCommand();
+                cmd.CommandText = @"
+                    PRAGMA journal_mode = WAL;
+                    PRAGMA synchronous = NORMAL;
+                    PRAGMA foreign_keys = ON;
+                ";
+                await cmd.ExecuteNonQueryAsync();
+            }
+        }
+
+        /// <summary>
+        /// SQLite backup komutu ile veritabanı yedeği alır
+        /// </summary>
+        public async Task BackupDatabaseAsync(string backupPath)
+        {
+            // Önce WAL dosyalarını temizle
+            using var checkpointCmd = _connection.CreateCommand();
+            checkpointCmd.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
+            await checkpointCmd.ExecuteNonQueryAsync();
+
+            // SQLite backup API kullan
+            using var backupConnection = new SqliteConnection($"Data Source={backupPath};");
+            await backupConnection.OpenAsync();
+            
+            _connection.BackupDatabase(backupConnection);
+            await backupConnection.CloseAsync();
+        }
+
+        /// <summary>
+        /// Veritabanı şema versiyonunu döner
+        /// </summary>
+        public async Task<int> GetUserVersionAsync()
+        {
+            using var cmd = CreateCommand("PRAGMA user_version;");
+            var result = await cmd.ExecuteScalarAsync();
+            return result != null ? Convert.ToInt32(result) : 0;
+        }
+
+        /// <summary>
+        /// Veritabanı şema versiyonunu ayarlar
+        /// </summary>
+        public async Task SetUserVersionAsync(int version)
+        {
+            using var cmd = CreateCommand($"PRAGMA user_version = {version};");
+            await cmd.ExecuteNonQueryAsync();
+        }
     }
 }

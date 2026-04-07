@@ -37,6 +37,8 @@ namespace OptikFormApp
             services.AddSingleton<AppSettingsService>();
             services.AddSingleton<NotificationService>();
             services.AddSingleton<UndoRedoManager>(sp => new UndoRedoManager(50));
+            services.AddSingleton<JsonDataService>();
+            services.AddSingleton<BackupService>();
 
             // Transient Services - Her kullanımda yeni instance
             services.AddTransient<OpticalParserService>();

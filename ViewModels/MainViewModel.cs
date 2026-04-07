@@ -36,6 +36,7 @@ namespace OptikFormApp.ViewModels
         private readonly ItemAnalysisService _itemAnalysisService;
         private readonly SuccessPredictionService _successPredictionService;
         private readonly VersionService _versionService;
+        private readonly BackupService _backupService;
 
         private readonly object _studentsLock = new();
         private readonly object _coursesLock = new();
@@ -99,6 +100,7 @@ namespace OptikFormApp.ViewModels
         private bool _isAdvancedFilterOpen;
         private bool _isItemAnalysisOpen;
         private bool _isSuccessPredictionOpen;
+        private bool _isValidationDetailsOpen = false;
         private bool _isSaveExamModalOpen;
         private bool _isDetailedAnswerKeyEditorOpen;
         private bool _isBulkAnswerEntryOpen;
@@ -147,6 +149,7 @@ namespace OptikFormApp.ViewModels
             _successPredictionService = new SuccessPredictionService();
             _versionService = new VersionService();
             _versionCheckService = new VersionCheckService();
+            _backupService = new BackupService(_dbService, _settingsService, _notificationService, _jsonDataService);
 
             // Undo/Redo event handlers
             _undoRedoManager.CanUndoChanged += (s, e) => { OnPropertyChanged(nameof(CanUndo)); OnPropertyChanged(nameof(UndoDescription)); };
@@ -969,6 +972,181 @@ namespace OptikFormApp.ViewModels
                 }
             });
 
+            // Backup & Restore Commands
+            CreateFullBackupCommand = new AsyncRelayCommand(async _ => {
+                var sfd = new SaveFileDialog {
+                    Filter = "ZIP Dosyası|*.zip",
+                    FileName = $"OptikBackup_{DateTime.Now:yyyyMMdd_HHmmss}.zip",
+                    Title = "Yedek Dosyasını Kaydet"
+                };
+                if (sfd.ShowDialog() == true)
+                {
+                    IsBusy = true;
+                    BusyMessage = "Tam yedek oluşturuluyor...";
+                    try
+                    {
+                        await _backupService.CreateFullBackupAsync(sfd.FileName);
+                        ShowToastSuccess("Yedekleme tamamlandı!");
+                        AddToLog($"Tam yedek oluşturuldu: {Path.GetFileName(sfd.FileName)}", LogLevel.Success);
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowToastError($"Yedekleme hatası: {ex.Message}");
+                        AddToLog($"Yedekleme hatası: {ex.Message}", LogLevel.Error);
+                    }
+                    finally
+                    {
+                        IsBusy = false;
+                    }
+                }
+            });
+
+            CreateDatabaseBackupCommand = new AsyncRelayCommand(async _ => {
+                var sfd = new SaveFileDialog {
+                    Filter = "SQLite Database|*.db",
+                    FileName = $"OptikDB_{DateTime.Now:yyyyMMdd_HHmmss}.db",
+                    Title = "Veritabanı Yedeğini Kaydet"
+                };
+                if (sfd.ShowDialog() == true)
+                {
+                    IsBusy = true;
+                    BusyMessage = "Veritabanı yedeği oluşturuluyor...";
+                    try
+                    {
+                        await _backupService.CreateDatabaseBackupAsync(sfd.FileName);
+                        ShowToastSuccess("Veritabanı yedeği oluşturuldu!");
+                        AddToLog($"Veritabanı yedeği: {Path.GetFileName(sfd.FileName)}", LogLevel.Success);
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowToastError($"Yedekleme hatası: {ex.Message}");
+                        AddToLog($"Veritabanı yedekleme hatası: {ex.Message}", LogLevel.Error);
+                    }
+                    finally
+                    {
+                        IsBusy = false;
+                    }
+                }
+            });
+
+            ExportSettingsCommand = new AsyncRelayCommand(async _ => {
+                var sfd = new SaveFileDialog {
+                    Filter = "JSON Dosyası|*.json",
+                    FileName = $"OptikSettings_{DateTime.Now:yyyyMMdd_HHmmss}.json",
+                    Title = "Ayarları Dışa Aktar"
+                };
+                if (sfd.ShowDialog() == true)
+                {
+                    try
+                    {
+                        await _backupService.ExportSettingsAsync(sfd.FileName);
+                        ShowToastSuccess("Ayarlar dışa aktarıldı!");
+                        AddToLog($"Ayarlar dışa aktarıldı: {Path.GetFileName(sfd.FileName)}", LogLevel.Success);
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowToastError($"Aktarma hatası: {ex.Message}");
+                    }
+                }
+            });
+
+            RestoreFullBackupCommand = new AsyncRelayCommand(async _ => {
+                var ofd = new OpenFileDialog {
+                    Filter = "ZIP Yedek Dosyası|*.zip",
+                    Title = "Yedek Dosyası Seçin"
+                };
+                if (ofd.ShowDialog() == true)
+                {
+                    ConfirmModalTitle = "Yedek Geri Yükleme";
+                    ConfirmModalMessage = "Mevcut verilerin üzerine yazılacak.\n\nDevam etmek istediğinize emin misiniz?";
+                    ConfirmButtonText = "Geri Yükle";
+                    _onConfirmAction = async () => {
+                        IsBusy = true;
+                        BusyMessage = "Yedek geri yükleniyor...";
+                        try
+                        {
+                            await _backupService.RestoreFullBackupAsync(ofd.FileName, true);
+                            await LoadCoursesAsync();
+                            ShowToastSuccess("Yedek geri yüklendi! Lütfen uygulamayı yeniden başlatın.");
+                            AddToLog($"Yedek geri yüklendi: {Path.GetFileName(ofd.FileName)}", LogLevel.Success);
+                        }
+                        catch (Exception ex)
+                        {
+                            ShowToastError($"Geri yükleme hatası: {ex.Message}");
+                            AddToLog($"Geri yükleme hatası: {ex.Message}", LogLevel.Error);
+                        }
+                        finally
+                        {
+                            IsBusy = false;
+                        }
+                    };
+                    IsConfirmModalOpen = true;
+                }
+            });
+
+            RestoreDatabaseCommand = new AsyncRelayCommand(async _ => {
+                var ofd = new OpenFileDialog {
+                    Filter = "SQLite Database|*.db",
+                    Title = "Veritabanı Yedeği Seçin"
+                };
+                if (ofd.ShowDialog() == true)
+                {
+                    ConfirmModalTitle = "Veritabanı Geri Yükleme";
+                    ConfirmModalMessage = "Mevcut veritabanı değiştirilecek.\n\nDevam etmek istediğinize emin misiniz?";
+                    ConfirmButtonText = "Geri Yükle";
+                    _onConfirmAction = async () => {
+                        IsBusy = true;
+                        BusyMessage = "Veritabanı geri yükleniyor...";
+                        try
+                        {
+                            await _backupService.RestoreDatabaseAsync(ofd.FileName);
+                            await LoadCoursesAsync();
+                            ShowToastSuccess("Veritabanı geri yüklendi!");
+                            AddToLog($"Veritabanı geri yüklendi: {Path.GetFileName(ofd.FileName)}", LogLevel.Success);
+                        }
+                        catch (Exception ex)
+                        {
+                            ShowToastError($"Geri yükleme hatası: {ex.Message}");
+                            AddToLog($"Veritabanı geri yükleme hatası: {ex.Message}", LogLevel.Error);
+                        }
+                        finally
+                        {
+                            IsBusy = false;
+                        }
+                    };
+                    IsConfirmModalOpen = true;
+                }
+            });
+
+            ImportSettingsCommand = new AsyncRelayCommand(async _ => {
+                var ofd = new OpenFileDialog {
+                    Filter = "JSON Dosyası|*.json",
+                    Title = "Ayar Dosyası Seçin"
+                };
+                if (ofd.ShowDialog() == true)
+                {
+                    try
+                    {
+                        await _backupService.ImportSettingsAsync(ofd.FileName);
+                        // Ayarları yeniden yükle
+                        var saved = _settingsService.Load();
+                        SchoolName = saved.SchoolName;
+                        NetCoefficient = saved.NetCoefficient;
+                        BaseScore = saved.BaseScore;
+                        WrongDeductionFactor = saved.WrongDeductionFactor;
+                        ThemeIndex = saved.ThemeIndex;
+                        FontSize = saved.FontSize > 0 ? saved.FontSize : 14;
+                        ApplyTheme(ThemeIndex == 1);
+                        ApplyFontSize(FontSize);
+                        ShowToastSuccess("Ayarlar içe aktarıldı!");
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowToastError($"Ayar içe aktarma hatası: {ex.Message}");
+                    }
+                }
+            });
+
             // Item Analysis Commands
             OpenItemAnalysisCommand = new RelayCommand(_ => {
                 IsItemAnalysisOpen = true;
@@ -990,6 +1168,15 @@ namespace OptikFormApp.ViewModels
             });
             CloseSuccessPredictionCommand = new RelayCommand(_ => IsSuccessPredictionOpen = false);
             RunSuccessPredictionCommand = new AsyncRelayCommand(async _ => await RunSuccessPredictionAsync());
+
+            // Validation Details Commands
+            ShowValidationDetailsCommand = new RelayCommand(_ => IsValidationDetailsOpen = true);
+            CloseValidationDetailsCommand = new RelayCommand(_ => IsValidationDetailsOpen = false);
+            CopyValidationErrorsCommand = new RelayCommand(_ => {
+                var errorText = string.Join("\n", ValidationIssues.Select(i => $"{i.Title}: {i.Message} (Etkilenen: {i.AffectedItems})"));
+                System.Windows.Clipboard.SetText(errorText);
+                ShowToastSuccess("Hatalar panoya kopyalandı!");
+            });
 
             // Detailed Answer Key Editor Commands
             OpenDetailedAnswerKeyEditorCommand = new RelayCommand(_ => {
@@ -1484,6 +1671,14 @@ namespace OptikFormApp.ViewModels
         // JSON Data Import/Export Commands
         public ICommand ExportJsonCommand { get; set; }
         public ICommand ImportJsonCommand { get; set; }
+
+        // Backup & Restore Commands
+        public ICommand CreateFullBackupCommand { get; set; }
+        public ICommand CreateDatabaseBackupCommand { get; set; }
+        public ICommand ExportSettingsCommand { get; set; }
+        public ICommand RestoreFullBackupCommand { get; set; }
+        public ICommand RestoreDatabaseCommand { get; set; }
+        public ICommand ImportSettingsCommand { get; set; }
         
         public bool IsItemAnalysisOpen { get => _isItemAnalysisOpen; set { _isItemAnalysisOpen = value; OnPropertyChanged(); } }
         public ObservableCollection<ItemAnalysisService.QuestionItemStats> QuestionStats { get => _questionStats; set { _questionStats = value; OnPropertyChanged(); } }
@@ -1511,6 +1706,14 @@ namespace OptikFormApp.ViewModels
         public ICommand OpenSuccessPredictionCommand { get; set; }
         public ICommand CloseSuccessPredictionCommand { get; set; }
         public ICommand RunSuccessPredictionCommand { get; set; }
+
+        // Validation Details Properties
+        public bool IsValidationDetailsOpen { get => _isValidationDetailsOpen; set { _isValidationDetailsOpen = value; OnPropertyChanged(); } }
+        
+        // Validation Details Commands
+        public ICommand ShowValidationDetailsCommand { get; set; }
+        public ICommand CloseValidationDetailsCommand { get; set; }
+        public ICommand CopyValidationErrorsCommand { get; set; }
 
         // Detailed Answer Key Editor Properties
         public bool IsDetailedAnswerKeyEditorOpen { get => _isDetailedAnswerKeyEditorOpen; set { _isDetailedAnswerKeyEditorOpen = value; OnPropertyChanged(); } }
@@ -1850,15 +2053,35 @@ namespace OptikFormApp.ViewModels
                 
                 if (errors.Count > 0)
                 {
+                    // Hataları log'a ekle
                     foreach (var err in errors) AddToLog(err, LogLevel.Error);
+                    
+                    // Parse hatalarını ValidationIssues'e de ekle (üst panelde görünsün)
+                    foreach (var err in errors.Where(e => !e.StartsWith("KRİTİK HATA")))
+                    {
+                        // Hata mesajını parçala: [ÖğrenciNo] İsim: Mesaj
+                        var parts = err.Split(':');
+                        var title = parts.Length > 1 ? parts[0].Trim() : "Parse Hatası";
+                        var message = parts.Length > 1 ? string.Join(":", parts.Skip(1)).Trim() : err;
+                        
+                        ValidationIssues.Add(new ValidationIssue
+                        {
+                            Title = title.Length > 50 ? title.Substring(0, 50) + "..." : title,
+                            Message = message,
+                            Severity = ValidationSeverity.Warning,
+                            AffectedItems = err.Contains('[') && err.Contains(']') 
+                                ? err.Substring(err.IndexOf('['), err.IndexOf(']') - err.IndexOf('[') + 1)
+                                : $"Satır {errors.IndexOf(err) + 1}"
+                        });
+                    }
+                    OnPropertyChanged(nameof(ValidationIssuesCount));
+                    
                     if (isCritical)
                     {
                         ShowToastError("Dosya formatı geçersiz. Lütfen optik okuyucu çıktısı (.txt) olduğundan emin olun.");
                         StatusMessage = "Dosya formatı geçersiz.";
                         return;
                     }
-                    string errorSummary = string.Join("\n", errors.Take(5));
-                    if (errors.Count > 5) errorSummary += $"\n...ve {errors.Count - 5} hata daha.";
                     ShowToastWarning($"{errors.Count} satırda hata var, {students.Count} kayıt yüklendi.");
                 }
                 

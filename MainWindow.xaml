@@ -89,6 +89,16 @@
                         <MenuItem Header="Genel Hesaplama Ayarları..." Command="{Binding OpenGeneralConfigCommand}"/>
                         <Separator/>
                         <MenuItem Header="Sınav Şablonlarını Yönet..." Command="{Binding OpenTemplateManagerCommand}"/>
+                        <Separator/>
+                        <MenuItem Header="📦 Yedekleme ve Geri Yükleme">
+                            <MenuItem Header="Tam Yedek Oluştur (.zip)" Command="{Binding CreateFullBackupCommand}"/>
+                            <MenuItem Header="Sadece Veritabanı Yedekle (.db)" Command="{Binding CreateDatabaseBackupCommand}"/>
+                            <MenuItem Header="Ayarları Dışa Aktar (.json)" Command="{Binding ExportSettingsCommand}"/>
+                            <Separator/>
+                            <MenuItem Header="Tam Yedek Geri Yükle (.zip)" Command="{Binding RestoreFullBackupCommand}"/>
+                            <MenuItem Header="Veritabanı Geri Yükle (.db)" Command="{Binding RestoreDatabaseCommand}"/>
+                            <MenuItem Header="Ayarları İçe Aktar (.json)" Command="{Binding ImportSettingsCommand}"/>
+                        </MenuItem>
                     </MenuItem>
                     <MenuItem Header="_Yardım">
                         <MenuItem Header="Klavye Kısayolları" Command="{Binding ShowShortcutsCommand}" InputGestureText="F1"/>
@@ -325,6 +335,10 @@
         <!-- SUCCESS PREDICTION MODAL OVERLAY -->
         <modals:SuccessPredictionModal Panel.ZIndex="640" 
                                         Visibility="{Binding IsSuccessPredictionOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+        <!-- VALIDATION DETAILS MODAL OVERLAY -->
+        <modals:ValidationDetailsModal Panel.ZIndex="650" 
+                                       Visibility="{Binding IsValidationDetailsOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
         <!-- BUSY LOADING OVERLAY -->
         <modals:BusyOverlay Panel.ZIndex="1000" />

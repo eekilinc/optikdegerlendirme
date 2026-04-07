@@ -56,7 +56,17 @@ namespace OptikFormApp.Services
 
                     if (line.Length < 33) 
                     {
-                        errors.Add($"Satır {lineNum}: Veri uzunluğu yetersiz (En az 33 karakter gerekli).");
+                        // Kısa satırda bile temel bilgileri çıkarmaya çalış
+                        string partialName = line.Length >= 1 ? line.Substring(0, Math.Min(22, line.Length)).Trim() : "";
+                        string partialId = line.Length > 22 ? line.Substring(22, Math.Min(10, line.Length - 22)).Trim() : "";
+                        
+                        string identifier = !string.IsNullOrEmpty(partialId) 
+                            ? $"[{partialId}] {partialName}".Trim() 
+                            : !string.IsNullOrEmpty(partialName) 
+                                ? $"[{partialName}]" 
+                                : $"[Satır {lineNum}]";
+                        
+                        errors.Add($"{identifier}: VERİ EKSİK! Satır uzunluğu {line.Length} (En az 33 gerekli). Cevaplar eksik olabilir.");
                         continue; 
                     }
 
@@ -67,13 +77,46 @@ namespace OptikFormApp.Services
                         string bookletType = line.Substring(32, 1).Trim().ToUpper();
                         string rawAnswers = line.Length > 33 ? line.Substring(33).TrimEnd() : "";
 
+                        // Öğrenci tanımlayıcı bilgisi (hata mesajları için)
+                        string studentIdentifier = !string.IsNullOrEmpty(studentId) 
+                            ? $"[{studentId}] {fullName}".Trim() 
+                            : !string.IsNullOrEmpty(fullName) 
+                                ? $"[{fullName}]" 
+                                : $"[Satır {lineNum}]";
+
                         if (!IsValidOpticalFormat(bookletType, rawAnswers, studentId))
                         {
-                            errors.Add($"Satır {lineNum}: Geçersiz veri formatı (Optik forma uygun olmayan karakterler tespit edildi).");
+                            errors.Add($"{studentIdentifier}: Geçersiz veri formatı (Optik forma uygun olmayan karakterler). Kitapçık: '{bookletType}', Cevap uzunluğu: {rawAnswers.Length}");
                             continue;
                         }
 
-                        if (string.IsNullOrEmpty(fullName) && string.IsNullOrEmpty(studentId))
+                        // Kitapçık tipi kontrolü
+                        if (string.IsNullOrEmpty(bookletType) || !char.IsLetter(bookletType[0]))
+                        {
+                            errors.Add($"{studentIdentifier}: Kitapçık tipi eksik veya geçersiz (Beklenen: A, B, C...).");
+                        }
+
+                        // Öğrenci bilgisi kontrolü
+                        bool hasName = !string.IsNullOrEmpty(fullName);
+                        bool hasId = !string.IsNullOrEmpty(studentId);
+
+                        if (!hasName && !hasId && string.IsNullOrEmpty(rawAnswers))
+                        {
+                            errors.Add($"Satır {lineNum}: Tüm alanlar boş (isim, numara ve cevaplar) - Bu satır atlandı.");
+                            continue;
+                        }
+
+                        if (hasName && !hasId)
+                        {
+                            errors.Add($"{studentIdentifier}: Öğrenci numarası eksik.");
+                        }
+                        else if (!hasName && hasId)
+                        {
+                            errors.Add($"{studentIdentifier}: Öğrenci adı eksik.");
+                        }
+
+                        // Cevap anahtarı kontrolü (isim ve numara yoksa)
+                        if (!hasName && !hasId)
                         {
                             answerKeys.Add(new AnswerKeyModel 
                             { 

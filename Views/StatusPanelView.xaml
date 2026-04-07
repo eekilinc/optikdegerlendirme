@@ -9,13 +9,35 @@
         <!-- VALIDATION ALERT PANEL -->
         <Border Visibility="{Binding ValidationIssuesCount, Converter={StaticResource NumericToVis}}" 
                 Background="#FEF2F2" BorderBrush="#FEE2E2" BorderThickness="1" CornerRadius="12" 
-                Margin="0,15,0,0" Padding="15,10">
+                Margin="0,15,0,0" Padding="15,12">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="⚠️" FontSize="18" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                <TextBlock Text="⚠️" FontSize="20" VerticalAlignment="Center" Margin="0,0,15,0"/>
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="{Binding ValidationIssuesCount, StringFormat='{}{0} Adet Veri Doğrulama Sorunu Tespit Edildi!'}" FontWeight="Bold" Foreground="#991B1B"/>
-                    <TextBlock Text="Bazı satırlarda okuma hataları veya eksik işaretlemeler var. Lütfen dosyayı kontrol edin." FontSize="11" Foreground="#B91C1C"/>
+                    <TextBlock Text="{Binding ValidationIssuesCount, StringFormat='{}{0} Adet Veri Doğrulama Sorunu Tespit Edildi!'}" FontWeight="Bold" Foreground="#991B1B" FontSize="14"/>
+                    <TextBlock Text="Bazı satırlarda okuma hataları veya eksik işaretlemeler var." FontSize="12" Foreground="#B91C1C" Margin="0,2,0,0"/>
                 </StackPanel>
+                <Button Content="🔍 Detayları Gör" Margin="15,0,0,0" Padding="12,6" 
+                        Background="#DC2626" Foreground="White" FontWeight="SemiBold" FontSize="12"
+                        BorderThickness="0" Cursor="Hand"
+                        Command="{Binding ShowValidationDetailsCommand}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#DC2626"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#B91C1C"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
             </StackPanel>
         </Border>
 

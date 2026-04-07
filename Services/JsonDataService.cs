@@ -152,5 +152,69 @@ Veri:
                 return false;
             }
         }
+
+        /// <summary>
+        /// Tüm veritabanı verilerini JSON formatında dışa aktarır (backup için)
+        /// </summary>
+        public async Task<string> ExportAllDataAsync()
+        {
+            var exportContainer = new FullExportData
+            {
+                ExportVersion = "2.0",
+                ExportDate = DateTime.Now,
+                Application = "OptikFormApp",
+                Exams = new List<ExamExportData>()
+            };
+
+            // Tüm dersleri ve sınavları al
+            using var dbService = new DatabaseService();
+            await dbService.InitializeDatabaseAsync();
+            
+            var courses = await dbService.GetCoursesAsync();
+            foreach (var course in courses)
+            {
+                var exams = await dbService.GetExamsForCourseAsync(course.Id);
+                foreach (var exam in exams)
+                {
+                    var results = await dbService.GetResultsForExamAsync(exam.Id);
+                    
+                    var examData = new ExamExportData
+                    {
+                        ExamTitle = exam.Title,
+                        CourseName = course.Name,
+                        ExamDate = exam.Date,
+                        Students = results,
+                        AverageScore = results.Count > 0 ? results.Average(s => s.Score) : 0,
+                        MaxScore = results.Count > 0 ? results.Max(s => s.Score) : 0,
+                        MinScore = results.Count > 0 ? results.Min(s => s.Score) : 0
+                    };
+                    
+                    exportContainer.Exams.Add(examData);
+                }
+            }
+
+            exportContainer.TotalCourses = courses.Count;
+            exportContainer.TotalExams = exportContainer.Exams.Count;
+            exportContainer.TotalStudents = exportContainer.Exams.Sum(e => e.TotalStudents);
+
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+
+            return JsonSerializer.Serialize(exportContainer, options);
+        }
+
+        public class FullExportData
+        {
+            public string ExportVersion { get; set; } = "2.0";
+            public DateTime ExportDate { get; set; }
+            public string Application { get; set; } = "OptikFormApp";
+            public int TotalCourses { get; set; }
+            public int TotalExams { get; set; }
+            public int TotalStudents { get; set; }
+            public List<ExamExportData> Exams { get; set; } = new();
+        }
     }
 }

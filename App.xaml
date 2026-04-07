@@ -25,6 +25,9 @@
         <vm:TrendToVisibilityConverter x:Key="GreaterThanZeroToVis" Mode="Positive"/>
         <vm:TrendToVisibilityConverter x:Key="LessThanZeroToVis" Mode="Negative"/>
         <vm:NumericToVisibilityConverter x:Key="NumericToVis"/>
+        <vm:StringToVisibilityConverter x:Key="StringToVis"/>
+        <vm:SeverityToBrushConverter x:Key="SeverityToBrushConverter"/>
+        <vm:SeverityToIconConverter x:Key="SeverityToIconConverter"/>
 
         <!-- Global Animasyon Kaynakları -->
         <Storyboard x:Key="FadeInAnimation">
