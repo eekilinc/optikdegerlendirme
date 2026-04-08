@@ -127,6 +127,11 @@ namespace OptikFormApp.ViewModels
         private SuccessPredictionService.ClassPredictionSummary _classPredictionSummary = new();
         private double _passingScore = 50;
 
+        // Student Detail Modal fields
+        private bool _isStudentDetailOpen;
+        private StudentResult? _selectedStudentDetail;
+        private StudentResult? _originalStudentBeforeEdit;
+
         public ICollectionView StudentsView { get; }
 
         public MainViewModel()
@@ -1169,6 +1174,74 @@ namespace OptikFormApp.ViewModels
             CloseSuccessPredictionCommand = new RelayCommand(_ => IsSuccessPredictionOpen = false);
             RunSuccessPredictionCommand = new AsyncRelayCommand(async _ => await RunSuccessPredictionAsync());
 
+            // Student Detail Commands
+            OpenStudentDetailCommand = new RelayCommand(obj => {
+                if (obj is StudentResult student)
+                {
+                    // Store reference to original student
+                    _originalStudentBeforeEdit = student;
+                    
+                    // Create editable COPY - changes here won't affect original until saved
+                    SelectedStudentDetail = new StudentResult
+                    {
+                        StudentId = student.StudentId,
+                        FullName = student.FullName,
+                        BookletType = student.BookletType,
+                        RawAnswers = student.RawAnswers,
+                        Answers = new List<string>(student.Answers),
+                        Score = student.Score,
+                        CorrectCount = student.CorrectCount,
+                        IncorrectCount = student.IncorrectCount,
+                        EmptyCount = student.EmptyCount,
+                        NetCount = student.NetCount,
+                        Rank = student.Rank,
+                        RowNumber = student.RowNumber,
+                        QuestionResults = new List<bool>(student.QuestionResults),
+                        ColoredAnswers = new ObservableCollection<AnswerItem>(student.ColoredAnswers.Select(a => new AnswerItem { Character = a.Character, State = a.State, QuestionNumber = a.QuestionNumber }))
+                    };
+                    
+                    IsStudentDetailOpen = true;
+                    AddToLog($"Öğrenci detayı açıldı: {student.FullName} ({student.StudentId})", LogLevel.Info);
+                }
+            });
+            CloseStudentDetailCommand = new RelayCommand(_ => {
+                // Discard changes - just close without applying to original
+                IsStudentDetailOpen = false;
+                _originalStudentBeforeEdit = null;
+                SelectedStudentDetail = null;
+            });
+            SaveStudentDetailCommand = new AsyncRelayCommand(async _ => {
+                if (SelectedStudentDetail != null && _originalStudentBeforeEdit != null)
+                {
+                    // Apply changes to the ORIGINAL student
+                    _originalStudentBeforeEdit.StudentId = SelectedStudentDetail.StudentId;
+                    _originalStudentBeforeEdit.FullName = SelectedStudentDetail.FullName;
+                    
+                    // Add to undo stack
+                    var command = new StudentDataChangeCommand(
+                        new List<StudentResult>(Students),
+                        new List<StudentResult>(Students),
+                        $"Öğrenci düzenlendi: {SelectedStudentDetail.FullName}"
+                    );
+                    _undoRedoManager.ExecuteCommand(command);
+                    
+                    AddToLog($"Öğrenci bilgileri güncellendi: {SelectedStudentDetail.FullName} ({SelectedStudentDetail.StudentId})", LogLevel.Success);
+                    ShowToastSuccess("Öğrenci bilgileri güncellendi!");
+                    
+                    // Refresh the view
+                    StudentsView.Refresh();
+                    
+                    // Auto-save if exam is selected
+                    if (SelectedExam != null)
+                    {
+                        await AutoSaveSelectedExamAsync();
+                    }
+                }
+                IsStudentDetailOpen = false;
+                _originalStudentBeforeEdit = null;
+                SelectedStudentDetail = null;
+            });
+
             // Validation Details Commands
             ShowValidationDetailsCommand = new RelayCommand(_ => IsValidationDetailsOpen = true);
             CloseValidationDetailsCommand = new RelayCommand(_ => IsValidationDetailsOpen = false);
@@ -1706,6 +1779,15 @@ namespace OptikFormApp.ViewModels
         public ICommand OpenSuccessPredictionCommand { get; set; }
         public ICommand CloseSuccessPredictionCommand { get; set; }
         public ICommand RunSuccessPredictionCommand { get; set; }
+
+        // Student Detail Properties
+        public bool IsStudentDetailOpen { get => _isStudentDetailOpen; set { _isStudentDetailOpen = value; OnPropertyChanged(); } }
+        public StudentResult? SelectedStudentDetail { get => _selectedStudentDetail; set { _selectedStudentDetail = value; OnPropertyChanged(); } }
+        
+        // Student Detail Commands
+        public ICommand OpenStudentDetailCommand { get; set; }
+        public ICommand CloseStudentDetailCommand { get; set; }
+        public ICommand SaveStudentDetailCommand { get; set; }
 
         // Validation Details Properties
         public bool IsValidationDetailsOpen { get => _isValidationDetailsOpen; set { _isValidationDetailsOpen = value; OnPropertyChanged(); } }

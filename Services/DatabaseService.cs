@@ -314,10 +314,11 @@ namespace OptikFormApp.Services
                     EmptyCount   = reader.GetInt32(7)
                 };
 
+                int qNum = 1;
                 foreach (char c in res.RawAnswers)
                 {
                     res.Answers.Add(c.ToString());
-                    res.ColoredAnswers.Add(new AnswerItem { Character = c == ' ' ? '_' : c, State = AnswerState.NotEvaluated });
+                    res.ColoredAnswers.Add(new AnswerItem { Character = c == ' ' ? '_' : c, State = AnswerState.NotEvaluated, QuestionNumber = qNum++ });
                 }
 
                 var qjson = reader.GetString(8);

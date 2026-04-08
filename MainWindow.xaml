@@ -336,6 +336,10 @@
         <modals:SuccessPredictionModal Panel.ZIndex="640" 
                                         Visibility="{Binding IsSuccessPredictionOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
+        <!-- STUDENT DETAIL MODAL OVERLAY -->
+        <modals:StudentDetailModal Panel.ZIndex="645" 
+                                   Visibility="{Binding IsStudentDetailOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
         <!-- VALIDATION DETAILS MODAL OVERLAY -->
         <modals:ValidationDetailsModal Panel.ZIndex="650" 
                                        Visibility="{Binding IsValidationDetailsOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>

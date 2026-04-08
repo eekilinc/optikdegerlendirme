@@ -238,7 +238,7 @@ namespace OptikFormApp.Services
                     }
                     student.QuestionResults.Add(isCorrect || isEmpty ? isCorrect : false);
                     var state = isCorrect ? AnswerState.Correct : (isEmpty ? AnswerState.Empty : AnswerState.Incorrect);
-                    student.ColoredAnswers.Add(new AnswerItem { Character = displayChar, State = state });
+                    student.ColoredAnswers.Add(new AnswerItem { Character = displayChar, State = state, QuestionNumber = i + 1 });
                 }
 
                 student.CorrectCount = correct;

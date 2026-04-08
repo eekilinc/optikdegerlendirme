@@ -12,5 +12,6 @@ namespace OptikFormApp.Models
     {
         public char Character { get; set; }
         public AnswerState State { get; set; }
+        public int QuestionNumber { get; set; }
     }
 }

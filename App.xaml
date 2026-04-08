@@ -13,6 +13,7 @@
         <vm:ValueToWidthConverter x:Key="ValueToWidthConverter"/>
         <vm:DifficultyToBackgroundConverter x:Key="DifficultyToBackgroundConverter"/>
         <vm:AnswerStateToBrushConverter x:Key="AnswerStateConverter"/>
+        <vm:AnswerStateToBackgroundConverter x:Key="AnswerStateToBgConverter"/>
         <vm:CountToVisibilityConverter x:Key="CountToVisConverter"/>
         <vm:CountToVisibilityConverter x:Key="DataToVisConverter" Invert="True"/>
         <vm:ValueToHeightConverter x:Key="ValueHeightConverter"/>
