@@ -5,147 +5,118 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="800">
-    
-    <Border Background="{DynamicResource CardBg}" CornerRadius="12" Padding="25">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-            
-            <!-- Header Section -->
-            <StackPanel Grid.Row="0" Margin="0,0,0,25">
-                <TextBlock Text="📊 Soru Zorluk Seviyesi Analizi" 
-                          FontSize="24" FontWeight="Bold" 
-                          Foreground="{DynamicResource TextMain}" Margin="0,0,0,15"/>
-                
-                <!-- Modern Stats Cards -->
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    
+
+    <DockPanel Background="{DynamicResource CardBg}" LastChildFill="True">
+
+        <!-- Başlık Bölümü - DockPanel.Dock=Top -->
+        <StackPanel DockPanel.Dock="Top" Margin="25,25,25,15">
+
+            <!-- Header Section - Kompakt -->
+            <StackPanel Margin="0,0,0,15">
+                <TextBlock Text="📊 Soru Zorluk Seviyesi Analizi"
+                          FontSize="20" FontWeight="Bold"
+                          Foreground="{DynamicResource TextMain}" Margin="0,0,0,10"/>
+
+                <!-- Mini Stats - Dengeli Boyut -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
                     <!-- Kolay -->
-                    <Border Grid.Column="0" CornerRadius="12" Padding="20" Margin="0,0,8,0">
+                    <Border CornerRadius="8" Padding="12,10" Margin="0,0,6,0" MinWidth="90">
                         <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#10B981" Offset="0"/>
-                                <GradientStop Color="#059669" Offset="1"/>
-                            </LinearGradientBrush>
+                            <SolidColorBrush Color="#10B981"/>
                         </Border.Background>
-                        <Border.Effect>
-                            <DropShadowEffect Color="#10B981" Opacity="0.3" BlurRadius="10" ShadowDepth="2"/>
-                        </Border.Effect>
                         <StackPanel>
-                            <TextBlock Text="🟢" FontSize="24" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                            <TextBlock Text="Kolay" FontSize="14" FontWeight="SemiBold" 
-                                      Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                            <TextBlock Text="{Binding QuestionDifficulties, Converter={StaticResource DifficultyCountConverter}, ConverterParameter='Kolay'}" 
-                                      FontSize="28" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                            <TextBlock Text="Soru" FontSize="12" Foreground="#E0F2FE" 
-                                      HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                            <TextBlock Text="🟢" FontSize="18" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding QuestionDifficulties, Converter={StaticResource DifficultyCountConverter}, ConverterParameter='Kolay'}"
+                                      FontSize="22" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Kolay" FontSize="10" Foreground="#D1FAE5" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
-                    
+
                     <!-- Orta -->
-                    <Border Grid.Column="1" CornerRadius="12" Padding="20" Margin="8,0">
+                    <Border CornerRadius="8" Padding="12,10" Margin="0,0,6,0" MinWidth="90">
                         <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#F59E0B" Offset="0"/>
-                                <GradientStop Color="#D97706" Offset="1"/>
-                            </LinearGradientBrush>
+                            <SolidColorBrush Color="#F59E0B"/>
                         </Border.Background>
-                        <Border.Effect>
-                            <DropShadowEffect Color="#F59E0B" Opacity="0.3" BlurRadius="10" ShadowDepth="2"/>
-                        </Border.Effect>
                         <StackPanel>
-                            <TextBlock Text="🟡" FontSize="24" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                            <TextBlock Text="Orta" FontSize="14" FontWeight="SemiBold" 
-                                      Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                            <TextBlock Text="{Binding QuestionDifficulties, Converter={StaticResource DifficultyCountConverter}, ConverterParameter='Orta'}" 
-                                      FontSize="28" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                            <TextBlock Text="Soru" FontSize="12" Foreground="#FEF3C7" 
-                                      HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                            <TextBlock Text="🟡" FontSize="18" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding QuestionDifficulties, Converter={StaticResource DifficultyCountConverter}, ConverterParameter='Orta'}"
+                                      FontSize="22" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Orta" FontSize="10" Foreground="#FEF3C7" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
-                    
+
                     <!-- Zor -->
-                    <Border Grid.Column="2" CornerRadius="12" Padding="20" Margin="8,0">
+                    <Border CornerRadius="8" Padding="12,10" Margin="0,0,6,0" MinWidth="90">
                         <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#EF4444" Offset="0"/>
-                                <GradientStop Color="#DC2626" Offset="1"/>
-                            </LinearGradientBrush>
+                            <SolidColorBrush Color="#EF4444"/>
                         </Border.Background>
-                        <Border.Effect>
-                            <DropShadowEffect Color="#EF4444" Opacity="0.3" BlurRadius="10" ShadowDepth="2"/>
-                        </Border.Effect>
                         <StackPanel>
-                            <TextBlock Text="🔴" FontSize="24" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                            <TextBlock Text="Zor" FontSize="14" FontWeight="SemiBold" 
-                                      Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                            <TextBlock Text="{Binding QuestionDifficulties, Converter={StaticResource DifficultyCountConverter}, ConverterParameter='Zor'}" 
-                                      FontSize="28" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                            <TextBlock Text="Soru" FontSize="12" Foreground="#FEE2E2" 
-                                      HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                            <TextBlock Text="🔴" FontSize="18" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding QuestionDifficulties, Converter={StaticResource DifficultyCountConverter}, ConverterParameter='Zor'}"
+                                      FontSize="22" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Zor" FontSize="10" Foreground="#FEE2E2" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
-                    
+
                     <!-- Çok Zor -->
-                    <Border Grid.Column="3" CornerRadius="12" Padding="20" Margin="8,0,0,0">
+                    <Border CornerRadius="8" Padding="12,10" Margin="0,0,6,0" MinWidth="90">
                         <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#6B7280" Offset="0"/>
-                                <GradientStop Color="#4B5563" Offset="1"/>
-                            </LinearGradientBrush>
+                            <SolidColorBrush Color="#6B7280"/>
                         </Border.Background>
-                        <Border.Effect>
-                            <DropShadowEffect Color="#6B7280" Opacity="0.3" BlurRadius="10" ShadowDepth="2"/>
-                        </Border.Effect>
                         <StackPanel>
-                            <TextBlock Text="⚫" FontSize="24" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                            <TextBlock Text="Çok Zor" FontSize="14" FontWeight="SemiBold" 
-                                      Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                            <TextBlock Text="{Binding QuestionDifficulties, Converter={StaticResource DifficultyCountConverter}, ConverterParameter='Çok Zor'}" 
-                                      FontSize="28" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                            <TextBlock Text="Soru" FontSize="12" Foreground="#F3F4F6" 
-                                      HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                            <TextBlock Text="⚫" FontSize="18" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding QuestionDifficulties, Converter={StaticResource DifficultyCountConverter}, ConverterParameter='Çok Zor'}"
+                                      FontSize="22" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Çok Zor" FontSize="10" Foreground="#E5E7EB" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
-                </Grid>
+
+                    <!-- Toplam Soru -->
+                    <Border CornerRadius="8" Padding="12,10" Margin="6,0,0,0" MinWidth="90"
+                            BorderBrush="{DynamicResource Accent}" BorderThickness="2">
+                        <Border.Background>
+                            <SolidColorBrush Color="#EFF6FF"/>
+                        </Border.Background>
+                        <StackPanel>
+                            <TextBlock Text="📊" FontSize="18" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding QuestionDifficulties.Count}"
+                                      FontSize="22" FontWeight="Bold" Foreground="{DynamicResource Accent}" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Toplam" FontSize="10" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
                 
-                <!-- Distribution Summary -->
-                <Border Background="{DynamicResource AltRowBg}" CornerRadius="8" Padding="15" Margin="0,15,0,0">
+                <!-- Distribution Summary - Kompakt -->
+                <Border Background="{DynamicResource AltRowBg}" CornerRadius="6" Padding="8" Margin="0,10,0,0">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="📈" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Dağılım:" FontSize="14" FontWeight="SemiBold" 
-                                  Foreground="{DynamicResource TextMain}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBlock Text="{Binding DifficultyDistribution}" 
-                                  FontSize="14" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
+                        <TextBlock Text="📈" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Dağılım:" FontSize="11" FontWeight="SemiBold"
+                                  Foreground="{DynamicResource TextMain}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="{Binding DifficultyDistribution}"
+                                  FontSize="11" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
             </StackPanel>
-            
-            <!-- Modern Data Grid -->
-            <Border Grid.Row="2" Background="{DynamicResource AltRowBg}" CornerRadius="12" Padding="20">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    
-                    <TextBlock Grid.Row="0" Text="📋 Soru Bazında Detaylı Analiz" 
-                              FontSize="18" FontWeight="Bold" 
-                              Foreground="{DynamicResource TextMain}" Margin="0,0,0,20"/>
-                    
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" 
-                                  HorizontalScrollBarVisibility="Disabled">
-                        <ItemsControl ItemsSource="{Binding QuestionDifficulties}">
-                            <ItemsControl.ItemTemplate>
+        </StackPanel>
+
+        <!-- SORU LİSTESİ - Kartların hemen altında -->
+        <Border Background="{DynamicResource AltRowBg}" CornerRadius="12" Padding="20" Margin="25,0,25,25"
+                MinHeight="450">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*" MinHeight="350"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="📋 Soru Bazında Detaylı Analiz"
+                          FontSize="18" FontWeight="Bold"
+                          Foreground="{DynamicResource TextMain}" Margin="0,0,0,20"/>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Visible"
+                              HorizontalScrollBarVisibility="Disabled"
+                              MinHeight="350">
+                    <ItemsControl ItemsSource="{Binding QuestionDifficulties}">
+                        <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border Background="{DynamicResource CardBg}" CornerRadius="10" 
                                            Padding="15" Margin="0,0,0,8" 
@@ -225,6 +196,5 @@
                     </ScrollViewer>
                 </Grid>
             </Border>
-        </Grid>
-    </Border>
+    </DockPanel>
 </UserControl>

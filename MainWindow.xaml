@@ -22,6 +22,7 @@
         <KeyBinding Key="E" Modifiers="Ctrl" Command="{Binding ExportExcelCommand}" />
         <KeyBinding Key="C" Modifiers="Ctrl+Shift" Command="{Binding ExportCsvCommand}" />
         <KeyBinding Key="P" Modifiers="Ctrl" Command="{Binding ExportPdfCommand}" />
+        <KeyBinding Key="R" Modifiers="Ctrl+Shift" Command="{Binding ExportFullReportCommand}" />
         <!-- İşlem kısayolları -->
         <KeyBinding Key="F5" Command="{Binding EvaluateCommand}" />
         <KeyBinding Key="F1" Command="{Binding ShowShortcutsCommand}" />
@@ -80,6 +81,7 @@
                         <MenuItem Header="Not Listesi (No + Puan) (.csv)" Command="{Binding ExportGradeListCommand}"/>
                         <Separator/>
                         <MenuItem Header="Toplu PDF Karne Al (.pdf)" Command="{Binding ExportPdfCommand}" InputGestureText="Ctrl+P"/>
+                        <MenuItem Header="📄 Tam Rapor PDF (Tüm Analizler)" Command="{Binding ExportFullReportCommand}" InputGestureText="Ctrl+Shift+R"/>
                         <Separator/>
                         <MenuItem Header="📊 Gelişmiş Soru Analizi" Command="{Binding OpenItemAnalysisCommand}"/>
                         <MenuItem Header="🔮 Başarı Tahmini" Command="{Binding OpenSuccessPredictionCommand}"/>

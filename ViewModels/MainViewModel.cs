@@ -457,6 +457,59 @@ namespace OptikFormApp.ViewModels
                 }
             });
 
+            // TAM RAPOR PDF EXPORT
+            ExportFullReportCommand = new AsyncRelayCommand(async _ => {
+                if (Students.Count == 0) {
+                    ShowToastError("Önce veri yüklemeniz ve puanları hesaplamanız gerekmektedir.");
+                    return;
+                }
+                
+                var sfd = new SaveFileDialog {
+                    Filter = "PDF Dosyası|*.pdf",
+                    FileName = $"{SelectedCourse?.Name ?? "Sinav"}_TamRapor_{DateTime.Now:yyyyMMdd}.pdf"
+                };
+                
+                if (sfd.ShowDialog() == true) {
+                    try {
+                        IsBusy = true;
+                        BusyMessage = "Tam rapor PDF hazırlanıyor...";
+                        
+                        await Task.Run(() => {
+                            _pdfService.GenerateFullReport(
+                                SelectedCourse?.Name ?? "Sınav Raporu",
+                                Students.ToList(),
+                                QuestionStats.ToList(),
+                                QuestionDifficulties.ToList(),
+                                LearningOutcomes,
+                                ReliabilityStats,
+                                ClassStats,
+                                ScoreDistribution,
+                                QuestionCorrelations,
+                                Percentiles,
+                                AnswerKeys,
+                                sfd.FileName
+                            );
+                        });
+                        
+                        ShowToastSuccess($"Tam rapor kaydedildi: {Path.GetFileName(sfd.FileName)}");
+                        AddToLog($"Tam rapor PDF export edildi: {sfd.FileName}", LogLevel.Success);
+                        
+                        // PDF'i aç
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
+                            FileName = sfd.FileName,
+                            UseShellExecute = true
+                        });
+                    }
+                    catch (Exception ex) {
+                        ShowToastError($"PDF oluşturma hatası: {ex.Message}");
+                        AddToLog($"Tam rapor PDF hatası: {ex.Message}", LogLevel.Error);
+                    }
+                    finally {
+                        IsBusy = false;
+                    }
+                }
+            });
+
             ShowAddCourseCommand = new RelayCommand(_ => IsAddCourseOpen = true);
             CloseAddCourseCommand = new RelayCommand(_ => IsAddCourseOpen = false);
             AddCourseCommand = new AsyncRelayCommand(async _ => {
@@ -1674,6 +1727,7 @@ namespace OptikFormApp.ViewModels
         public ICommand ExportCsvCommand { get; set; }
         public ICommand ExportPdfCommand { get; set; }
         public ICommand ExportSinglePdfCommand { get; set; }
+        public ICommand ExportFullReportCommand { get; set; }
         public ICommand AddAnswerKeyCommand { get; set; }
         public ICommand RemoveAnswerKeyCommand { get; set; }
         public ICommand OpenModalCommand { get; set; }
@@ -2279,9 +2333,13 @@ namespace OptikFormApp.ViewModels
                     StudentsView.Refresh();
                     UpdateChartData(statsList, list);
                     UpdateOutcomeStats();
+                    UpdateQuestionDifficultyAnalysis(); // Kazanım bağımsız zorluk analizi
                     UpdateStatisticsReport();
                     OnPropertyChanged(nameof(ValidationIssuesCount));
                 });
+
+                // Madde analizini otomatik çalıştır
+                await RunItemAnalysisAsync();
 
                 StatusMessage = "Değerlendirme başarıyla tamamlandı.";
                 AddToLog("Değerlendirme başarıyla tamamlandı.", LogLevel.Success);
@@ -2347,9 +2405,6 @@ namespace OptikFormApp.ViewModels
             }
             
             OnPropertyChanged(nameof(LearningOutcomes));
-            
-            // Zorluk Seviyesi Analizini Güncelle
-            UpdateQuestionDifficultyAnalysis();
             
             // Log the calculation completion
             AddToLog($"Kazanım odaklı başarı analizi tamamlandı: {LearningOutcomes.Count} kazanımdan {groups.Count()} benzersiz konu hesaplandı.", LogLevel.Success);

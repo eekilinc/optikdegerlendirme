@@ -106,6 +106,13 @@
                         <TextBlock Text="CSV" FontWeight="SemiBold"/>
                     </StackPanel>
                 </Button>
+
+                <Button Command="{Binding ExportFullReportCommand}" Style="{StaticResource PipelineButton}" Background="#8B5CF6" BorderBrush="#7C3AED" Foreground="White" Margin="0,0,10,10" Padding="15,8" ToolTip="Tam Rapor PDF (Ctrl+Shift+R)" Visibility="{Binding Students.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="📄" Margin="0,0,8,0"/>
+                        <TextBlock Text="Tam Rapor" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Button>
             </WrapPanel>
         </WrapPanel>
     </Border>

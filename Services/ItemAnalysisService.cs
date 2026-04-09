@@ -307,21 +307,27 @@ namespace OptikFormApp.Services
             double mean = scores.Average();
             double stdDev = CalculateStandardDeviation(scores);
 
+            // Standart sapma çok düşükse Z-skor anlamsız olur, atla
+            bool useZScore = stdDev > 5.0; // Minimum 5 puan standart sapma gerekli
+
             foreach (var student in students)
             {
-                // 1. Puan anomalisi (çok düşük veya çok yüksek)
-                double zScore = stdDev > 0 ? (student.Score - mean) / stdDev : 0;
-                
-                if (Math.Abs(zScore) > 2.5)
+                // 1. Puan anomalisi (çok düşük veya çok yüksek) - sadece anlamlı stdDev ile
+                if (useZScore)
                 {
-                    anomalies.Add(new AnomalyResult(
-                        student.StudentId,
-                        student.FullName,
-                        AnomalyType.ScoreInconsistency,
-                        Math.Min(Math.Abs(zScore) / 3, 1.0),
-                        zScore > 0 ? "Puan ortalamanın çok üzerinde" : "Puan ortalamanın çok altında",
-                        Array.Empty<double>()
-                    ));
+                    double zScore = (student.Score - mean) / stdDev;
+                    
+                    if (Math.Abs(zScore) > 3.0) // Eşik yükseltildi: 2.5 -> 3.0
+                    {
+                        anomalies.Add(new AnomalyResult(
+                            student.StudentId,
+                            student.FullName,
+                            AnomalyType.ScoreInconsistency,
+                            Math.Min(Math.Abs(zScore) / 4, 1.0), // Normalize edildi
+                            zScore > 0 ? "Puan ortalamanın çok üzerinde" : "Puan ortalamanın çok altında",
+                            Array.Empty<double>()
+                        ));
+                    }
                 }
 
                 // 2. Cevap kalıbı analizi
