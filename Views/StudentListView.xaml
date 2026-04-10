@@ -64,17 +64,6 @@
                   RowBackground="{DynamicResource CardBg}"
                   AlternatingRowBackground="{DynamicResource AltRowBg}"
                   BorderThickness="0">
-            <DataGrid.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="✏️ Öğrenci Detaylarını Düzenle" 
-                              Command="{Binding DataContext.OpenStudentDetailCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                              CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
-                    <Separator/>
-                    <MenuItem Header="📄 Bu Öğrenci İçin PDF Karne Al" 
-                              Command="{Binding DataContext.ExportSinglePdfCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                              CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
-                </ContextMenu>
-            </DataGrid.ContextMenu>
             <DataGrid.CellStyle>
                 <Style TargetType="DataGridCell">
                     <Setter Property="Padding" Value="{Binding DataContext.GridCellPadding, RelativeSource={RelativeSource AncestorType=Window}}"/>
