@@ -12,107 +12,124 @@
         
         <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
             <!-- Left: Title -->
-            <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Orientation="Horizontal" Margin="0,0,30,10">
-                <Border Width="45" Height="45" CornerRadius="10" Background="{DynamicResource AltRowBg}" Margin="0,0,15,0" Padding="5">
+            <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Orientation="Horizontal" Margin="0,0,25,0">
+                <Border Width="40" Height="40" CornerRadius="8" Background="{DynamicResource AltRowBg}" Margin="0,0,12,0" Padding="5">
                     <Image Source="/Assets/app_logo.png" Stretch="Uniform"/>
                 </Border>
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="AĞLASUN MYO Optik Değerlendirme" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextMain}"/>
-                    <TextBlock Text="Optik okuma, test hesaplama ve raporlama adımlarını sırasıyla yönetin." FontSize="13" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    <TextBlock Text="AĞLASUN MYO" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextMain}"/>
+                    <TextBlock Text="Optik Değerlendirme Sistemi" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
                 </StackPanel>
             </StackPanel>
 
-            <!-- Right: Action Pipeline -->
+            <!-- Right: Actions -->
             <WrapPanel HorizontalAlignment="Left" VerticalAlignment="Center" Orientation="Horizontal">
                 
-                <Button Command="{Binding OpenModalCommand}" Style="{StaticResource OutlineButton}" Margin="0,0,15,10" Padding="15,8">
+                <!-- Workflow Group -->
+                <Border Background="#F0FDF4" CornerRadius="6" Padding="8,6" Margin="0,0,10,0">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="📋" Margin="0,0,8,0" FontSize="14"/>
-                        <TextBlock Text="Cevap Anahtarı"/>
+                        <TextBlock Text="▶️ İŞLEMLER" FontSize="10" FontWeight="Bold" Foreground="#166534" VerticalAlignment="Center" Margin="0,0,8,0" Opacity="0.8"/>
+                        <Button Command="{Binding LoadTxtCommand}" Style="{StaticResource PipelineButton}" Background="#16A34A" BorderBrush="#15803D" Foreground="White" Padding="10,6" Margin="0,0,6,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📁" FontSize="12" Margin="0,0,4,0"/>
+                                <TextBlock Text="Yükle" FontSize="12" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+                        
+                        <Button Command="{Binding OpenSaveExamModalCommand}" IsEnabled="{Binding Students.Count}" Padding="10,6" Margin="0,0,6,0">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource PipelineButton}">
+                                    <Setter Property="Background" Value="#22C55E"/>
+                                    <Setter Property="BorderBrush" Value="#16A34A"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasUnsavedData}" Value="True">
+                                            <Setter Property="Background" Value="#DC2626"/>
+                                            <Setter Property="BorderBrush" Value="#B91C1C"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock FontSize="12" Margin="0,0,4,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="✓"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasUnsavedData}" Value="True">
+                                                    <Setter Property="Text" Value="!"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock FontSize="12" FontWeight="SemiBold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="Kaydedildi"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasUnsavedData}" Value="True">
+                                                    <Setter Property="Text" Value="Kaydet"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Button>
+                        
+                        <Button Command="{Binding EvaluateCommand}" Style="{StaticResource PipelineButton}" Background="#7C3AED" BorderBrush="#6D28D9" Foreground="White" Padding="10,6">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⚡" FontSize="12" Margin="0,0,4,0"/>
+                                <TextBlock Text="Hesapla" FontSize="12" FontWeight="Bold"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
-                </Button>
-
-                <Button Command="{Binding OpenGeneralConfigCommand}" Style="{StaticResource OutlineButton}" Margin="0,0,15,10" Padding="15,8">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="⚙️" Margin="0,0,8,0" FontSize="14"/>
-                        <TextBlock Text="Sınav Ayarları"/>
-                    </StackPanel>
-                </Button>
-                
-                 <Button Command="{Binding LoadTxtCommand}" Style="{StaticResource PipelineButton}" Background="{DynamicResource AltRowBg}" BorderBrush="{DynamicResource Border}" Foreground="{DynamicResource TextMain}" Margin="0,0,10,10" Padding="15,8">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="📁" Margin="0,0,8,0"/>
-                        <TextBlock Text="1. Yükle" FontWeight="SemiBold"/>
-                    </StackPanel>
-                </Button>
-
-                <Button Command="{Binding OpenSaveExamModalCommand}" Style="{StaticResource PipelineButton}" IsEnabled="{Binding Students.Count}" Background="#10B981" BorderBrush="#059669" Foreground="White" Margin="0,0,10,10" Padding="15,8">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="💾" Margin="0,0,8,0"/>
-                        <TextBlock Text="2. Kaydet" FontWeight="SemiBold"/>
-                    </StackPanel>
-                    <Button.ToolTip>Sınav verilerini seçili derse kaydet (Ctrl+S)</Button.ToolTip>
-                </Button>
-                
-                <!-- Save Status Indicator -->
-                <Border Margin="0,0,10,10" Padding="10,6" CornerRadius="6" VerticalAlignment="Center">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Setter Property="Background" Value="#DCFCE7"/>
-                            <Setter Property="Visibility" Value="Visible"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Students.Count}" Value="0">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding HasUnsavedData}" Value="True">
-                                    <Setter Property="Background" Value="#FEF3C7"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <TextBlock FontSize="12" FontWeight="SemiBold">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Text" Value="✅ Kaydedildi"/>
-                                <Setter Property="Foreground" Value="#16A34A"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding HasUnsavedData}" Value="True">
-                                        <Setter Property="Text" Value="⚠️ Kaydedilmedi"/>
-                                        <Setter Property="Foreground" Value="#D97706"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
                 </Border>
                 
-                <Button Command="{Binding EvaluateCommand}" Style="{StaticResource PipelineButton}" Background="#8B5CF6" BorderBrush="#7C3AED" Foreground="White" Margin="0,0,10,10" Padding="15,8">
+                <!-- Config Group -->
+                <Border Background="{DynamicResource AltRowBg}" CornerRadius="6" Padding="8,6" Margin="0,0,10,0">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="⚡" Margin="0,0,8,0"/>
-                        <TextBlock Text="3. Hesapla" FontWeight="Bold"/>
+                        <TextBlock Text="⚙️ AYARLAR" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,8,0" Opacity="0.7"/>
+                        <Button Command="{Binding OpenModalCommand}" Style="{StaticResource OutlineButton}" Padding="8,6" Margin="0,0,4,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📋" Margin="0,0,4,0"/>
+                                <TextBlock Text="Cevap Anahtarı" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding OpenGeneralConfigCommand}" Style="{StaticResource OutlineButton}" Padding="8,6">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⚙️" Margin="0,0,4,0"/>
+                                <TextBlock Text="Sınav Ayarları" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
-                </Button>
-
-                <Button Command="{Binding ExportExcelCommand}" Style="{StaticResource PipelineButton}" Background="#F59E0B" BorderBrush="#D97706" Foreground="White" Margin="0,0,10,10" Padding="15,8" ToolTip="Excel Raporu Al (Ctrl+E)">
+                </Border>
+                
+                <!-- Export Group -->
+                <Border Background="#FEF3C7" CornerRadius="6" Padding="8,6" Visibility="{Binding Students.Count, Converter={StaticResource DataToVisConverter}}">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="📊" Margin="0,0,8,0"/>
-                        <TextBlock Text="4. Excel" FontWeight="SemiBold"/>
+                        <TextBlock Text="📤 DIŞA AKTAR" FontSize="10" FontWeight="Bold" Foreground="#92400E" VerticalAlignment="Center" Margin="0,0,8,0" Opacity="0.8"/>
+                        <Button Command="{Binding ExportExcelCommand}" Style="{StaticResource PipelineButton}" Background="#D97706" BorderBrush="#B45309" Foreground="White" Padding="10,6" Margin="0,0,6,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📊" FontSize="12" Margin="0,0,4,0"/>
+                                <TextBlock Text="Excel" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding ExportCsvCommand}" Style="{StaticResource PipelineButton}" Background="#C2410C" BorderBrush="#9A3412" Foreground="White" Padding="10,6" Margin="0,0,6,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📋" FontSize="12" Margin="0,0,4,0"/>
+                                <TextBlock Text="CSV" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding ExportFullReportCommand}" Style="{StaticResource PipelineButton}" Background="#BE185D" BorderBrush="#9D174D" Foreground="White" Padding="10,6">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📄" FontSize="12" Margin="0,0,4,0"/>
+                                <TextBlock Text="PDF Rapor" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
-                </Button>
-
-                <Button Command="{Binding ExportCsvCommand}" Style="{StaticResource PipelineButton}" Background="#6366F1" BorderBrush="#4F46E5" Foreground="White" Margin="0,0,10,10" Padding="15,8" ToolTip="CSV Olarak Aktar (Ctrl+Shift+C)">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="📋" Margin="0,0,8,0"/>
-                        <TextBlock Text="CSV" FontWeight="SemiBold"/>
-                    </StackPanel>
-                </Button>
-
-                <Button Command="{Binding ExportFullReportCommand}" Style="{StaticResource PipelineButton}" Background="#8B5CF6" BorderBrush="#7C3AED" Foreground="White" Margin="0,0,10,10" Padding="15,8" ToolTip="Tam Rapor PDF (Ctrl+Shift+R)" Visibility="{Binding Students.Count, Converter={StaticResource CountToVisibilityConverter}}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="📄" Margin="0,0,8,0"/>
-                        <TextBlock Text="Tam Rapor" FontWeight="SemiBold"/>
-                    </StackPanel>
-                </Button>
+                </Border>
             </WrapPanel>
         </WrapPanel>
     </Border>
